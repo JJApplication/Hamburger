@@ -70,12 +70,12 @@ func (mm *ModifierManager) registerDefaultModifiers() {
 	// 注册gzip压缩修改器
 	gzipModifier := NewGzipModifier()
 	mm.chain.AddModifier(gzipModifier)
-	logger.GetLogger().Debug().Str("名称", gzipModifier.GetName()).Msg("已注册修改器")
+	logger.GetLogger().Debug().Str("name", gzipModifier.GetName()).Msg("modifier registered")
 
 	// 注册自定义头修改器
 	customHeaderModifier := NewCustomHeaderModifier()
 	mm.chain.AddModifier(customHeaderModifier)
-	logger.GetLogger().Debug().Str("名称", gzipModifier.GetName()).Msg("已注册修改器")
+	logger.GetLogger().Debug().Str("name", gzipModifier.GetName()).Msg("modifier registered")
 }
 
 func (mm *ModifierManager) RegisterModifier(modifier Modifier) {
@@ -92,7 +92,7 @@ func (mm *ModifierManager) ModifyResponse(response *http.Response) error {
 // UpdateConfig 更新所有修改器的配置
 func (mm *ModifierManager) UpdateConfig() {
 	mm.chain.UpdateConfig()
-	logger.GetLogger().Debug().Msg("所有修改器配置已更新")
+	logger.GetLogger().Debug().Msg("all modifier configurations updated")
 }
 
 // GetEnabledModifiers 获取所有启用的修改器
@@ -109,7 +109,7 @@ func (mm *ModifierManager) GetModifierByName(name string) Modifier {
 func (mm *ModifierManager) AddCustomModifier(modifier Modifier) {
 	if modifier != nil {
 		mm.chain.AddModifier(modifier)
-		logger.GetLogger().Debug().Str("名称", modifier.GetName()).Msg("已添加自定义修改器")
+		logger.GetLogger().Debug().Str("name", modifier.GetName()).Msg("custom modifier added")
 	}
 }
 

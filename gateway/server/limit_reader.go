@@ -27,7 +27,7 @@ func (lr *limitedReader) Read(p []byte) (n int, err error) {
 	if lr.read > lr.limit {
 		lr.exceeded = true
 		if lr.logger != nil {
-			lr.logger.Error().Str("Host", lr.host).Int64("Read", lr.read).Int64("Limit", lr.limit).Msg("请求体超出限制被拒绝")
+			lr.logger.Error().Str("Host", lr.host).Int64("Read", lr.read).Int64("Limit", lr.limit).Msg("request entity too large, rejected")
 		}
 		return 0, fmt.Errorf("request entity too large")
 	}

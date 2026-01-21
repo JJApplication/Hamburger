@@ -364,19 +364,19 @@ func TestMapFind(t *testing.T) {
 		return v > 5
 	})
 	if !found {
-		t.Error("应该找到值大于5的元素")
+		t.Error("should find element with value greater than 5")
 	}
 	if value <= 5 {
-		t.Errorf("找到的值应该大于5，实际值: %d", value)
+		t.Errorf("found value should be greater than 5, actual value: %d", value)
 	}
-	t.Logf("找到: %s = %d", key, value)
+	t.Logf("found: %s = %d", key, value)
 	
 	// 测试查找不存在的元素
 	_, _, found = m.Find(func(k string, v int) bool {
 		return v > 10
 	})
 	if found {
-		t.Error("不应该找到值大于10的元素")
+		t.Error("should not find element with value greater than 10")
 	}
 	
 	// 测试根据key查找
@@ -384,10 +384,10 @@ func TestMapFind(t *testing.T) {
 		return k == "banana"
 	})
 	if !found {
-		t.Error("应该找到key为banana的元素")
+		t.Error("should find element with key banana")
 	}
 	if key != "banana" || value != 3 {
-		t.Errorf("期望找到banana=3，实际找到%s=%d", key, value)
+		t.Errorf("expected to find banana=3, actually found %s=%d", key, value)
 	}
 }
 
@@ -406,7 +406,7 @@ func TestMapFindAll(t *testing.T) {
 	})
 	
 	if len(results) != 3 {
-		t.Errorf("期望找到3个元素，实际找到%d个", len(results))
+		t.Errorf("expected to find 3 elements, actually found %d", len(results))
 	}
 	
 	// 验证结果
@@ -414,10 +414,10 @@ func TestMapFindAll(t *testing.T) {
 	for _, kv := range results {
 		expectedValue, exists := expectedKeys[kv.Key]
 		if !exists {
-			t.Errorf("意外的key: %s", kv.Key)
+			t.Errorf("unexpected key: %s", kv.Key)
 		}
 		if kv.Value != expectedValue {
-			t.Errorf("key %s 的值不匹配，期望%d，实际%d", kv.Key, expectedValue, kv.Value)
+			t.Errorf("value for key %s does not match, expected %d, actual %d", kv.Key, expectedValue, kv.Value)
 		}
 	}
 	
@@ -426,7 +426,7 @@ func TestMapFindAll(t *testing.T) {
 		return v > 10
 	})
 	if len(results) != 0 {
-		t.Errorf("期望找到0个元素，实际找到%d个", len(results))
+		t.Errorf("expected to find 0 elements, actually found %d", len(results))
 	}
 	
 	// 测试查找所有元素
@@ -434,7 +434,7 @@ func TestMapFindAll(t *testing.T) {
 		return true
 	})
 	if len(results) != 5 {
-		t.Errorf("期望找到5个元素，实际找到%d个", len(results))
+		t.Errorf("expected to find 5 elements, actually found %d", len(results))
 	}
 }
 
@@ -455,19 +455,19 @@ func TestMapFindWithStruct(t *testing.T) {
 		return p.Age >= 30
 	})
 	if !found {
-		t.Error("应该找到年龄大于等于30的人")
+		t.Error("should find person with age greater than or equal to 30")
 	}
 	if person.Age < 30 {
-		t.Errorf("找到的人年龄应该大于等于30，实际年龄: %d", person.Age)
+		t.Errorf("found person's age should be greater than or equal to 30, actual age: %d", person.Age)
 	}
-	t.Logf("找到: %s = %+v", key, person)
+	t.Logf("found: %s = %+v", key, person)
 	
 	// 查找所有年龄大于等于30的人
 	results := m.FindAll(func(k string, p Person) bool {
 		return p.Age >= 30
 	})
 	if len(results) != 2 {
-		t.Errorf("期望找到2个人，实际找到%d个", len(results))
+		t.Errorf("expected to find 2 people, actually found %d", len(results))
 	}
 }
 
@@ -480,7 +480,7 @@ func TestMapFindEmpty(t *testing.T) {
 		return true
 	})
 	if found {
-		t.Error("空Map不应该找到任何元素")
+		t.Error("empty map should not find any elements")
 	}
 	
 	// 测试空Map的FindAll
@@ -488,7 +488,7 @@ func TestMapFindEmpty(t *testing.T) {
 		return true
 	})
 	if len(results) != 0 {
-		t.Errorf("空Map应该返回空结果，实际返回%d个元素", len(results))
+		t.Errorf("empty map should return empty results, actually returned %d elements", len(results))
 	}
 }
 

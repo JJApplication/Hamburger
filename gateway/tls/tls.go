@@ -6,11 +6,12 @@ import (
 	"Hamburger/internal/structure"
 	"crypto/tls"
 	"fmt"
+	"net"
+	"sync"
+
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/singleflight"
-	"net"
-	"sync"
 )
 
 type TLSManager struct {
@@ -43,7 +44,7 @@ func (m *TLSManager) RegisterAfterAutoCert(f func() error) {
 // ConfigureTLS 配置 TLS
 func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.Listener) (*tls.Config, net.Listener, error) {
 	if tlsConfig == nil {
-		return nil, nil, fmt.Errorf("HTTPS 服务器缺少 TLS 配置")
+		return nil, nil, fmt.Errorf("HTTPS server missing TLS configuration")
 	}
 
 	if tlsConfig.AutoTLS {
@@ -51,7 +52,7 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 		// 构建域名白名单（必须提供域名，否则不可启动AutoTLS）
 		domains := GetTlsDomains(m.config)
 		if len(domains) == 0 {
-			return nil, nil, fmt.Errorf("自动TLS已启用但未配置任何域名，无法申请证书")
+			return nil, nil, fmt.Errorf("autotls enabled but no domains configured, cannot request certificate")
 		}
 
 		// 初始化或复用 autocert 管理器
@@ -70,22 +71,22 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 				m.acmeMU.Lock()
 				defer m.acmeMU.Unlock()
 
-				m.logger.Info().Str("域名", hello.ServerName).Msg("AutoTLS: 即将获取/刷新证书, 准备处理80端口")
+				m.logger.Info().Str("domain", hello.ServerName).Msg("autotls: about to obtain/renew certificate, preparing to handle port 80")
 				if err := m.beforeAutoCert(); err != nil {
-					m.logger.Error().Err(err).Msg("AutoTLS: beforeHandleAutoCert 失败")
+					m.logger.Error().Err(err).Msg("autotls: beforehandleautocert failed")
 				}
 
 				cert, err := origGetCert(hello)
 
 				if err2 := m.afterAutoCert(); err2 != nil {
-					m.logger.Error().Err(err2).Msg("AutoTLS: afterHandleAutoCert 失败")
+					m.logger.Error().Err(err2).Msg("autotls: afterhandleautocert failed")
 				}
 
 				if err != nil {
-					m.logger.Error().Err(err).Msg("AutoTLS: 获取证书失败")
+					m.logger.Error().Err(err).Msg("autotls: failed to obtain certificate")
 					return nil, err
 				} else {
-					m.logger.Info().Str("域名", hello.ServerName).Msg("AutoTLS: 证书获取/刷新完成")
+					m.logger.Info().Str("domain", hello.ServerName).Msg("autotls: certificate obtained/renewed successfully")
 					return cert, nil
 				}
 			})
@@ -109,7 +110,7 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 	// 加载证书和私钥
 	cert, err := tls.LoadX509KeyPair(tlsConfig.CertFile, tlsConfig.KeyFile)
 	if err != nil {
-		return nil, nil, fmt.Errorf("加载 TLS 证书失败: %v", err)
+		return nil, nil, fmt.Errorf("failed to load TLS certificate: %v", err)
 	}
 
 	// 配置 TLS

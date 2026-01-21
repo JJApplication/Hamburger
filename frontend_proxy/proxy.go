@@ -19,7 +19,7 @@ func BackendProxyMiddleware(server *HeliosServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取内部标志头
 		internalFlag := c.GetHeader(server.config.InternalFlag)
-		server.logger.Info().Str("internal_flag", internalFlag).Msg("Received request")
+		server.logger.Info().Str("internal_flag", internalFlag).Msg("received request")
 		if internalFlag == "" {
 			c.Next()
 			return
@@ -71,7 +71,7 @@ func BackendProxyMiddleware(server *HeliosServer) gin.HandlerFunc {
 
 // proxyToBackend 代理请求到后端服务
 func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.BackendConfig) {
-	server.logger.Debug().Str("backend_service", backend.Service).Msg("Proxy request to backend")
+	server.logger.Debug().Str("backend_service", backend.Service).Msg("proxy request to backend")
 	// 构建目标URL，处理URL重写
 	targetPath := c.Request.URL.Path
 	if backend.UseRewrite {
@@ -87,7 +87,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 	}
 	targetURL, err := url.Parse(balancer)
 	if err != nil {
-		server.logger.Error().Err(err).Msg("Failed to parse balancer URL")
+		server.logger.Error().Err(err).Msg("failed to parse balancer url")
 		server.HandleError(c, 500, "Internal server error")
 		return
 	}
@@ -101,7 +101,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 	if c.Request.Body != nil {
 		bodyBytes, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			server.logger.Error().Err(err).Msg("Failed to read request body")
+			server.logger.Error().Err(err).Msg("failed to read request body")
 			server.HandleError(c, 500, "Internal server error")
 			return
 		}
@@ -116,7 +116,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 	// 创建HTTP请求
 	req, err := http.NewRequestWithContext(ctx, c.Request.Method, targetURL.String(), bodyReader)
 	if err != nil {
-		server.logger.Error().Err(err).Msg("Failed to create request")
+		server.logger.Error().Err(err).Msg("failed to create request")
 		server.HandleError(c, 500, "Internal server error")
 		return
 	}
@@ -138,7 +138,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 		req.Host = req.Header.Get("X-Proxy-Internal-Host")
 	}
 
-	server.logger.Debug().Str("target_url", targetURL.String()).Str("backend_service", backend.Service).Msg("Proxy request")
+	server.logger.Debug().Str("target_url", targetURL.String()).Str("backend_service", backend.Service).Msg("proxy request")
 
 	// 从池中获取HTTP客户端
 	client := server.GetHTTPClient()
@@ -147,7 +147,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 	// 发送请求
 	resp, err := client.Do(req)
 	if err != nil {
-		server.logger.Error().Err(err).Msg("Failed to proxy request")
+		server.logger.Error().Err(err).Msg("failed to proxy request")
 		server.HandleError(c, 500, "Internal server error")
 		return
 	}
@@ -166,7 +166,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 	buf := make([]byte, 32*1024) // 32KB缓冲区
 	_, err = io.CopyBuffer(c.Writer, resp.Body, buf)
 	if err != nil {
-		server.logger.Error().Err(err).Msg("Failed to copy response body")
+		server.logger.Error().Err(err).Msg("failed to copy response body")
 	}
 
 	// 记录代理日志
@@ -174,5 +174,5 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.Backen
 		Str("original_path", c.Request.URL.Path).
 		Str("target_url", targetURL.String()).
 		Str("backend_service", backend.Service).Int("status_code", resp.StatusCode).
-		Msg("Backend proxy request")
+		Msg("backend proxy request")
 }

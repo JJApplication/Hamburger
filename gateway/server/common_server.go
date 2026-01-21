@@ -5,12 +5,13 @@ import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/utils"
 	"fmt"
-	"github.com/rs/zerolog"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 // CommonHttpServer 通用http服务器
@@ -63,7 +64,7 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 			// 检查是否需要自动重定向HTTP到HTTPS
 			if r.Header.Get(cfg.ProxyHeader.BackendHeader) == "" && serverConfig.Protocol == "http" {
 				// 添加调试日志
-				logger.Debug().Str("Host", r.Host).Str("URI", r.RequestURI).Str("Protocol", serverConfig.Protocol).Msg("HTTP请求")
+				logger.Debug().Str("Host", r.Host).Str("URI", r.RequestURI).Str("Protocol", serverConfig.Protocol).Msg("http request")
 
 				// 检查请求的域名是否配置了自动重定向
 				host := r.Host
@@ -72,21 +73,21 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 					host = host[:colonIndex]
 				}
 
-				logger.Debug().Str("域名", host).Str("原始Host", r.Host).Msg("处理域名")
+				logger.Debug().Str("domain", host).Str("original_host", r.Host).Msg("processing domain")
 
 				// 查找匹配的域名配置
 				for i, domainConfig := range serverConfig.DomainConfig {
-					logger.Debug().Int("域名组", i).Bool("自动重定向", domainConfig.AutoRedirect).Any("域名", domainConfig.Domains).Msg("检查域名配置")
+					logger.Debug().Int("domain_group", i).Bool("auto_redirect", domainConfig.AutoRedirect).Any("domains", domainConfig.Domains).Msg("checking domain configuration")
 
 					if domainConfig.AutoRedirect {
 						// 检查当前域名是否在配置的域名列表中
 						for j, configuredDomain := range domainConfig.Domains {
-							logger.Debug().Int("域名组", j).Str("Host", host).Str("Domain", configuredDomain).Msg("检查域名匹配")
+							logger.Debug().Int("domain_group", j).Str("Host", host).Str("Domain", configuredDomain).Msg("checking domain match")
 
 							if host == configuredDomain || (strings.HasPrefix(configuredDomain, "*.") && strings.HasSuffix(host, configuredDomain[1:])) {
 								// 构建HTTPS重定向URL
 								httpsURL := fmt.Sprintf("https://%s%s", r.Host, r.RequestURI)
-								logger.Debug().Str("源URL", r.URL.String()).Str("目标URL", httpsURL).Str("配置域名", configuredDomain).Msg("域名匹配成功，执行重定向")
+								logger.Debug().Str("source_url", r.URL.String()).Str("target_url", httpsURL).Str("config_domain", configuredDomain).Msg("domain match success, performing redirect")
 								// 执行301永久重定向
 								w.Header().Set("Location", httpsURL)
 
@@ -100,9 +101,9 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 										hstsValue += "; preload"
 									}
 									w.Header().Set("Strict-Transport-Security", hstsValue)
-									logger.Debug().Str("HSTS头", hstsValue).Msg("设置HSTS头部")
+									logger.Debug().Str("hsts_header", hstsValue).Msg("setting hsts header")
 								} else {
-									logger.Debug().Msg("未设置HSTS头部 (HSTSMaxAge=0)")
+									logger.Debug().Msg("hsts header not set (HSTSMaxAge=0)")
 								}
 
 								w.WriteHeader(http.StatusMovedPermanently)
@@ -118,7 +119,7 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 				w.Header().Set("Connection", "close")
 				w.WriteHeader(http.StatusRequestEntityTooLarge)
 				w.Write([]byte("Request entity too large"))
-				logger.Printf("请求体过大被拒绝: Host=%s, ContentLength=%d, Limit=%d",
+				logger.Printf("request entity too large, rejected: Host=%s, ContentLength=%d, Limit=%d",
 					r.Host, r.ContentLength, serverConfig.MaxRequestBody)
 				return
 			}
@@ -135,14 +136,14 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 
 			originalHandler.ServeHTTP(w, r)
 		})
-		logger.Printf("服务器 %s 设置最大请求体大小: %d bytes (%.2f MB)",
+		logger.Printf("server %s max request body size set: %d bytes (%.2f MB)",
 			serverConfig.Name, serverConfig.MaxRequestBody, float64(serverConfig.MaxRequestBody)/(1024*1024))
 	}
 
 	// 创建监听器
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("创建监听器失败: %v", err)
+		return nil, fmt.Errorf("failed to create listener: %v", err)
 	}
 	instance.Listener = listener
 
@@ -152,13 +153,13 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 		tlsConfig, lis, err := tlsManager.ConfigureTLS(instance.Config.TLS, instance.Listener)
 		if err != nil {
 			listener.Close()
-			return nil, fmt.Errorf("配置 TLS 失败: %v", err)
+			return nil, fmt.Errorf("failed to configure TLS: %v", err)
 		}
 		instance.Listener = lis
 		instance.Server.TLSConfig = tlsConfig
 		instance.lock.Unlock()
 	}
-	logger.Printf("服务器 %s 开始监听 %s (协议: %s)",
+	logger.Printf("server %s starting listener on %s (protocol: %s)",
 		serverConfig.Name, addr, serverConfig.Protocol)
 
 	return instance, nil

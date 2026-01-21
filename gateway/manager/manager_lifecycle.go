@@ -7,11 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 // NewManager 创建新的服务器管理器
@@ -41,43 +42,43 @@ func (m *Manager) Start() error {
 	defer m.mu.Unlock()
 
 	if m.started {
-		return fmt.Errorf("服务器管理器已经启动")
+		return fmt.Errorf("server manager already started")
 	}
 
 	// 获取启用的服务器配置
 	enabledServers := GetEnabledServers(m.config)
 	if len(enabledServers) == 0 {
-		return fmt.Errorf("没有启用的服务器配置")
+		return fmt.Errorf("no enabled server configuration")
 	}
 
-	m.logger.Info().Msgf("开始启动 %d 个服务器实例", len(enabledServers))
+	m.logger.Info().Msgf("starting %d server instances", len(enabledServers))
 
 	// 启动每个服务器
 	for _, serverConfig := range enabledServers {
 		if err := m.startServer(serverConfig, m.logger); err != nil {
-			m.logger.Error().Msgf("启动服务器 %s 失败: %v", serverConfig.Name, err)
+			m.logger.Error().Msgf("failed to start server %s: %v", serverConfig.Name, err)
 			// 继续启动其他服务器，不因为一个失败而全部停止
 			continue
 		}
-		m.logger.Info().Msgf("启动服务器 %s 成功, 运行地址: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
+		m.logger.Info().Msgf("started server %s successfully, address: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
 
 		// http3 server
 		if m.config.Features.HTTP3.Enabled && serverConfig.Protocol == "https" {
 			if err := m.startHttp3Server(m.config.Features.HTTP3, serverConfig, m.logger, m.handler); err != nil {
-				m.logger.Error().Msgf("启动http3服务器 %s 失败: %v", serverConfig.Name, err)
+				m.logger.Error().Msgf("failed to start http3 server %s: %v", serverConfig.Name, err)
 				continue
 			}
-			m.logger.Info().Msgf("启动Http3服务器 %s 成功, 运行地址: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
+			m.logger.Info().Msgf("started http3 server %s successfully, address: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
 		}
 	}
 
 	// 检查是否至少有一个服务器启动成功
 	if len(m.servers) == 0 {
-		return fmt.Errorf("没有服务器启动成功")
+		return fmt.Errorf("no servers started successfully")
 	}
 
 	m.started = true
-	m.logger.Info().Msgf("服务器管理器启动完成，成功启动 %d 个服务器", len(m.servers))
+	m.logger.Info().Msgf("server manager started, successfully started %d servers", len(m.servers))
 
 	return nil
 }
@@ -110,7 +111,7 @@ func (m *Manager) startHttp3Server(cfg config.HTTP3Config, serverConfig config.S
 		http3Srv.Address = addr
 		err := http3Srv.Start(addr, m.tlsManager.GetTlsConfig(serverConfig.TLS))
 		if err != nil {
-			m.logger.Error().Err(err).Str("server", serverConfig.Name).Msg("启动http3服务失败")
+			m.logger.Error().Err(err).Str("server", serverConfig.Name).Msg("failed to start http3 service")
 		}
 	}()
 	return nil
@@ -127,9 +128,9 @@ func (m *Manager) runServer(instance *server.ServerInstance) {
 	err := instance.Server.Serve(instance.Listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		instance.Error = err
-		m.logger.Printf("服务器 %s 运行错误: %v", instance.Name, err)
+		m.logger.Printf("server %s runtime error: %v", instance.Name, err)
 	} else {
-		m.logger.Printf("服务器 %s 已停止", instance.Name)
+		m.logger.Printf("server %s stopped", instance.Name)
 	}
 
 	// 标记服务器已停止
@@ -142,10 +143,10 @@ func (m *Manager) Stop() error {
 	defer m.mu.Unlock()
 
 	if !m.started {
-		return fmt.Errorf("服务器管理器未启动")
+		return fmt.Errorf("server manager not started")
 	}
 
-	m.logger.Printf("开始停止 %d 个服务器实例", len(m.servers))
+	m.logger.Printf("stopping %d server instances", len(m.servers))
 
 	// 创建停止超时上下文
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -158,11 +159,11 @@ func (m *Manager) Stop() error {
 		go func(name string, instance *server.ServerInstance) {
 			defer wg.Done()
 			if err := instance.Server.Shutdown(stopCtx); err != nil {
-				m.logger.Printf("停止服务器 %s 失败: %v", name, err)
+				m.logger.Printf("failed to stop server %s: %v", name, err)
 				// 强制关闭
 				instance.Server.Close()
 			} else {
-				m.logger.Printf("服务器 %s 已优雅停止", name)
+				m.logger.Printf("server %s stopped gracefully", name)
 			}
 		}(name, instance)
 	}
@@ -180,14 +181,14 @@ func (m *Manager) Stop() error {
 	m.servers = make(map[string]*server.ServerInstance)
 	m.started = false
 
-	m.logger.Printf("所有服务器已停止")
+	m.logger.Printf("all servers stopped")
 	return nil
 }
 
 // Restart 重启所有服务器
 func (m *Manager) Restart() error {
 	if err := m.Stop(); err != nil {
-		return fmt.Errorf("停止服务器失败: %v", err)
+		return fmt.Errorf("failed to stop server: %v", err)
 	}
 
 	// 重新创建上下文
@@ -251,11 +252,11 @@ func (m *Manager) beforeHandleAutoCert() error {
 
 	// 如有占用则先停止
 	if http80 != nil {
-		m.logger.Info().Str("服务", http80.Name).Msg("AutoTLS: 检测到80端口被服务器占用, 先停止该HTTP服务器")
+		m.logger.Info().Str("service", http80.Name).Msg("AutoTLS: port 80 occupied by server, stopping it first")
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		if err := http80.Server.Shutdown(ctx); err != nil {
-			m.logger.Error().Err(err).Msg("AutoTLS: 停止80端口HTTP服务器失败")
+			m.logger.Error().Err(err).Msg("AutoTLS: failed to stop port 80 http server")
 		}
 		m.stoppedHTTP80 = http80
 		// 从映射移除，避免状态混淆
@@ -268,7 +269,7 @@ func (m *Manager) beforeHandleAutoCert() error {
 	addr := fmt.Sprintf("0.0.0.0:%d", 80)
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("AutoTLS: 创建80端口挑战监听失败: %v", err)
+		return fmt.Errorf("autotls: failed to create port 80 challenge listener: %v", err)
 	}
 
 	tempSrv := &http.Server{
@@ -282,10 +283,10 @@ func (m *Manager) beforeHandleAutoCert() error {
 	m.autoCertTempServer = tempSrv
 	go func() {
 		if err := tempSrv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			m.logger.Error().Err(err).Msg("AutoTLS: 挑战服务器运行错误")
+			m.logger.Error().Err(err).Msg("AutoTLS: challenge server runtime error")
 		}
 	}()
-	m.logger.Info().Str("地址", addr).Msg("AutoTLS: 临时挑战服务器已开启")
+	m.logger.Info().Str("address", addr).Msg("AutoTLS: temporary challenge server started")
 	return nil
 }
 
@@ -297,14 +298,14 @@ func (m *Manager) afterHandleAutoCert() error {
 		defer cancel()
 		_ = m.autoCertTempServer.Shutdown(ctx)
 		m.autoCertTempServer = nil
-		m.logger.Info().Msg("AutoTLS: 临时挑战服务器已关闭")
+		m.logger.Info().Msg("AutoTLS: temporary challenge server closed")
 	}
 
 	// 恢复原HTTP服务器（如存在）
 	if m.stoppedHTTP80 != nil {
-		m.logger.Info().Str("服务", m.stoppedHTTP80.Name).Msg("AutoTLS: 重新启动原HTTP服务器 (80端口)")
+		m.logger.Info().Str("service", m.stoppedHTTP80.Name).Msg("AutoTLS: restarting original http server (port 80)")
 		if err := m.startServer(m.stoppedHTTP80.Config, m.logger); err != nil {
-			m.logger.Error().Err(err).Msg("AutoTLS: 重启80端口HTTP服务器失败")
+			m.logger.Error().Err(err).Msg("AutoTLS: failed to restart port 80 http server")
 		}
 		m.stoppedHTTP80 = nil
 	}

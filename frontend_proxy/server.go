@@ -3,7 +3,6 @@ package frontend_proxy
 import (
 	"Hamburger/internal/config"
 	"fmt"
-	"github.com/rs/zerolog"
 	"html/template"
 	"net/http"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"github.com/gin-gonic/gin"
 )
@@ -248,7 +249,7 @@ func (s *HeliosServer) HandleDirectoryListing(c *gin.Context, dirPath string) {
 
 // HandleError 处理错误响应
 func (s *HeliosServer) HandleError(c *gin.Context, statusCode int, message string) {
-	s.logger.Error().Int("status", statusCode).Str("message", message).Msg("HTTP Error")
+	s.logger.Error().Int("status", statusCode).Str("message", message).Msg("http error")
 
 	// 检查是否有自定义错误页面
 	var errorPage string
@@ -287,20 +288,20 @@ func (s *HeliosServer) HandleError(c *gin.Context, statusCode int, message strin
 // Start 启动服务器
 func (s *HeliosServer) Start() error {
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
-	s.logger.Info().Str("address", addr).Msg("Starting Helios server")
+	s.logger.Info().Str("address", addr).Msg("starting helios server")
 	return s.gin.Run(addr)
 }
 
 // Shutdown 优雅关闭服务器
 func (s *HeliosServer) Shutdown() {
-	s.logger.Info().Msg("Shutting down Helios server...")
+	s.logger.Info().Msg("shutting down helios server...")
 
-	s.logger.Info().Msg("Server shutdown complete")
+	s.logger.Info().Msg("server shutdown complete")
 }
 
 func (s *HeliosServer) Status() {
-	s.logger.Info().Str("version", Version).Msg("Starting Helios Server")
-	s.logger.Info().Msgf("[Helios] Server running on %s:%d", s.config.Host, s.config.Port)
-	s.logger.Info().Msgf("[Helios] Cache enabled: %v", s.config.Cache.Enable)
-	s.logger.Info().Msgf("[Helios] Log level: %v", s.config.Log.LogLevel)
+	s.logger.Info().Str("version", Version).Msg("starting helios server")
+	s.logger.Info().Msgf("[Helios] server running on %s:%d", s.config.Host, s.config.Port)
+	s.logger.Info().Msgf("[Helios] cache enabled: %v", s.config.Cache.Enable)
+	s.logger.Info().Msgf("[Helios] log level: %v", s.config.Log.LogLevel)
 }

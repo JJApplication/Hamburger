@@ -115,7 +115,7 @@ func ProxyModifyResponse(cfg *config.Config, logger *zerolog.Logger) func(respon
 					mod.Use(response)
 				}
 			})
-			logger.Debug().Time("start", start).Time("end", end).Dur("sub", sub).Msg("Perform time for response modifier")
+			logger.Debug().Time("start", start).Time("end", end).Dur("sub", sub).Msg("perform time for response modifier")
 			return nil
 		}
 
@@ -134,7 +134,7 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			Any("url", request.URL).
 			Str("proto", request.Proto).
 			Str("method", request.Method).
-			Err(err).Msg("Proxy Error")
+			Err(err).Msg("proxy error")
 		stat.Add(stat.Fail)
 		// 熔断判断
 		switch request.Header.Get(serror.SandwichInternalFlag) {
@@ -147,7 +147,7 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			error_page.Cache(http.StatusTooManyRequests, writer, request, error_page.Forbidden)
 			return
 		case serror.SandwichDomainNotAllow:
-			logger.Debug().Msg("http: no Host in request URL")
+			logger.Debug().Msg("http: no host in request url")
 			error_page.Cache(http.StatusForbidden, writer, request, error_page.Forbidden)
 			return
 		case serror.SandwichBackendError:

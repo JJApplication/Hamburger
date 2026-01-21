@@ -35,12 +35,12 @@ func (s *StatServer) Start() error {
 	if !s.Enabled {
 		return nil
 	}
-	s.logger.Info().Str("address", s.Addr).Int("port", s.Port).Msg("开启状态统计服务")
+	s.logger.Info().Str("address", s.Addr).Int("port", s.Port).Msg("start stat server")
 
 	go func() {
 		err := s.server.ListenAndServe()
 		if err != nil {
-			s.logger.Error().Err(err).Msg("Stat server listen err")
+			s.logger.Error().Err(err).Msg("stat server listen err")
 		}
 	}()
 

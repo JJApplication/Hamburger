@@ -116,10 +116,10 @@ func (app *HamburgerApp) Status() {
 	gwHttp3ServerStatus := app.Manager.GetHttp3ServerStatus()
 
 	for _, server := range gwServerStatus {
-		app.logger.Info().Str("name", server.Name).Bool("running", server.Started).Msg("[Gateway Proxy] Server status")
+		app.logger.Info().Str("name", server.Name).Bool("running", server.Started).Msg("[gateway proxy] server status")
 	}
 	for _, server := range gwHttp3ServerStatus {
-		app.logger.Info().Str("name", server.Name).Bool("running", server.IsStarted()).Msg("[Gateway Proxy] Server status")
+		app.logger.Info().Str("name", server.Name).Bool("running", server.IsStarted()).Msg("[gateway proxy] server status")
 	}
 }
 
@@ -131,7 +131,7 @@ func (app *HamburgerApp) LifeCycle() {
 	// 启动优雅关闭监听
 	go func() {
 		<-c
-		app.logger.Info().Msg("Received shutdown signal, gracefully shutting down...")
+		app.logger.Info().Msg("received shutdown signal, gracefully shutting down...")
 		app.FrontServer.Shutdown()
 		if err := app.Manager.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("gateway server shutdown failed")

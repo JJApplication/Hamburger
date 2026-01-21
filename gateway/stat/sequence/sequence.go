@@ -1,14 +1,14 @@
 package sequence
 
 import (
+	"Hamburger/gateway/stat/db"
 	"fmt"
-	"sandwich/stat/db"
 	"strings"
 	"sync"
 	"time"
 
-	"sandwich/config"
-	"sandwich/log"
+	"Hamburger/internal/config"
+	"Hamburger/internal/logger"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -78,7 +78,7 @@ func (seq *SequenceManger) RecordRequest(domain, path, method string) {
 		DoUpdates: clause.Assignments(map[string]interface{}{"count": gorm.Expr("count + 1"), "updated_at": time.Now()}),
 	}).Create(rec).Error
 	if err != nil {
-		log.GetLogger().Error().Err(err).Msg("sequence: 记录失败")
+		logger.GetLogger().Error().Err(err).Msg("sequence: record failed")
 	}
 }
 

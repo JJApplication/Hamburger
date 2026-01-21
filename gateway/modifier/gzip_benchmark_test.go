@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"sandwich/config"
+	"Hamburger/internal/config"
 	"strings"
 	"testing"
 	"time"

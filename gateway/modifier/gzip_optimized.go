@@ -94,7 +94,7 @@ func NewOptimizedGzipModifier() *OptimizedGzipModifier {
 		Bool("enable", modifier.enabled).
 		Int("level", modifier.level).
 		Int("threshold", modifier.threshold).
-		Int("asyncThreshold", modifier.asyncThreshold).Msg("优化版Gzip修改器已初始化")
+		Int("asyncThreshold", modifier.asyncThreshold).Msg("optimized gzip modifier initialized")
 
 	return modifier
 }
@@ -437,10 +437,10 @@ func (g *OptimizedGzipModifier) UpdateConfig() {
 				return w
 			},
 		}
-		logger.GetLogger().Debug().Int("level", g.level).Msg("gzip压缩级别已更新，writer对象池已重新初始化")
+		logger.GetLogger().Debug().Int("level", g.level).Msg("gzip compression level updated, writer pool re-initialized")
 	}
 
-	logger.GetLogger().Debug().Bool("enable", g.enabled).Int("level", g.level).Any("types", g.types).Msg("gzip配置已更新")
+	logger.GetLogger().Debug().Bool("enable", g.enabled).Int("level", g.level).Any("types", g.types).Msg("gzip configuration updated")
 }
 
 func (g *OptimizedGzipModifier) GetName() string {

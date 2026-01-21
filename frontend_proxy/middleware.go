@@ -43,7 +43,7 @@ func LoggingMiddleware(logger *zerolog.Logger, config *config.PxyFrontConfig) gi
 				Str("path", c.Request.URL.Path).
 				Dur("response_time", latency).
 				Int("status_code", c.Writer.Status()).
-				Str("ip", c.ClientIP()).Msg("Access Log")
+				Str("ip", c.ClientIP()).Msg("access log")
 		} else {
 			// 简单请求日志
 			logger.Info().
@@ -52,7 +52,7 @@ func LoggingMiddleware(logger *zerolog.Logger, config *config.PxyFrontConfig) gi
 				Int("status", c.Writer.Status()).
 				Dur("latency", latency).
 				Str("ip", c.ClientIP()).
-				Msg("HTTP Request")
+				Msg("http request")
 		}
 	}
 }

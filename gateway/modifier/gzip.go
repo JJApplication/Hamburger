@@ -80,7 +80,7 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 
 	// 检查响应是否已经被压缩
 	if response.Header.Get("Content-Encoding") != "" {
-		logger.GetLogger().Debug().Msg("响应已被压缩，跳过gzip处理")
+		logger.GetLogger().Debug().Msg("response already compressed, skipping gzip processing")
 		return nil
 	}
 
@@ -96,7 +96,7 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 	tee := io.TeeReader(response.Body, &buf)
 	originalBody, err := io.ReadAll(tee)
 	if err != nil {
-		logger.GetLogger().Debug().Err(err).Msg("读取响应体失败")
+		logger.GetLogger().Debug().Err(err).Msg("failed to read response body")
 		return err
 	}
 
@@ -109,7 +109,7 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 	// 压缩响应体
 	compressedBody, err := g.compressData(originalBody)
 	if err != nil {
-		logger.GetLogger().Debug().Err(err).Msg("gzip压缩失败")
+		logger.GetLogger().Debug().Err(err).Msg("gzip compression failed")
 		// 压缩失败时返回原始响应
 		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
 		return nil
@@ -117,7 +117,7 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 
 	// 检查压缩效果，如果压缩后更大则不使用压缩
 	if len(compressedBody) >= len(originalBody) {
-		logger.GetLogger().Debug().Msg("压缩后大小未减少，使用原始响应")
+		logger.GetLogger().Debug().Msg("compressed size not reduced, using original response")
 		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
 		return nil
 	}
@@ -132,9 +132,9 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 
 	if config.Get().Debug {
 		logger.GetLogger().Debug().
-			Int("原始大小", len(originalBody)).
-			Int("压缩大小", len(compressedBody)).
-			Float64("压缩率", float64(len(originalBody)-len(compressedBody))/float64(len(originalBody))*100).Msg("gzip压缩成功")
+			Int("original_size", len(originalBody)).
+			Int("compressed_size", len(compressedBody)).
+			Float64("compression_ratio", float64(len(originalBody)-len(compressedBody))/float64(len(originalBody))*100).Msg("gzip compression successful")
 	}
 	return nil
 }
@@ -167,7 +167,7 @@ func (g *GzipModifier) shouldCompress(response *http.Response) bool {
 		}
 	}
 
-	logger.GetLogger().Debug().Str("响应类型", contentType).Msg("响应类型不在可压缩列表中")
+	logger.GetLogger().Debug().Str("content_type", contentType).Msg("content type not in compressible list")
 	return false
 }
 
@@ -239,9 +239,9 @@ func (g *GzipModifier) UpdateConfig() {
 				return w
 			},
 		}
-		logger.GetLogger().Debug().Int("level", g.level).Msg("gzip压缩级别已更新，writer对象池已重新初始化")
+		logger.GetLogger().Debug().Int("level", g.level).Msg("gzip compression level updated, writer pool re-initialized")
 	}
-	logger.GetLogger().Debug().Bool("enable", g.enabled).Int("level", g.level).Any("types", g.types).Msg("gzip配置已更新")
+	logger.GetLogger().Debug().Bool("enable", g.enabled).Int("level", g.level).Any("types", g.types).Msg("gzip configuration updated")
 }
 
 // GetName 获取修改器名称

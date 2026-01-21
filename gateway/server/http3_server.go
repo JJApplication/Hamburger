@@ -7,11 +7,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
@@ -53,11 +54,11 @@ func (s *Server) Start(addr string, tlsConfig *tls.Config) error {
 	defer s.mu.Unlock()
 
 	if s.started {
-		return fmt.Errorf("HTTP/3 服务器已经启动")
+		return fmt.Errorf("http/3 server already started")
 	}
 
 	if !s.config.Enabled {
-		return fmt.Errorf("HTTP/3 功能未启用")
+		return fmt.Errorf("http/3 feature disabled")
 	}
 
 	// 创建 QUIC 配置
@@ -66,19 +67,19 @@ func (s *Server) Start(addr string, tlsConfig *tls.Config) error {
 	// 创建 UDP 监听器
 	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
-		return fmt.Errorf("解析 UDP 地址失败: %v", err)
+		return fmt.Errorf("failed to resolve udp address: %v", err)
 	}
 
 	udpConn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		return fmt.Errorf("创建 UDP 监听器失败: %v", err)
+		return fmt.Errorf("failed to create udp listener: %v", err)
 	}
 
 	// 创建 QUIC 监听器
 	s.listener, err = quic.Listen(udpConn, tlsConfig, quicConfig)
 	if err != nil {
 		udpConn.Close()
-		return fmt.Errorf("创建 QUIC 监听器失败: %v", err)
+		return fmt.Errorf("failed to create quic listener: %v", err)
 	}
 
 	// 创建 HTTP/3 服务器
@@ -92,7 +93,7 @@ func (s *Server) Start(addr string, tlsConfig *tls.Config) error {
 	go s.serve()
 
 	s.started = true
-	s.logger.Printf("HTTP/3 服务器已启动，监听地址: %s", addr)
+	s.logger.Printf("http/3 server started, listening on: %s", addr)
 
 	return nil
 }
@@ -115,15 +116,15 @@ func (s *Server) createQUICConfig() *quic.Config {
 func (s *Server) serve() {
 	defer func() {
 		if r := recover(); r != nil {
-			s.logger.Printf("HTTP/3 服务器发生 panic: %v", r)
+			s.logger.Printf("http/3 server panic: %v", r)
 		}
 	}()
 
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Printf("HTTP/3 服务器运行错误: %v", err)
+		s.logger.Printf("http/3 server runtime error: %v", err)
 	} else {
-		s.logger.Printf("HTTP/3 服务器已停止")
+		s.logger.Printf("http/3 server stopped")
 	}
 }
 
@@ -133,10 +134,10 @@ func (s *Server) Stop() error {
 	defer s.mu.Unlock()
 
 	if !s.started {
-		return fmt.Errorf("HTTP/3 服务器未启动")
+		return fmt.Errorf("http/3 server not started")
 	}
 
-	s.logger.Printf("正在停止 HTTP/3 服务器...")
+	s.logger.Printf("stopping http/3 server...")
 
 	// 创建停止超时上下文
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -144,7 +145,7 @@ func (s *Server) Stop() error {
 
 	// 优雅停止服务器
 	if err := s.server.Shutdown(stopCtx); err != nil {
-		s.logger.Printf("HTTP/3 服务器优雅停止失败: %v", err)
+		s.logger.Printf("failed to gracefully stop http/3 server: %v", err)
 		// 强制关闭
 		s.server.Close()
 	}
@@ -158,7 +159,7 @@ func (s *Server) Stop() error {
 	s.cancel()
 
 	s.started = false
-	s.logger.Printf("HTTP/3 服务器已停止")
+	s.logger.Printf("http/3 server stopped")
 
 	return nil
 }
@@ -217,13 +218,13 @@ func (s *Server) UpdateConfig(newConfig config.HTTP3Config) error {
 	}
 
 	s.config = newConfig
-	s.logger.Printf("HTTP/3 配置已更新")
+	s.logger.Printf("http/3 configuration updated")
 
 	// 如果服务器正在运行且配置有重大变化，需要重启
 	if s.started {
-		s.logger.Printf("HTTP/3 配置变化，需要重启服务器")
+		s.logger.Printf("http/3 configuration changed, restart required")
 		// 注意：这里不直接重启，而是返回错误让调用者决定
-		return fmt.Errorf("HTTP/3 配置变化，需要重启服务器")
+		return fmt.Errorf("http/3 configuration changed, server restart required")
 	}
 
 	return nil
@@ -253,15 +254,15 @@ func (s *Server) HealthCheck() error {
 	defer s.mu.RUnlock()
 
 	if !s.config.Enabled {
-		return fmt.Errorf("HTTP/3 功能未启用")
+		return fmt.Errorf("http/3 feature disabled")
 	}
 
 	if !s.started {
-		return fmt.Errorf("HTTP/3 服务器未启动")
+		return fmt.Errorf("http/3 server not started")
 	}
 
 	if s.listener == nil {
-		return fmt.Errorf("HTTP/3 监听器未初始化")
+		return fmt.Errorf("http/3 listener not initialized")
 	}
 
 	return nil
