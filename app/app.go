@@ -1,9 +1,11 @@
 package app
 
 import (
+	"Hamburger/backend_proxy"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/manager"
+	"Hamburger/initialize"
 	"Hamburger/internal/config"
 	"Hamburger/internal/logger"
 	"flag"
@@ -21,9 +23,10 @@ type HamburgerApp struct {
 	logger *zerolog.Logger // APP日志
 
 	// Proxy
-	FrontServer *frontend_proxy.HeliosServer
-	Gateway     *core.Proxy
-	Manager     *manager.Manager
+	FrontServer   *frontend_proxy.HeliosServer
+	BackendServer *backend_proxy.BackendProxy
+	Gateway       *core.Proxy
+	Manager       *manager.Manager
 }
 
 const (
@@ -63,20 +66,11 @@ func NewHamburgerApp() *HamburgerApp {
 }
 
 func (app *HamburgerApp) InitApp() error {
-	err := new(error)
-	// init logger
-	app.InitLogger()
-	// init database
-	app.InitMongo()
-	// init runtime
-	app.InitRuntime()
-	// init front proxy
-	app.InitFrontServer(err)
-	// init gateway proxy
-	app.InitGateway()
-	// init gw server manager
-	app.InitGatewayManager()
-	return *err
+	_, err := initialize.Initialize()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (app *HamburgerApp) Run() {
@@ -111,6 +105,8 @@ func (app *HamburgerApp) Run() {
 // Status 输出服务器状态信息
 func (app *HamburgerApp) Status() {
 	app.FrontServer.Status()
+
+	app.BackendServer.Status()
 
 	gwServerStatus := app.Manager.GetServerStatus()
 	gwHttp3ServerStatus := app.Manager.GetHttp3ServerStatus()

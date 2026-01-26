@@ -23,6 +23,6 @@ type AppConfig struct {
 	MaxCores     int                `yaml:"max_cores" json:"max_cores"`
 
 	// 第二优先级
-	PxyBackend  PxyBackConfig  `yaml:"pxy_backend" json:"pxy_backend"`
-	PxyFrontend PxyFrontConfig `yaml:"pxy_frontend" json:"pxy_frontend"`
+	PxyBackend  PxyBackendConfig `yaml:"pxy_backend" json:"pxy_backend"`
+	PxyFrontend PxyFrontConfig   `yaml:"pxy_frontend" json:"pxy_frontend"`
 }

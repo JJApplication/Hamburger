@@ -149,17 +149,19 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 
 	// 如果是 HTTPS，配置 TLS
 	if instance.TLS {
-		instance.lock.Lock()
-		tlsConfig, lis, err := tlsManager.ConfigureTLS(instance.Config.TLS, instance.Listener)
-		if err != nil {
-			listener.Close()
-			return nil, fmt.Errorf("failed to configure TLS: %v", err)
+		if tlsManager != nil {
+			instance.lock.Lock()
+			tlsConfig, lis, err := tlsManager.ConfigureTLS(instance.Config.TLS, instance.Listener)
+			if err != nil {
+				listener.Close()
+				return nil, fmt.Errorf("failed to configure TLS: %v", err)
+			}
+			instance.Listener = lis
+			instance.Server.TLSConfig = tlsConfig
+			instance.lock.Unlock()
 		}
-		instance.Listener = lis
-		instance.Server.TLSConfig = tlsConfig
-		instance.lock.Unlock()
 	}
-	logger.Printf("server %s starting listener on %s (protocol: %s)",
+	logger.Info().Msgf("server %s starting listener on %s (protocol: %s)",
 		serverConfig.Name, addr, serverConfig.Protocol)
 
 	return instance, nil

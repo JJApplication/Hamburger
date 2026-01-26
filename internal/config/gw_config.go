@@ -7,9 +7,6 @@ import (
 	"strings"
 )
 
-type PxyBackConfig struct {
-}
-
 type ProxyConfig struct {
 	FlushInterval   int64  `yaml:"flush_interval" json:"flush_interval"`
 	BufSize         int    `yaml:"buf_size" json:"buf_size"`
@@ -30,6 +27,9 @@ type ServerConfig struct {
 	MaxRequestBody int64          `yaml:"max_request_body" json:"max_request_body"` // 最大请求体大小（字节）
 	TLS            *TLSConfig     `yaml:"tls,omitempty" json:"tls,omitempty"`       // TLS配置
 	DomainConfig   []DomainConfig `yaml:"domains" json:"domains"`                   // 域名绑定配置
+	// 后端服务器映射
+	ServiceDomains []string `yaml:"service_domains" json:"service_domains"` // 后端服务域名
+	Service        string   `yaml:"service" json:"service"`                 // 后端服务
 	// 扩展配置
 	ReadTimeout       int64 `yaml:"read_timeout" json:"read_timeout"`
 	WriteTimeout      int64 `yaml:"write_timeout" json:"write_timeout"`

@@ -19,7 +19,7 @@ type Config struct {
 	Debug        bool               `yaml:"debug" json:"debug"`                 // 调试模式
 	PProf        PProf              `yaml:"pprof" json:"pprof"`
 	MaxCores     int                `yaml:"max_cores" json:"max_cores"`
-	PxyBackend   PxyBackConfig      `yaml:"pxy_backend" json:"pxy_backend"`
+	PxyBackend   PxyBackendConfig   `yaml:"pxy_backend" json:"pxy_backend"`
 	PxyFrontend  PxyFrontConfig     `yaml:"pxy_frontend" json:"pxy_frontend"`
 }
 
