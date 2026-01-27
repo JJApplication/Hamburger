@@ -6,6 +6,7 @@ import (
 
 func (i *Initializer) InitLogger() Runner {
 	return Runner{
+		Priority: PriorityHigh,
 		fn: func() error {
 			logger.ReloadLogger(&i.cfg.Log)
 			i.logger = logger.GetLogger()

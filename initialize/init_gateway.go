@@ -7,6 +7,7 @@ import (
 
 func (i *Initializer) InitGateway() Runner {
 	return Runner{
+		Priority: PriorityNormal,
 		fn: func() error {
 			gw := core.NewProxy(i.cfg, i.logger)
 			i.Gateway = gw

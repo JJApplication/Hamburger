@@ -6,6 +6,7 @@ import (
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/manager"
 	"Hamburger/internal/config"
+	grpc_proxy "Hamburger/internal/grpc"
 	"github.com/rs/zerolog"
 	"slices"
 )
@@ -20,6 +21,7 @@ type Initializer struct {
 	BackendServer *backend_proxy.BackendProxy
 	Gateway       *core.Proxy
 	Manager       *manager.Manager
+	GrpcProxy     *grpc_proxy.GrpcProxy
 }
 
 type Runner struct {
@@ -33,17 +35,22 @@ const (
 	PriorityLow
 )
 
-func Initialize() (*Initializer, error) {
+func Initialize(appConf *config.AppConfig, cfg *config.Config, logger *zerolog.Logger) (*Initializer, error) {
 	err := new(error)
 	i := new(Initializer)
+	i.appConf = appConf
+	i.cfg = cfg
+	i.logger = logger
 
-	i.Register(i.InitLogger(), PriorityHigh)
-	i.Register(i.InitMongo(), PriorityHigh)
-	i.Register(i.InitRuntime(), PriorityHigh)
-	i.Register(i.InitFrontServer(), PriorityNormal)
-	i.Register(i.InitGateway(), PriorityNormal)
-	i.Register(i.InitGatewayManager(), PriorityLow)
-	i.Register(i.InitBackendServer(), PriorityLow)
+	i.Register(i.InitLogger())
+	i.Register(i.InitMongo())
+	i.Register(i.InitRuntime())
+	i.Register(i.InitFrontServer())
+	i.Register(i.InitGateway())
+	i.Register(i.InitGatewayManager())
+	i.Register(i.InitBackendServer())
+	i.Register(i.InitGrpcProxy())
+	i.Register(i.InitPProf())
 
 	// 按优先级排序
 	slices.SortFunc(i.runners, func(a Runner, b Runner) int {
@@ -58,7 +65,6 @@ func Initialize() (*Initializer, error) {
 	return i, *err
 }
 
-func (i *Initializer) Register(runner Runner, priority int) {
-	runner.Priority = priority
+func (i *Initializer) Register(runner Runner) {
 	i.runners = append(i.runners, runner)
 }

@@ -9,6 +9,7 @@ import (
 
 func (i *Initializer) InitRuntime() Runner {
 	return Runner{
+		Priority: PriorityHigh,
 		fn: func() error {
 			runtime.InitRuntimeDomains(i.appConf)
 			runtime.InitDomainPortsMap()

@@ -6,6 +6,7 @@ import (
 
 func (i *Initializer) InitGatewayManager() Runner {
 	return Runner{
+		Priority: PriorityLow,
 		fn: func() error {
 			mg := manager.NewManager(i.cfg, i.logger, i.Gateway.Create())
 			i.Manager = mg

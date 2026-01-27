@@ -4,6 +4,7 @@ import "Hamburger/backend_proxy"
 
 func (i *Initializer) InitBackendServer() Runner {
 	return Runner{
+		Priority: PriorityLow,
 		fn: func() error {
 			bp := backend_proxy.NewBackendProxy(i.cfg, i.logger)
 			i.BackendServer = bp

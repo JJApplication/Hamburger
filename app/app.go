@@ -7,6 +7,7 @@ import (
 	"Hamburger/gateway/manager"
 	"Hamburger/initialize"
 	"Hamburger/internal/config"
+	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
 	"flag"
 	"github.com/rs/zerolog"
@@ -27,6 +28,7 @@ type HamburgerApp struct {
 	BackendServer *backend_proxy.BackendProxy
 	Gateway       *core.Proxy
 	Manager       *manager.Manager
+	GrpcProxy     *grpc_proxy.GrpcProxy
 }
 
 const (
@@ -66,10 +68,16 @@ func NewHamburgerApp() *HamburgerApp {
 }
 
 func (app *HamburgerApp) InitApp() error {
-	_, err := initialize.Initialize()
+	i, err := initialize.Initialize(app.appConf, app.conf, app.logger)
 	if err != nil {
 		return err
 	}
+	app.FrontServer = i.FrontServer
+	app.BackendServer = i.BackendServer
+	app.Gateway = i.Gateway
+	app.Manager = i.Manager
+	app.GrpcProxy = i.GrpcProxy
+
 	return nil
 }
 
