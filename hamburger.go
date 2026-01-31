@@ -1,8 +1,9 @@
 package main
 
 import (
-	"Hamburger/app"
 	"fmt"
+
+	"Hamburger/app"
 )
 
 var (

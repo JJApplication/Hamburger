@@ -1,9 +1,6 @@
 package manager
 
 import (
-	"Hamburger/gateway/server"
-	"Hamburger/gateway/tls"
-	"Hamburger/internal/config"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +8,10 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"Hamburger/gateway/server"
+	"Hamburger/gateway/tls"
+	"Hamburger/internal/config"
 
 	"github.com/rs/zerolog"
 )
@@ -85,7 +86,7 @@ func (m *Manager) Start() error {
 
 // startServer 启动单个服务器
 func (m *Manager) startServer(serverConfig config.ServerConfig, logger *zerolog.Logger) error {
-	instance, err := server.CommonHttpServer(m.config, serverConfig, logger, m.handler, m.tlsManager)
+	instance, err := server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager)
 	if err != nil {
 		return err
 	}

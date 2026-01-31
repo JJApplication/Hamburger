@@ -8,9 +8,10 @@ Copyright Renj
 package modifier
 
 import (
-	"Hamburger/internal/logger"
 	"net/http"
 	"sync"
+
+	"Hamburger/internal/logger"
 )
 
 // ModifierManager 修改器管理器
@@ -150,5 +151,5 @@ func (mm *ModifierManager) GetStatus() map[string]interface{} {
 func (mm *ModifierManager) GetModifiers() []Modifier {
 	mm.lock.RLock()
 	defer mm.lock.RUnlock()
-	return mm.modifiers
+	return mm.chain.GetEnabledModifiers()
 }

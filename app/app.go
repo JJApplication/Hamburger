@@ -1,6 +1,12 @@
 package app
 
 import (
+	"flag"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
 	"Hamburger/backend_proxy"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/core"
@@ -10,12 +16,7 @@ import (
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
-	"flag"
 	"github.com/rs/zerolog"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 )
 
 type HamburgerApp struct {

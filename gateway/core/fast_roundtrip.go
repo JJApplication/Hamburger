@@ -1,11 +1,14 @@
 package core
 
 import (
-	"Hamburger/internal/logger"
 	"bytes"
 	"io"
 	"net/http"
+	"strings"
 	"time"
+
+	"Hamburger/internal/config"
+	"Hamburger/internal/logger"
 
 	"github.com/valyala/fasthttp"
 )
@@ -62,21 +65,31 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		// 真实场景下req.HOST为请求域名 req.URL.Host为解析后的真实地址
 		// 确保 Host header 设置正确
 		if req.URL.Host != "" {
-			uri.SetHost(req.URL.Host)
-			fr.Header.SetHost(req.URL.Host)
+			uri.SetHost(req.URL.Host)       // URI的Host
+			fr.SetHost(req.URL.Host)        // fr的Host
+			fr.Header.SetHost(req.URL.Host) // 请求头的Host
+			forwardHost := config.Get().ProxyHeader.ForwardHostHeader
+			if forwardHost != "" {
+				fr.Header.Set(forwardHost, req.Host) // 为方便后端服务获取原始Host 使用X-Forward-Host
+			}
 		}
 	}
 
 	// 复制请求头
 	for k, vv := range req.Header {
+		if strings.EqualFold("X-Forwarded-For", k) || strings.EqualFold("Host", k) {
+			continue
+		}
 		for _, v := range vv {
 			fr.Header.Add(k, v)
 		}
 	}
 
-	logger.L().Debug().Any("OriginalRequest", req).Msg("OriginalRequest")
-	logger.L().Debug().Any("FastHttpRequest", fr).Msg("OriginalRequest")
+	logger.L().Debug().Any("URL", req.URL).Str("Host", req.Host).Str("RequestURL", req.RequestURI).Msg("OriginalRequest")
+	logger.L().Debug().Any("URL", fr.URI()).Str("Host", string(fr.Host())).Str("RequestURL", string(fr.RequestURI())).Msg("FastHttpRequest")
 	logger.L().Debug().Str("Host", string(fr.Host())).Msg("fasthttp client")
+
+	// 代理到真实服务器必须重置Host
 
 	// 复制请求体（尽量流式）
 	if req.Body != nil {

@@ -1,9 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"Hamburger/internal/constant"
 	"Hamburger/internal/json"
-	"os"
 )
 
 type ProxyConfig struct {
@@ -236,6 +237,7 @@ type FrontProxyConfig struct {
 type ProxyHeader struct {
 	TraceId            string `yaml:"trace_id" json:"trace_id"`                         // traceId头
 	FrontendHostHeader string `yaml:"frontend_host_header" json:"frontend_host_header"` // 前端服务真实HOST
+	ForwardHostHeader  string `yaml:"forward_host_header" json:"forward_host_header"`   // 转发真实服务器时携带的原始Host
 	BackendHeader      string `yaml:"backend_header" json:"backend_header"`             // 区分后端服务标识
 	ProxyApp           string `yaml:"proxy_app" json:"proxy_app"`                       // 要转到的后端服务标识
 }

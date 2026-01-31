@@ -1,6 +1,11 @@
 package core
 
 import (
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"sync"
+
 	"Hamburger/gateway/breaker"
 	"Hamburger/gateway/error_page"
 	"Hamburger/gateway/grpc_proxy"
@@ -12,10 +17,6 @@ import (
 	"Hamburger/internal/serror"
 	"Hamburger/internal/utils"
 	"github.com/rs/zerolog"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"sync"
 )
 
 // 拦截所有请求并根据配置进行转发
@@ -113,6 +114,7 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 func ProxyModifyResponse(cfg *config.Config, logger *zerolog.Logger) func(response *http.Response) error {
 	return func(response *http.Response) error {
 		mods := modifier.GetManager().GetModifiers()
+		logger.Debug().Int("Count", len(mods)).Any("mods", mods).Msg("modifier manager")
 		if cfg.Debug {
 			start, end, sub := utils.PerformTime(func() {
 				for _, mod := range mods {
