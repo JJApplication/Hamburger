@@ -40,14 +40,17 @@ func getOptimizedTransport(transport string) *myTransport {
 		case "http":
 			sharedTransport = &myTransport{
 				Transport: OriginRoundTrip(),
+				conf:      config.Get(),
 			}
 		case "fasthttp":
 			sharedTransport = &myTransport{
 				Transport: NewFastRoundTripper(),
+				conf:      config.Get(),
 			}
 		default:
 			sharedTransport = &myTransport{
 				Transport: OriginRoundTrip(),
+				conf:      config.Get(),
 			}
 		}
 	})
@@ -85,6 +88,7 @@ func getBufferPool(bufSize int) httputil.BufferPool {
 func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *http.Request) {
 	return func(request *http.Request) {
 		logger.Debug().
+			Any("URL", request.URL).
 			Any("Header", request.Header).
 			Str("Host", request.Host).
 			Str("Trace-ID", request.Header.Get(cfg.ProxyHeader.TraceId)).

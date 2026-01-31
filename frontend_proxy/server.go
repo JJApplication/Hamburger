@@ -303,5 +303,4 @@ func (s *HeliosServer) Status() {
 	s.logger.Info().Str("version", Version).Msg("starting helios server")
 	s.logger.Info().Msgf("[Helios] server running on %s:%d", s.config.Host, s.config.Port)
 	s.logger.Info().Msgf("[Helios] cache enabled: %v", s.config.Cache.Enable)
-	s.logger.Info().Msgf("[Helios] log level: %v", s.config.Log.LogLevel)
 }

@@ -51,24 +51,24 @@ func (m *Manager) Start() error {
 		return fmt.Errorf("no enabled server configuration")
 	}
 
-	m.logger.Info().Msgf("starting %d server instances", len(enabledServers))
+	m.logger.Info().Msgf("[Gateway] starting %d server instances", len(enabledServers))
 
 	// 启动每个服务器
 	for _, serverConfig := range enabledServers {
 		if err := m.startServer(serverConfig, m.logger); err != nil {
-			m.logger.Error().Msgf("failed to start server %s: %v", serverConfig.Name, err)
+			m.logger.Error().Msgf("[Gateway] failed to start server %s: %v", serverConfig.Name, err)
 			// 继续启动其他服务器，不因为一个失败而全部停止
 			continue
 		}
-		m.logger.Info().Msgf("started server %s successfully, address: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
+		m.logger.Info().Msgf("[Gateway] started server %s successfully, address: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
 
 		// http3 server
 		if m.config.Features.HTTP3.Enabled && serverConfig.Protocol == "https" {
 			if err := m.startHttp3Server(m.config.Features.HTTP3, serverConfig, m.logger, m.handler); err != nil {
-				m.logger.Error().Msgf("failed to start http3 server %s: %v", serverConfig.Name, err)
+				m.logger.Error().Msgf("[Gateway] failed to start http3 server %s: %v", serverConfig.Name, err)
 				continue
 			}
-			m.logger.Info().Msgf("started http3 server %s successfully, address: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
+			m.logger.Info().Msgf("[Gateway] started http3 server %s successfully, address: %s:%d", serverConfig.Name, serverConfig.Host, serverConfig.Port)
 		}
 	}
 
@@ -78,7 +78,7 @@ func (m *Manager) Start() error {
 	}
 
 	m.started = true
-	m.logger.Info().Msgf("server manager started, successfully started %d servers", len(m.servers))
+	m.logger.Info().Msgf("[Gateway] server manager started, successfully started %d servers", len(m.servers))
 
 	return nil
 }
@@ -128,9 +128,9 @@ func (m *Manager) runServer(instance *server.ServerInstance) {
 	err := instance.Server.Serve(instance.Listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		instance.Error = err
-		m.logger.Printf("server %s runtime error: %v", instance.Name, err)
+		m.logger.Error().Msgf("[Gateway] server %s runtime error: %v", instance.Name, err)
 	} else {
-		m.logger.Printf("server %s stopped", instance.Name)
+		m.logger.Info().Msgf("[Gateway] server %s stopped", instance.Name)
 	}
 
 	// 标记服务器已停止
@@ -146,7 +146,7 @@ func (m *Manager) Stop() error {
 		return fmt.Errorf("server manager not started")
 	}
 
-	m.logger.Printf("stopping %d server instances", len(m.servers))
+	m.logger.Info().Msgf("[Gateway] stopping %d server instances", len(m.servers))
 
 	// 创建停止超时上下文
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -159,11 +159,11 @@ func (m *Manager) Stop() error {
 		go func(name string, instance *server.ServerInstance) {
 			defer wg.Done()
 			if err := instance.Server.Shutdown(stopCtx); err != nil {
-				m.logger.Printf("failed to stop server %s: %v", name, err)
+				m.logger.Error().Msgf("[Gateway] failed to stop server %s: %v", name, err)
 				// 强制关闭
 				instance.Server.Close()
 			} else {
-				m.logger.Printf("server %s stopped gracefully", name)
+				m.logger.Info().Msgf("[Gateway] server %s stopped gracefully", name)
 			}
 		}(name, instance)
 	}
@@ -181,7 +181,7 @@ func (m *Manager) Stop() error {
 	m.servers = make(map[string]*server.ServerInstance)
 	m.started = false
 
-	m.logger.Printf("all servers stopped")
+	m.logger.Info().Msg("all servers stopped")
 	return nil
 }
 
@@ -315,9 +315,9 @@ func (m *Manager) afterHandleAutoCert() error {
 // GetEnabledServers 获取所有启用的服务器配置
 func GetEnabledServers(cf *config.Config) []config.ServerConfig {
 	var enabled []config.ServerConfig
-	for _, server := range cf.Servers {
-		if server.Enabled {
-			enabled = append(enabled, server)
+	for _, svr := range cf.Servers {
+		if svr.Enabled {
+			enabled = append(enabled, svr)
 		}
 	}
 	return enabled

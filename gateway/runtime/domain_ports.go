@@ -10,8 +10,12 @@ import (
 // 域名和后端端口映射
 
 var (
-	DomainPortsMap structure.Map[[]int]
+	DomainPortsMap *structure.Map[[]int]
 )
+
+func init() {
+	DomainPortsMap = structure.NewMap[[]int]()
+}
 
 // InitDomainPortsMap 初始化域名端口组映射
 func InitDomainPortsMap() {

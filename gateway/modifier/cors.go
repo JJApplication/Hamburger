@@ -22,10 +22,10 @@ var (
 func NewCorsHeaderModifier() *CorsHeaderModifier {
 	cfg := config.Get()
 	cm := &CorsHeaderModifier{
-		enabled: cfg.Security.CORS.Enabled,
-		headers: cfg.Security.CORS.Header,
-		methods: cfg.Security.CORS.Method,
-		origins: cfg.Security.CORS.Origin,
+		enabled: cfg.Middleware.CORS.Enabled,
+		headers: cfg.Middleware.CORS.Header,
+		methods: cfg.Middleware.CORS.Method,
+		origins: cfg.Middleware.CORS.Origin,
 	}
 
 	return cm

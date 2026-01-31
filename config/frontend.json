@@ -1,0 +1,235 @@
+{
+  "host": "127.0.0.1",
+  "port": 7777,
+  "balancer": "http://127.0.0.1:80",
+  "cache": {
+    "enable": true,
+    "dir": "/renj.io/cache",
+    "expire": 0,
+    "matcher": [
+      "*.html",
+      "*.css",
+      "*.js",
+      "*.svg",
+      "*.ico",
+      "*.woff",
+      "*.woff2",
+      "*.ttf",
+      "*.otf",
+      "*.eot",
+      "*.map"
+    ]
+  },
+  "internal_flag": "X-Proxy-Internal-Front",
+  "internal_local_flag": "X-Proxy-Internal-Local",
+  "internal_backend_flag": "X-Proxy-Backend",
+  "cache_header": "X-Helios-Cache",
+  "error": {
+    "not_found": "",
+    "internal_server_error": ""
+  },
+  "custom_headers": [
+    {
+      "name": "X-Proxy-Frontend-Server",
+      "value": "Helios"
+    }
+  ],
+  "servers": [
+    {
+      "type": "WebServer",
+      "name": "Homeland",
+      "root": "/renj.io/app/Homeland",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "CV",
+      "root": "/renj.io/app/CV",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "Resume",
+      "root": "/renj.io/app/Resume",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "DevDoc",
+      "root": "/renj.io/app/DevDoc",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "BlogFront",
+      "root": "/renj.io/app/BlogFront",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "alias": {
+        "/images": "/renj.io/app/Blog/images"
+      },
+      "backends": [
+        {
+          "api": "/api",
+          "service": "Blog",
+          "use_rewrite": false
+        }
+      ]
+    },
+    {
+      "type": "WebServer",
+      "name": "Palace",
+      "root": "/renj.io/app/Palace",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "backends": [
+        {
+          "api": "/api",
+          "service": "Palace",
+          "use_rewrite": false
+        },
+        {
+          "api": "/static",
+          "service": "Palace",
+          "use_rewrite": false
+        }
+      ]
+    },
+    {
+      "type": "WebServer",
+      "name": "JJServiceFront",
+      "root": "/renj.io/app/JJServiceFront",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "backends": [
+        {
+          "api": "/api",
+          "service": "JJService",
+          "use_rewrite": false
+        }
+      ]
+    },
+    {
+      "type": "WebServer",
+      "name": "Works",
+      "root": "/renj.io/app/Works",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "Demeter",
+      "root": "/renj.io/app/Demeter",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "backends": [
+        {
+          "api": "/api",
+          "service": "Demeter",
+          "use_rewrite": false
+        }
+      ]
+    },
+    {
+      "type": "WebServer",
+      "name": "JJAppX",
+      "root": "/renj.io/app/JJAppX",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "Taco",
+      "root": "/renj.io/app/Taco",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "backends": [
+        {
+          "api": "/api",
+          "service": "Taco",
+          "use_rewrite": false
+        }
+      ]
+    },
+    {
+      "type": "WebServer",
+      "name": "ShinningCard",
+      "root": "/renj.io/app/ShinningCard",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "VisualAtom",
+      "root": "/renj.io/app/VisualAtom",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "ProjectAI",
+      "root": "/renj.io/app/ProjectAI",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "LivePhoto",
+      "root": "/renj.io/app/LivePhoto",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "AimTest",
+      "root": "/renj.io/app/AimTest",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "LoveLetter",
+      "root": "/renj.io/app/LoveLetter",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    }
+  ]
+}

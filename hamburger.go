@@ -14,7 +14,7 @@ var (
 
 func main() {
 	fmt.Printf("%s - %s\n", AppName, Description)
-	fmt.Printf("Version: %s\nBuildHash: %s\n", Version, BuildHash)
+	fmt.Printf("Version: %s\nBuildHash: %s\n\n", Version, BuildHash)
 	hamburger := app.NewHamburgerApp()
 	hamburger.Run()
 

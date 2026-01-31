@@ -4,7 +4,6 @@ import (
 	"Hamburger/internal/constant"
 	"Hamburger/internal/json"
 	"os"
-	"strings"
 )
 
 type ProxyConfig struct {
@@ -103,74 +102,22 @@ type FlowRecordConfig struct {
 
 // MiddlewareConfig 中间件配置结构体
 type MiddlewareConfig struct {
-	Name    string                 `yaml:"name" json:"name"`       // 中间件名称
-	Enabled bool                   `yaml:"enabled" json:"enabled"` // 是否启用
-	Order   int                    `yaml:"order" json:"order"`     // 执行顺序
-	Config  map[string]interface{} `yaml:"config" json:"config"`   // 中间件配置参数
-}
-
-func (m *MiddlewareConfig) GetInt(key string) int {
-	v, ok := m.Config[key]
-	if !ok {
-		return 0
-	}
-	value, ok := v.(float64)
-	if !ok {
-		return 0
-	}
-	return int(value)
-}
-
-func (m *MiddlewareConfig) GetString(key string) string {
-	v, ok := m.Config[key]
-	if !ok {
-		return ""
-	}
-	value, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return value
-}
-
-func (m *MiddlewareConfig) GetBool(key string) bool {
-	v, ok := m.Config[key]
-	if !ok {
-		return false
-	}
-	value, ok := v.(bool)
-	if ok {
-		return value
-	}
-	switch v.(type) {
-	case float64:
-		return v.(float64) > 0
-	case bool:
-		return v.(bool)
-	case string:
-		vs := v.(string)
-		if strings.ToLower(vs) == "true" || strings.ToLower(vs) == "yes" {
-			return true
-		}
-		return false
-	default:
-		return false
-	}
+	Gzip         GzipConfig  `yaml:"gzip" json:"gzip"` // Gzip压缩配置
+	NoCache      bool        `yaml:"no_cache" json:"no_cache"`
+	SecureHeader bool        `yaml:"secure_header" json:"secure_header"` // 安全响应头
+	Trace        TraceConfig `yaml:"trace" json:"trace"`                 // 请求跟踪
+	CORS         CorsConfig  `yaml:"cors" json:"cors"`                   // cors策略
 }
 
 // FeatureConfig 功能特性配置结构体
 type FeatureConfig struct {
-	HTTP3        HTTP3Config       `yaml:"http3" json:"http3"`         // HTTP/3配置
-	WebSocket    WebSocketConfig   `yaml:"websocket" json:"websocket"` // WebSocket配置
-	Cache        CacheConfig       `yaml:"cache" json:"cache"`         // 缓存配置
-	Gzip         GzipConfig        `yaml:"gzip" json:"gzip"`           // Gzip压缩配置
-	NoCache      bool              `yaml:"no_cache" json:"no_cache"`
-	SecureHeader bool              `yaml:"secure_header" json:"secure_header"` // 安全响应头
-	Trace        TraceConfig       `yaml:"trace" json:"trace"`                 // 请求跟踪
-	AutoCert     AutoCertConfig    `yaml:"auto_cert" json:"auto_cert"`         // 自动证书配置
-	GrpcProxy    GrpcProxyConfig   `yaml:"grpc_proxy" json:"grpc_proxy"`       // gRPC代理配置
-	FlowControl  FlowControlConfig `yaml:"flow_control" json:"flow_control"`   // 流控配置
-	Break        BreakConfig       `yaml:"break" json:"break"`                 // 熔断配置
+	HTTP3       HTTP3Config       `yaml:"http3" json:"http3"`               // HTTP/3配置
+	WebSocket   WebSocketConfig   `yaml:"websocket" json:"websocket"`       // WebSocket配置
+	Cache       CacheConfig       `yaml:"cache" json:"cache"`               // 缓存配置
+	AutoCert    AutoCertConfig    `yaml:"auto_cert" json:"auto_cert"`       // 自动证书配置
+	GrpcProxy   GrpcProxyConfig   `yaml:"grpc_proxy" json:"grpc_proxy"`     // gRPC代理配置
+	FlowControl FlowControlConfig `yaml:"flow_control" json:"flow_control"` // 流控配置
+	Break       BreakConfig       `yaml:"break" json:"break"`               // 熔断配置
 }
 
 // HTTP3Config HTTP/3协议配置结构体
@@ -256,7 +203,7 @@ type MonitorConfig struct {
 	Prometheus bool   `yaml:"prometheus" json:"prometheus"` // 是否启用Prometheus
 }
 
-type cors struct {
+type CorsConfig struct {
 	Enabled bool     `yaml:"enabled" json:"enabled"`
 	Method  []string `yaml:"method" json:"method"`
 	Origin  []string `yaml:"origin" json:"origin"` // 默认*
@@ -269,7 +216,6 @@ type SecurityConfig struct {
 	AllowIPs   []string `yaml:"allow_ips" json:"allow_ips"`     // 允许的IP列表
 	DenyIPs    []string `yaml:"deny_ips" json:"deny_ips"`       // 拒绝的IP列表
 	RateLimit  int      `yaml:"rate_limit" json:"rate_limit"`   // 速率限制
-	CORS       cors     `yaml:"cors" json:"cors"`               // cors策略
 
 	HSTS             bool         `yaml:"hsts" json:"hsts"`                     // HSTS策略
 	HSTSSubdomain    bool         `yaml:"hsts_subdomain" json:"hsts_subdomain"` // 包含子域名
@@ -366,24 +312,11 @@ func GetDefaultConfig() *AppConfig {
 				},
 			},
 		},
-		Middleware: []MiddlewareConfig{
-			{
-				Name:    "limiter",
+		Middleware: MiddlewareConfig{
+			Gzip: GzipConfig{
 				Enabled: true,
-				Order:   1,
-				Config: map[string]interface{}{
-					"limit": 100,
-					"reset": 60,
-				},
-			},
-			{
-				Name:    "breaker",
-				Enabled: true,
-				Order:   2,
-				Config: map[string]interface{}{
-					"limit": 20,
-					"reset": 10,
-				},
+				Level:   6,
+				Types:   []string{"text/html", "text/css", "text/javascript", "application/json"},
 			},
 		},
 		Features: FeatureConfig{
@@ -399,11 +332,6 @@ func GetDefaultConfig() *AppConfig {
 				PongTimeout:    10,
 				MaxMessageSize: 1048576, // 1MB
 				BufferSize:     1024,
-			},
-			Gzip: GzipConfig{
-				Enabled: true,
-				Level:   6,
-				Types:   []string{"text/html", "text/css", "text/javascript", "application/json"},
 			},
 			Cache: CacheConfig{
 				Enabled:  true,
@@ -440,7 +368,7 @@ func GetDefaultConfig() *AppConfig {
 			ProxyApp:           "X-Proxy-Backend",
 		},
 		CustomHeader: map[string]string{
-			"Proxy-Server":    constant.Sandwich,
+			"Proxy-Server":    constant.AppName,
 			"Proxy-Copyright": constant.Copyright,
 		},
 		Stat: StatConfig{

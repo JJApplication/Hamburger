@@ -1,0 +1,149 @@
+{
+  "pxy_backend_file": "config/backend.json",
+  "pxy_frontend_file": "config/frontend.json",
+  "domain_map": "config/domains.json",
+  "proxy": {
+    "flush_interval": 0,
+    "buf_size": 65536,
+    "transport": "fasthttp",
+    "proxy_mode": "fasthttp",
+    "max_conns_per_host": 100,
+    "idle_conn_timeout": 60
+  },
+  "servers": [
+    {
+      "name": "http-server",
+      "host": "0.0.0.0",
+      "port": 80,
+      "use_http2": true,
+      "protocol": "http",
+      "enabled": true,
+      "max_request_body": 52428800,
+      "domains": [
+        {
+          "domains": ["renj.io", "service.renj.io", "dev.renj.io", "blog.renj.io",
+            "me.renj.io", "gallery.renj.io", "jjapp.renj.io", "pkg.renj.io"],
+          "auto_redirect": true
+        }
+      ]
+    },
+    {
+      "name": "https-server",
+      "host": "0.0.0.0",
+      "port": 443,
+      "use_http2": true,
+      "protocol": "https",
+      "enabled": true,
+      "max_request_body": 52428800,
+      "tls": {
+        "cert_file": "config/ssl/fullchain.cer",
+        "key_file": "config/ssl/ssl.key",
+        "auto_tls": false
+      },
+      "domains": [
+        {
+          "domains": ["renj.io", "service.renj.io"]
+        }
+      ]
+    }
+  ],
+  "middleware": {
+    "cors": {
+      "enabled": true,
+      "header": ["Content-Type", "Origin", "Authorization", "access-token", "Token"]
+    },
+    "trace": {
+      "enabled": true,
+      "trace_id": "X-Gateway-Trace-Id"
+    },
+    "secure_header": true,
+    "gzip": {
+      "enabled": true,
+      "level": 6,
+      "types": [
+        "text/html",
+        "text/css",
+        "text/javascript",
+        "text/plain",
+        "text/xml",
+        "application/javascript",
+        "application/xml",
+        "application/json",
+        "font/ttf",
+        "font/woff",
+        "font/woff2",
+        "font/otf"
+      ],
+      "threshold": 2048
+    }
+  },
+  "features": {},
+  "database": {
+    "mongo": {
+      "url": "mongodb://localhost:27017",
+      "database": "ApolloMongo",
+      "timeout": 10
+    },
+    "influx": {
+      "enabled": false,
+      "url": "http://localhost:8086",
+      "token": "",
+      "org": "sandwich",
+      "bucket": "sandwich",
+      "password": ""
+    }
+  },
+  "security": {
+    "strict_mode": true,
+    "allow_ips": [],
+    "deny_ips": [],
+    "rate_limit": 1000
+  },
+  "proxy_header": {
+    "trace_id": "X-Gateway-Trace-Id",
+    "frontend_host_header": "X-Proxy-Internal-Host",
+    "backend_header": "X-Proxy-Internal-Local",
+    "proxy_app": "X-Proxy-Backend"
+  },
+  "log": {
+    "log_level": "debug",
+    "log_file": "",
+    "color": true
+  },
+  "module": null,
+  "stat": {
+    "db_file": "stat.db",
+    "use_db": true,
+    "compatible": true,
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8888,
+    "enable_stat": true,
+    "sync_duration": 720,
+    "save_duration": 3600,
+    "save_file": "data/stat.json",
+    "geo_file": "data/geo.json",
+    "domain_file": "data/domain.json",
+    "geo_db": "",
+    "sequence": {
+      "enabled": false,
+      "interval": 3600
+    }
+  },
+  "custom_header": {
+    "Proxy-Copyright": "renj.io",
+    "Proxy-Server": "Hamburger"
+  },
+  "syncer": {
+    "job_sync_domains": 60,
+    "job_sync_domain_ports": 60
+  },
+  "debug": true,
+  "pprof": {
+    "enable": false,
+    "port": 8889
+  },
+  "max_cores": 4,
+  "pxy_backend": {},
+  "pxy_frontend": {}
+}

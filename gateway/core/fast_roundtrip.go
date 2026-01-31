@@ -59,8 +59,11 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		if req.URL.Scheme != "" {
 			uri.SetScheme(req.URL.Scheme)
 		}
+		// 真实场景下req.HOST为请求域名 req.URL.Host为解析后的真实地址
+		// 确保 Host header 设置正确
 		if req.URL.Host != "" {
 			uri.SetHost(req.URL.Host)
+			fr.Header.SetHost(req.URL.Host)
 		}
 	}
 
@@ -71,12 +74,8 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 	}
 
-	// 真实场景下req.HOST为请求域名 req.URL.Host为解析后的真实地址
-	// 确保 Host header 设置正确
-	if req.URL.Host != "" {
-		fr.Header.SetHost(req.URL.Host)
-	}
-
+	logger.L().Debug().Any("OriginalRequest", req).Msg("OriginalRequest")
+	logger.L().Debug().Any("FastHttpRequest", fr).Msg("OriginalRequest")
 	logger.L().Debug().Str("Host", string(fr.Host())).Msg("fasthttp client")
 
 	// 复制请求体（尽量流式）
@@ -90,6 +89,11 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 	}
 
+	// 避免fasthttp无限重定向 增加专属请求头
+	if req.URL != nil && req.URL.Scheme == "https" {
+		fr.Header.Set("X-Forwarded-Proto", "https")
+	}
+	fr.DisableRedirectPathNormalizing = true
 	// 发送请求
 	if err := f.Client.Do(&fr, &resp); err != nil {
 		return nil, err
@@ -119,6 +123,8 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 			dst.Header.Set(key, val)
 		}
 	})
+
+	fr.Reset()
 
 	return dst, nil
 }

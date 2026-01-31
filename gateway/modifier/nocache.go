@@ -13,7 +13,7 @@ type NoCache struct {
 func NewNoCache() *NoCache {
 	cfg := config.Get()
 	mod := new(NoCache)
-	mod.enabled = cfg.Features.NoCache
+	mod.enabled = cfg.Middleware.NoCache
 	return mod
 }
 

@@ -26,7 +26,7 @@ func ReloadLogger(conf *config.LogConfig) {
 			Out:        os.Stdout,
 			NoColor:    !conf.Color,
 			TimeFormat: time.DateTime,
-		}).Level(getLevel(conf.LogLevel)).With().Timestamp().Logger()
+		}).Level(getLevel(conf.LogLevel)).With().Timestamp().Caller().Logger()
 	})
 }
 

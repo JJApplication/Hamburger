@@ -34,7 +34,10 @@ func Merge(appConfig *AppConfig) *Config {
 	}
 
 	if appConfig.PxyBackendFile != "" {
-
+		bc, err := LoadBackendConfig(appConfig.PxyBackendFile)
+		if err == nil {
+			conf.PxyBackend = bc
+		}
 	}
 
 	return conf

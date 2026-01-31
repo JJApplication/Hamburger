@@ -23,7 +23,7 @@ func minify(w http.ResponseWriter, b []byte) {
 
 func useGzip(request *http.Request) bool {
 	cf := config.Get()
-	if !cf.Features.Gzip.Enabled {
+	if !cf.Middleware.Gzip.Enabled {
 		return false
 	}
 	accept := request.Header.Get("Accept-Encoding")

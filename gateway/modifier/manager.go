@@ -43,12 +43,10 @@ func NewModifierManager() *ModifierManager {
 		modifiers: make([]Modifier, 0),
 	}
 
-	// 注册默认的修改器
-	manager.registerDefaultModifiers()
-
 	return manager
 }
 
+// InitModifiers 注册全部中间件 根据配置激活
 func InitModifiers() {
 	mm := GetManager()
 	// add trace
@@ -65,23 +63,10 @@ func InitModifiers() {
 	mm.RegisterModifier(NewCorsHeaderModifier())
 }
 
-// registerDefaultModifiers 注册默认的修改器
-func (mm *ModifierManager) registerDefaultModifiers() {
-	// 注册gzip压缩修改器
-	gzipModifier := NewGzipModifier()
-	mm.chain.AddModifier(gzipModifier)
-	logger.GetLogger().Debug().Str("name", gzipModifier.GetName()).Msg("modifier registered")
-
-	// 注册自定义头修改器
-	customHeaderModifier := NewCustomHeaderModifier()
-	mm.chain.AddModifier(customHeaderModifier)
-	logger.GetLogger().Debug().Str("name", gzipModifier.GetName()).Msg("modifier registered")
-}
-
 func (mm *ModifierManager) RegisterModifier(modifier Modifier) {
 	mm.lock.Lock()
 	defer mm.lock.Unlock()
-	mm.modifiers = append(mm.modifiers, modifier)
+	mm.chain.AddModifier(modifier)
 }
 
 // ModifyResponse 对响应应用所有启用的修改器

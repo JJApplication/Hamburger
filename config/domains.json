@@ -1,0 +1,97 @@
+{
+  "renj.io": {
+    "frontend": "Homeland"
+  },
+  "me.renj.io": {
+    "frontend": "Resume"
+  },
+  "cv.renj.io": {
+    "frontend": "CV"
+  },
+  "shinning-card.ai.renj.io": {
+    "frontend": "ShinningCard"
+  },
+  "dev.renj.io": {
+    "frontend": "DevDoc"
+  },
+  "blog.renj.io": {
+    "frontend": "BlogFront",
+    "backend": "Blog"
+  },
+  "gallery.renj.io": {
+    "frontend": "Palace",
+    "backend": "Palace"
+  },
+  "page.renj.io": {
+    "backend": "MySite"
+  },
+  "drive.renj.io": {
+    "frontend": "DriveFront",
+    "backend": "Drive"
+  },
+  "service.renj.io": {
+    "backend": "Apollo"
+  },
+  "card.renj.io": {
+    "frontend": "CardFront",
+    "backend": "Card"
+  },
+  "app.renj.io": {
+    "frontend": "JJServiceFront",
+    "backend": "JJService"
+  },
+  "api.renj.io": {
+    "backend": "JJGo"
+  },
+  "jjgo.renj.io": {
+    "frontend": "JJGoFront"
+  },
+  "mgek.renj.io": {
+    "backend": "Mgek"
+  },
+  "doc.renj.io": {
+    "backend": "MgekDoc"
+  },
+  "works.renj.io": {
+    "frontend": "Works"
+  },
+  "plan.renj.io": {
+    "frontend": "Demeter",
+    "backend": "Demeter"
+  },
+  "pkg.renj.io": {
+    "backend": "BlackHole"
+  },
+  "x.renj.io": {
+    "frontend": "JJAppX"
+  },
+  "plume.renj.io": {
+    "frontend": "PlumeFront",
+    "backend": "Plume"
+  },
+  "status.renj.io": {
+    "backend": "Status"
+  },
+  "stat.renj.io": {
+    "frontend": "Taco",
+    "backend": "Taco"
+  },
+  "jjapp.dev": {
+    "frontend": "JJAppDev"
+  },
+  "ai.renj.io": {
+    "frontend": "ProjectAI"
+  },
+  "visual-atom.ai.renj.io": {
+    "frontend": "VisualAtom"
+  },
+  "live-photo.ai.renj.io": {
+    "frontend": "LivePhoto"
+  },
+  "aimtest.ai.renj.io": {
+    "frontend": "AimTest"
+  },
+  "love.renj.io": {
+    "frontend": "LoveLetter"
+  }
+}

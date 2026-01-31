@@ -33,10 +33,10 @@ type GzipModifier struct {
 func NewGzipModifier() *GzipModifier {
 	cfg := config.Get()
 	gm := &GzipModifier{
-		enabled:   cfg.Features.Gzip.Enabled,
-		level:     cfg.Features.Gzip.Level,
-		types:     cfg.Features.Gzip.Types,
-		threshold: cfg.Features.Gzip.Threshold,
+		enabled:   cfg.Middleware.Gzip.Enabled,
+		level:     cfg.Middleware.Gzip.Level,
+		types:     cfg.Middleware.Gzip.Types,
+		threshold: cfg.Middleware.Gzip.Threshold,
 	}
 
 	// 初始化 gzip.Writer 对象池
@@ -227,9 +227,9 @@ func (g *GzipModifier) GetTypes() []string {
 func (g *GzipModifier) UpdateConfig() {
 	cfg := config.Get()
 	oldLevel := g.level
-	g.enabled = cfg.Features.Gzip.Enabled
-	g.level = cfg.Features.Gzip.Level
-	g.types = cfg.Features.Gzip.Types
+	g.enabled = cfg.Middleware.Gzip.Enabled
+	g.level = cfg.Middleware.Gzip.Level
+	g.types = cfg.Middleware.Gzip.Types
 
 	// 如果压缩级别发生变化，需要重新初始化 writer 对象池
 	if oldLevel != g.level {

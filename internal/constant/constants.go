@@ -2,7 +2,7 @@
 
 /*
    Create: 2025/8/5
-   Project: Sandwich
+   Project: AppName
    Github: https://github.com/landers1037
    Copyright Renj
 */
@@ -66,8 +66,8 @@ func InitConfigFromEnvs() {
 	SyncTime = time.Duration(LoaderEnv("SyncTime").Int(60*5)) * time.Second
 	InfluxUrl = LoaderEnv("InfluxUrl").String("http://127.0.0.1:8086")
 	InfluxToken = LoaderEnv("InfluxToken").String("")
-	InfluxOrg = LoaderEnv("InfluxOrg").String(Sandwich)
-	InfluxBucket = LoaderEnv("InfluxBucket").String(Sandwich)
+	InfluxOrg = LoaderEnv("InfluxOrg").String(AppName)
+	InfluxBucket = LoaderEnv("InfluxBucket").String(AppName)
 	InfluxPwd = LoaderEnv("InfluxPwd").String("")
 	EnableInflux = LoaderEnv("EnableInflux").Bool(false)
 	CacheSize = LoaderEnv("CacheSize").Int(10)

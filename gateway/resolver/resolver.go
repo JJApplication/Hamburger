@@ -37,6 +37,7 @@ func (r *Resolver) Parse(request *http.Request) *url.URL {
 	host := request.Host
 	result := r.ruler.Parse(request)
 
+	r.logger.Debug().Any("Result", result).Msg("rule-parse request")
 	if r.ResolveError(result, request) {
 		return nil
 	}

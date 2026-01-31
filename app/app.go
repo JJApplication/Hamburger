@@ -5,6 +5,7 @@ import (
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/manager"
+	"Hamburger/gateway/modifier"
 	"Hamburger/initialize"
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
@@ -24,11 +25,12 @@ type HamburgerApp struct {
 	logger *zerolog.Logger // APP日志
 
 	// Proxy
-	FrontServer   *frontend_proxy.HeliosServer
-	BackendServer *backend_proxy.BackendProxy
-	Gateway       *core.Proxy
-	Manager       *manager.Manager
-	GrpcProxy     *grpc_proxy.GrpcProxy
+	FrontServer     *frontend_proxy.HeliosServer
+	BackendServer   *backend_proxy.BackendProxy
+	Gateway         *core.Proxy
+	Manager         *manager.Manager
+	GrpcProxy       *grpc_proxy.GrpcProxy
+	ModifierManager *modifier.ModifierManager
 }
 
 const (
@@ -36,7 +38,7 @@ const (
 )
 
 var (
-	ConfigFile     = flag.String("config", "config.json", "config file")
+	ConfigFile     = flag.String("config", "config/config.json", "config file")
 	GenerateConfig = flag.Bool("generate", false, "generate config file")
 )
 
@@ -68,7 +70,7 @@ func NewHamburgerApp() *HamburgerApp {
 }
 
 func (app *HamburgerApp) InitApp() error {
-	i, err := initialize.Initialize(app.appConf, app.conf, app.logger)
+	i, err := initialize.Initialize(app.appConf, app.conf)
 	if err != nil {
 		return err
 	}
@@ -77,6 +79,8 @@ func (app *HamburgerApp) InitApp() error {
 	app.Gateway = i.Gateway
 	app.Manager = i.Manager
 	app.GrpcProxy = i.GrpcProxy
+	app.ModifierManager = i.ModifierManager
+	app.logger = i.GetLogger()
 
 	return nil
 }

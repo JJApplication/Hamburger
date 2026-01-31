@@ -62,7 +62,7 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 			// 内部请求不需要判断重定向
 
 			// 检查是否需要自动重定向HTTP到HTTPS
-			if r.Header.Get(cfg.ProxyHeader.BackendHeader) == "" && serverConfig.Protocol == "http" {
+			if serverConfig.Protocol == "http" {
 				// 添加调试日志
 				logger.Debug().Str("Host", r.Host).Str("URI", r.RequestURI).Str("Protocol", serverConfig.Protocol).Msg("http request")
 
@@ -88,8 +88,6 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 								// 构建HTTPS重定向URL
 								httpsURL := fmt.Sprintf("https://%s%s", r.Host, r.RequestURI)
 								logger.Debug().Str("source_url", r.URL.String()).Str("target_url", httpsURL).Str("config_domain", configuredDomain).Msg("domain match success, performing redirect")
-								// 执行301永久重定向
-								w.Header().Set("Location", httpsURL)
 
 								// 根据配置设置HSTS头部
 								if domainConfig.HSTSMaxAge > 0 {
@@ -106,7 +104,7 @@ func CommonHttpServer(cfg *config.Config, serverConfig config.ServerConfig, logg
 									logger.Debug().Msg("hsts header not set (HSTSMaxAge=0)")
 								}
 
-								w.WriteHeader(http.StatusMovedPermanently)
+								http.Redirect(w, r, httpsURL, http.StatusPermanentRedirect)
 								return
 							}
 						}

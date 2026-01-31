@@ -50,7 +50,6 @@ type CustomHeaderConfig struct {
 
 // PxyFrontConfig 前端服务器配置
 type PxyFrontConfig struct {
-	Log                 LogConfig            `json:"log" toml:"log"`
 	Host                string               `json:"host" toml:"host"`
 	Port                int                  `json:"port" toml:"port"`
 	Balancer            string               `json:"balancer" toml:"balancer"`
@@ -69,17 +68,17 @@ func LoadFrontConfig(file string) (PxyFrontConfig, error) {
 	if err != nil {
 		return PxyFrontConfig{}, err
 	}
-	var config AppConfig
+	var cf PxyFrontConfig
 	ext := filepath.Ext(file)
 	switch ext {
 	case ".json":
-		err = json.Unmarshal(data, &config)
-		return PxyFrontConfig{}, err
+		err = json.Unmarshal(data, &cf)
+		return cf, err
 	case ".toml":
-		err = toml.Unmarshal(data, &config)
-		return PxyFrontConfig{}, err
+		err = toml.Unmarshal(data, &cf)
+		return cf, err
 	default:
-		err = json.Unmarshal(data, &config)
-		return PxyFrontConfig{}, err
+		err = json.Unmarshal(data, &cf)
+		return cf, err
 	}
 }

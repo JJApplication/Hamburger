@@ -13,7 +13,7 @@ type SecureHeaderModifier struct {
 func NewSecureHeaderModifier() *SecureHeaderModifier {
 	cfg := config.Get()
 	mod := new(SecureHeaderModifier)
-	mod.enable = cfg.Features.SecureHeader
+	mod.enable = cfg.Middleware.SecureHeader
 	return mod
 }
 

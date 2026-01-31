@@ -57,6 +57,8 @@ func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
 func (r *Ruler) Parse(req *http.Request) RuleResult {
 	// 首先通过域名判断是什么服务组
 	host := req.Host
+	// 代理服务都是http协议服务器
+	finalSchema := "http"
 	if host == "" {
 		return RuleResult{
 			ProxyError: errors.New("host is empty"),
@@ -78,19 +80,27 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		// 根据请求和域名判断转发到的真实服务
 		if serviceMap.Frontend != "" && serviceMap.Backend == "" {
 			// 纯前端服务
+			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Frontend)
 			return RuleResult{
 				ProxyTo:     serviceMap.Frontend,
 				ProxyHost:   r.cfg.PxyFrontend.Host,
 				ProxyPort:   r.cfg.PxyFrontend.Port,
-				ProxyScheme: "http",
+				ProxyScheme: finalSchema,
 			}
 		}
 		if serviceMap.Frontend == "" && serviceMap.Backend != "" {
 			// 纯后端服务
+			ports, ok := runtime.DomainPortsMap.Get(host)
+			if !ok {
+				return RuleResult{
+					ProxyError: errors.New("domains port is empty"),
+				}
+			}
 			return RuleResult{
 				ProxyTo:     serviceMap.Backend,
 				ProxyHost:   "127.0.0.1",
-				ProxyScheme: "http",
+				ProxyPort:   balancer.PickOneRoundRobin(ports),
+				ProxyScheme: finalSchema,
 			}
 		}
 
@@ -125,7 +135,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 					ProxyHost:   "127.0.0.1",
 					ProxyPath:   targetPath,
 					ProxyPort:   balancer.PickOneRoundRobin(ports),
-					ProxyScheme: "http",
+					ProxyScheme: finalSchema,
 				}
 			}
 		}

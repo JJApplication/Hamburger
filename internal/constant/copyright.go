@@ -1,6 +1,6 @@
 package constant
 
 const (
-	Sandwich  = "Sandwich"
+	AppName   = "Hamburger"
 	Copyright = "renj.io"
 )

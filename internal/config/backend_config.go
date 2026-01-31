@@ -1,5 +1,12 @@
 package config
 
+import (
+	"Hamburger/internal/json"
+	"github.com/BurntSushi/toml"
+	"os"
+	"path/filepath"
+)
+
 // PxyBackendConfig 后端自定义服务器配置
 type PxyBackendConfig struct {
 	Enabled bool            `json:"enabled" toml:"enabled"` // 是否开启此特性
@@ -19,4 +26,24 @@ type Response struct {
 	Code    int               `yaml:"code" json:"code"`
 	Msg     string            `yaml:"msg" json:"msg"`
 	Headers map[string]string `yaml:"headers" json:"headers"`
+}
+
+func LoadBackendConfig(file string) (PxyBackendConfig, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return PxyBackendConfig{}, err
+	}
+	var cf PxyBackendConfig
+	ext := filepath.Ext(file)
+	switch ext {
+	case ".json":
+		err = json.Unmarshal(data, &cf)
+		return cf, err
+	case ".toml":
+		err = toml.Unmarshal(data, &cf)
+		return cf, err
+	default:
+		err = json.Unmarshal(data, &cf)
+		return PxyBackendConfig{}, err
+	}
 }

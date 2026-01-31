@@ -15,8 +15,8 @@ func NewTraceModifier() *TraceModifier {
 	cfg := config.Get()
 
 	mod := new(TraceModifier)
-	mod.enable = cfg.Features.Trace.Enabled
-	mod.header = cfg.Features.Trace.TraceId
+	mod.enable = cfg.Middleware.Trace.Enabled
+	mod.header = cfg.Middleware.Trace.TraceId
 	return mod
 }
 
@@ -28,8 +28,7 @@ func (t TraceModifier) Use(response *http.Response) {
 }
 
 func (t TraceModifier) ModifyResponse(response *http.Response) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (t TraceModifier) IsEnabled() bool {
@@ -37,8 +36,7 @@ func (t TraceModifier) IsEnabled() bool {
 }
 
 func (t TraceModifier) UpdateConfig() {
-	//TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t TraceModifier) GetName() string {
