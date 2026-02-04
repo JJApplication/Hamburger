@@ -101,6 +101,14 @@ type FlowRecordConfig struct {
 	RetentionPeriod string `yaml:"retention_period" json:"retention_period"` // 数据保留期
 }
 
+type Sanitizer struct {
+	Enabled bool `yaml:"enabled" json:"enabled"` // 是否启用缓存
+}
+
+type DomainCheck struct {
+	Enabled bool `yaml:"enabled" json:"enabled"`
+}
+
 // MiddlewareConfig 中间件配置结构体
 type MiddlewareConfig struct {
 	Gzip         GzipConfig  `yaml:"gzip" json:"gzip"` // Gzip压缩配置
@@ -108,6 +116,8 @@ type MiddlewareConfig struct {
 	SecureHeader bool        `yaml:"secure_header" json:"secure_header"` // 安全响应头
 	Trace        TraceConfig `yaml:"trace" json:"trace"`                 // 请求跟踪
 	CORS         CorsConfig  `yaml:"cors" json:"cors"`                   // cors策略
+	Sanitizer    Sanitizer   `yaml:"sanitizer" json:"sanitizer"`         // 请求头标准化
+	DomainCheck  DomainCheck `yaml:"domain_check" json:"domain_check"`   // 域名强制校验
 }
 
 // FeatureConfig 功能特性配置结构体

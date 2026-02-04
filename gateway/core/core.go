@@ -1,6 +1,7 @@
 package core
 
 import (
+	"Hamburger/gateway/prehandler"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -105,6 +106,14 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 			}
 		}
 
+		pm := prehandler.GetManager()
+		for _, handler := range pm.GetPreHandlers() {
+			if err := handler.Handle(request); err != nil {
+				logger.Debug().Err(err).Str("Name", handler.Name()).Msg("pre handler failed")
+				request.URL = &url.URL{}
+				return
+			}
+		}
 		request.URL = resolver.OneResolver(cfg, logger).Parse(request)
 		logger.Debug().Any("URL", request.URL).Msg("parse request")
 	}

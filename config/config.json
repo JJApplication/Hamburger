@@ -112,7 +112,7 @@
   },
   "module": null,
   "stat": {
-    "db_file": "stat.db",
+    "db_file": "data/stat.db",
     "use_db": true,
     "compatible": true,
     "enabled": true,

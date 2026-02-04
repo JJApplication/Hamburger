@@ -54,6 +54,8 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitBackendServer())
 	i.Register(i.InitGrpcProxy())
 	i.Register(i.InitModifierManager())
+	i.Register(i.InitPreHandlerManager())
+	i.Register(i.InitStatManager())
 	i.Register(i.InitPProf())
 
 	// 按优先级排序
