@@ -1,6 +1,7 @@
 package app
 
 import (
+	"Hamburger/gateway/stat"
 	"flag"
 	"os"
 	"os/signal"
@@ -32,6 +33,7 @@ type HamburgerApp struct {
 	Manager         *manager.Manager
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
+	StatServer      *stat.StatServer
 }
 
 const (
@@ -81,6 +83,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.Manager = i.Manager
 	app.GrpcProxy = i.GrpcProxy
 	app.ModifierManager = i.ModifierManager
+	app.StatServer = i.StatServer
 	app.logger = i.GetLogger()
 
 	return nil
@@ -96,7 +99,7 @@ func (app *HamburgerApp) Run() {
 	app.LifeCycle()
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -109,6 +112,13 @@ func (app *HamburgerApp) Run() {
 		defer wg.Done()
 		if err := app.Manager.Start(); err != nil {
 			app.logger.Fatal().Err(err).Msg("gateway server error")
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := app.StatServer.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("stat server error")
 		}
 	}()
 

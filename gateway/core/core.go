@@ -109,8 +109,8 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 		pm := prehandler.GetManager()
 		for _, handler := range pm.GetPreHandlers() {
 			if err := handler.Handle(request); err != nil {
-				logger.Debug().Err(err).Str("Name", handler.Name()).Msg("pre handler failed")
-				request.URL = &url.URL{}
+				logger.Debug().Err(err).Str("Name", handler.Name()).Err(err).Msg("pre handler failed")
+				request.URL = &url.URL{Scheme: constant.SchemeSandwich}
 				return
 			}
 		}

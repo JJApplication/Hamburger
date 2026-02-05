@@ -111,13 +111,14 @@ type DomainCheck struct {
 
 // MiddlewareConfig 中间件配置结构体
 type MiddlewareConfig struct {
-	Gzip         GzipConfig  `yaml:"gzip" json:"gzip"` // Gzip压缩配置
-	NoCache      bool        `yaml:"no_cache" json:"no_cache"`
-	SecureHeader bool        `yaml:"secure_header" json:"secure_header"` // 安全响应头
-	Trace        TraceConfig `yaml:"trace" json:"trace"`                 // 请求跟踪
-	CORS         CorsConfig  `yaml:"cors" json:"cors"`                   // cors策略
-	Sanitizer    Sanitizer   `yaml:"sanitizer" json:"sanitizer"`         // 请求头标准化
-	DomainCheck  DomainCheck `yaml:"domain_check" json:"domain_check"`   // 域名强制校验
+	Gzip         GzipConfig   `yaml:"gzip" json:"gzip"` // Gzip压缩配置
+	NoCache      bool         `yaml:"no_cache" json:"no_cache"`
+	SecureHeader bool         `yaml:"secure_header" json:"secure_header"` // 安全响应头
+	Trace        TraceConfig  `yaml:"trace" json:"trace"`                 // 请求跟踪
+	CORS         CorsConfig   `yaml:"cors" json:"cors"`                   // cors策略
+	Sanitizer    Sanitizer    `yaml:"sanitizer" json:"sanitizer"`         // 请求头标准化
+	DomainCheck  DomainCheck  `yaml:"domain_check" json:"domain_check"`   // 域名强制校验
+	ImageProtect ImageProtect `yaml:"image_protect" json:"image_protect"` // 图片防盗链
 }
 
 // FeatureConfig 功能特性配置结构体
@@ -228,13 +229,12 @@ type SecurityConfig struct {
 	DenyIPs    []string `yaml:"deny_ips" json:"deny_ips"`       // 拒绝的IP列表
 	RateLimit  int      `yaml:"rate_limit" json:"rate_limit"`   // 速率限制
 
-	HSTS             bool         `yaml:"hsts" json:"hsts"`                     // HSTS策略
-	HSTSSubdomain    bool         `yaml:"hsts_subdomain" json:"hsts_subdomain"` // 包含子域名
-	HSTSPreload      bool         `yaml:"hsts_preload" json:"hsts_preload"`     // 预加载
-	XssProtection    bool         `yaml:"xss_protection" json:"xss_protection"` // XSS保护
-	IFrameProtection bool         `yaml:"iframe_protection" json:"iframe_protection"`
-	SameSite         bool         `yaml:"same_site" json:"same_site"`         // 同源策略
-	ImageProtect     ImageProtect `yaml:"image_protect" json:"image_protect"` // 图片防盗链
+	HSTS             bool `yaml:"hsts" json:"hsts"`                     // HSTS策略
+	HSTSSubdomain    bool `yaml:"hsts_subdomain" json:"hsts_subdomain"` // 包含子域名
+	HSTSPreload      bool `yaml:"hsts_preload" json:"hsts_preload"`     // 预加载
+	XssProtection    bool `yaml:"xss_protection" json:"xss_protection"` // XSS保护
+	IFrameProtection bool `yaml:"iframe_protection" json:"iframe_protection"`
+	SameSite         bool `yaml:"same_site" json:"same_site"` // 同源策略
 }
 
 type FrontProxyConfig struct {
@@ -289,6 +289,7 @@ type SequenceConfig struct {
 }
 
 type ImageProtect struct {
+	Enabled      bool     `yaml:"enabled" json:"enabled"`             // 是否启用
 	ImageType    []string `yaml:"image_type" json:"image_type"`       // 过滤的图片类型
 	AllowReferer []string `yaml:"allow_referer" json:"allow_referer"` // 允许的请求头
 }

@@ -6,6 +6,7 @@ import (
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
+	"Hamburger/gateway/stat"
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
@@ -25,6 +26,7 @@ type Initializer struct {
 	Manager         *manager.Manager
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
+	StatServer      *stat.StatServer
 }
 
 type Runner struct {
@@ -56,6 +58,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitModifierManager())
 	i.Register(i.InitPreHandlerManager())
 	i.Register(i.InitStatManager())
+	i.Register(i.InitStatServer())
 	i.Register(i.InitPProf())
 
 	// 按优先级排序

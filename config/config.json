@@ -77,7 +77,47 @@
       "threshold": 2048
     }
   },
-  "features": {},
+  "features": {
+    "flow_control": {
+      "enabled": true,
+      "global_limit": {
+        "requests": 10000,
+        "window": "60s",
+        "unit": "s"
+      },
+      "rules": [
+        {
+          "name": "api-limit",
+          "enabled": true,
+          "priority": 1,
+          "match_type": "host",
+          "match_value": "renj.io",
+          "header_key": "",
+          "limits": [
+            {
+              "requests": 1000,
+              "window": "10s",
+              "unit": "s"
+            },
+            {
+              "requests": 5000,
+              "window": "10min",
+              "unit": "min"
+            }
+          ],
+          "action": "block",
+          "description": "API服务限流"
+        }
+      ],
+      "recording": {
+        "enabled": false,
+        "record_blocked": true,
+        "record_allowed": false,
+        "storage_type": "file",
+        "retention_period": "30d"
+      }
+    }
+  },
   "database": {
     "mongo": {
       "url": "mongodb://localhost:27017",

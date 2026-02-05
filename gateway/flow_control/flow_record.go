@@ -9,12 +9,12 @@ Copyright Renj
 package flow
 
 import (
+	"Hamburger/internal/config"
+	"Hamburger/internal/data"
+	"Hamburger/internal/json"
+	"Hamburger/internal/logger"
 	"net/http"
 	"os"
-	"sandwich/config"
-	"sandwich/data"
-	"sandwich/json"
-	"sandwich/log"
 	"strings"
 	"sync"
 	"time"
@@ -61,7 +61,7 @@ type FlowRecord struct {
 
 // NewFlowRecorder 创建流量记录器
 func NewFlowRecorder() *FlowRecorder {
-	cfg := config.Get().FlowControl.Recording
+	cfg := config.Get().Features.FlowControl.Recording
 	recorder := &FlowRecorder{
 		config:       &cfg,
 		recordBuffer: make([]FlowRecord, 0, 100),
@@ -85,7 +85,7 @@ func (fr *FlowRecorder) RecordBlocked(req *http.Request, result *FlowCheckResult
 	record := fr.createRecord(req, "blocked", result.RuleName, result.Reason)
 	fr.addRecord(record)
 
-	log.GetLogger().Info().Str("Host", record.Host).Str("IP", record.ClientIP).
+	logger.GetLogger().Info().Str("Host", record.Host).Str("IP", record.ClientIP).
 		Str("Rule", record.RuleName).Str("Reason", record.Reason).Msg("Flow blocked")
 }
 
@@ -209,7 +209,7 @@ func (fr *FlowRecorder) doFlush() {
 // storeToInflux 存储到InfluxDB
 func (fr *FlowRecorder) storeToInflux(records []FlowRecord) {
 	if !config.Get().Database.Influx.Enabled {
-		log.Info("InfluxDB is not enabled, switching to file storage")
+		logger.Info("InfluxDB is not enabled, switching to file storage")
 		fr.storeToFile(records)
 		return
 	}
@@ -229,14 +229,14 @@ func (fr *FlowRecorder) storeToInflux(records []FlowRecord) {
 		}
 	}
 
-	log.GetLogger().Info().Int("records", len(records)).Msg("Stored flow records to InfluxDB")
+	logger.GetLogger().Info().Int("records", len(records)).Msg("Stored flow records to InfluxDB")
 }
 
 // storeToMongo 存储到MongoDB
 func (fr *FlowRecorder) storeToMongo(records []FlowRecord) {
 	// 这里需要实现MongoDB存储逻辑
 	// 如果没有现成的MongoDB客户端，先使用文件存储
-	log.Info("MongoDB storage not implemented yet, switching to file storage")
+	logger.Info("MongoDB storage not implemented yet, switching to file storage")
 	fr.storeToFile(records)
 }
 
@@ -244,7 +244,7 @@ func (fr *FlowRecorder) storeToMongo(records []FlowRecord) {
 func (fr *FlowRecorder) storeToFile(records []FlowRecord) {
 	file, err := os.OpenFile(fr.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.GetLogger().Error().Err(err).Msg("Failed to open flow record file")
+		logger.GetLogger().Error().Err(err).Msg("Failed to open flow record file")
 		return
 	}
 	defer file.Close()
@@ -252,16 +252,16 @@ func (fr *FlowRecorder) storeToFile(records []FlowRecord) {
 	for _, record := range records {
 		data, err := json.Marshal(record)
 		if err != nil {
-			log.GetLogger().Error().Err(err).Msg("Failed to marshal flow record")
+			logger.GetLogger().Error().Err(err).Msg("Failed to marshal flow record")
 			continue
 		}
 		_, err = file.WriteString(string(data) + "\n")
 		if err != nil {
-			log.GetLogger().Error().Err(err).Msg("Failed to write flow record")
+			logger.GetLogger().Error().Err(err).Msg("Failed to write flow record")
 		}
 	}
 
-	log.GetLogger().Info().Str("file", fr.filePath).Int("records", len(records)).Msg("Stored flow records to file")
+	logger.GetLogger().Info().Str("file", fr.filePath).Int("records", len(records)).Msg("Stored flow records to file")
 }
 
 // GetBlockedHosts 获取被限流的Host统计

@@ -34,6 +34,9 @@ func NewModifierManager() *PreHandlerManager {
 func InitPreHandlerManager() {
 	pm := GetManager()
 	pm.Add(NewHeaderSanitizer())
+	pm.Add(NewPreCheckDomains())
+	pm.Add(NewRateLimiter())
+	pm.Add(NewImageProtectModifier())
 }
 
 func (m *PreHandlerManager) Add(ph PreHandler) {
