@@ -28,13 +28,11 @@ func BenchmarkOptimizedGzip_VeryLargeData(b *testing.B) {
 
 func benchmarkOptimizedGzip(b *testing.B, dataSize int) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html", "application/json"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	testData := generateTestData(dataSize)
@@ -55,13 +53,11 @@ func benchmarkOptimizedGzip(b *testing.B, dataSize int) {
 // 基准测试：缓存效果
 func BenchmarkOptimizedGzip_WithCache(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.cacheEnabled = true
@@ -88,13 +84,11 @@ func BenchmarkOptimizedGzip_WithCache(b *testing.B) {
 // 基准测试：异步压缩
 func BenchmarkOptimizedGzip_AsyncCompression(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.asyncThreshold = 50 * 1024      // 50KB异步阈值
@@ -116,13 +110,11 @@ func BenchmarkOptimizedGzip_AsyncCompression(b *testing.B) {
 // 基准测试：并发性能
 func BenchmarkOptimizedGzip_Concurrent(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -145,13 +137,11 @@ func BenchmarkOptimizedGzip_Concurrent(b *testing.B) {
 // 对比测试：原版本 vs 优化版本
 func BenchmarkComparison_Original_50KB(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -171,13 +161,11 @@ func BenchmarkComparison_Original_50KB(b *testing.B) {
 
 func BenchmarkComparison_Optimized_50KB(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -198,13 +186,11 @@ func BenchmarkComparison_Optimized_50KB(b *testing.B) {
 // 功能测试
 func TestOptimizedGzipModifier_BasicFunctionality(t *testing.T) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html", "application/json"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 
@@ -256,13 +242,11 @@ func TestOptimizedGzipModifier_BasicFunctionality(t *testing.T) {
 
 func TestOptimizedGzipModifier_CacheHit(t *testing.T) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.cacheEnabled = true
@@ -296,13 +280,11 @@ func TestOptimizedGzipModifier_CacheHit(t *testing.T) {
 
 func TestOptimizedGzipModifier_Stats(t *testing.T) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.cacheEnabled = false // 禁用缓存以测试压缩次数

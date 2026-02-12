@@ -2,7 +2,6 @@ package app
 
 import (
 	"Hamburger/gateway/stat"
-	"flag"
 	"os"
 	"os/signal"
 	"sync"
@@ -17,6 +16,7 @@ import (
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
+
 	"github.com/rs/zerolog"
 )
 
@@ -24,7 +24,8 @@ type HamburgerApp struct {
 	appConf *config.AppConfig
 	conf    *config.Config
 
-	logger *zerolog.Logger // APP日志
+	logger  *zerolog.Logger // APP日志
+	pidFile string
 
 	// Proxy
 	FrontServer     *frontend_proxy.HeliosServer
@@ -40,27 +41,14 @@ const (
 	DefaultConfigFile = "config.json"
 )
 
-var (
-	ConfigFile     = flag.String("config", "config/config.json", "config file")
-	GenerateConfig = flag.Bool("generate", false, "generate config file")
-)
-
-func NewHamburgerApp() *HamburgerApp {
-	flag.Parse()
-
-	if *GenerateConfig {
-		_ = config.CreateConfig()
-		os.Exit(0)
+func NewHamburgerApp(configFile string) (*HamburgerApp, error) {
+	if configFile == "" {
+		configFile = DefaultConfigFile
 	}
-	if *ConfigFile == "" {
-		*ConfigFile = DefaultConfigFile
-	}
-
 	logger.InitLogger()
-	appCfg, err := config.LoadConfig(*ConfigFile)
+	appCfg, err := config.LoadConfig(configFile)
 	if err != nil {
-		logger.GetLogger().Fatal().Err(err).Msg("load config file failed")
-		panic(err)
+		return nil, err
 	}
 
 	cfg := config.Merge(appCfg)
@@ -69,7 +57,8 @@ func NewHamburgerApp() *HamburgerApp {
 	return &HamburgerApp{
 		appConf: appCfg,
 		conf:    cfg,
-	}
+		logger:  logger.GetLogger(),
+	}, nil
 }
 
 func (app *HamburgerApp) InitApp() error {
@@ -123,6 +112,7 @@ func (app *HamburgerApp) Run() {
 	}()
 
 	wg.Wait()
+	app.removePidFile()
 }
 
 // Status 输出服务器状态信息
@@ -155,6 +145,18 @@ func (app *HamburgerApp) LifeCycle() {
 		if err := app.Manager.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("gateway server shutdown failed")
 		}
+		app.removePidFile()
 		os.Exit(0)
 	}()
+}
+
+func (app *HamburgerApp) SetPidFile(pidFile string) {
+	app.pidFile = pidFile
+}
+
+func (app *HamburgerApp) removePidFile() {
+	if app.pidFile == "" {
+		return
+	}
+	_ = os.Remove(app.pidFile)
 }

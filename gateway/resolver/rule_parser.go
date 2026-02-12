@@ -70,9 +70,14 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 	}
 	if host == "localhost" || host == StaticHost {
 		// 内部调用
+		r.logger.Debug().Str("URL", req.URL.RawPath).Msg("host is localhost")
 	} else {
 		serviceMap, ok := runtime.DomainsRuntimeMap.DomainsMap.Get(host)
 		if !ok {
+			// 未匹配运行时域名映射时尝试自定义服务映射
+			if r.IsCustomServiceEnabled() {
+				return r.ResolveCustomService(host)
+			}
 			return RuleResult{
 				ProxyError: errors.New("domains map is empty"),
 			}
@@ -86,6 +91,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			// 纯前端服务
 			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Frontend)
 			return RuleResult{
+				ProxyToType: Frontend,
 				ProxyTo:     serviceMap.Frontend,
 				ProxyHost:   r.cfg.PxyFrontend.Host,
 				ProxyPort:   r.cfg.PxyFrontend.Port,
@@ -101,6 +107,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 				}
 			}
 			return RuleResult{
+				ProxyToType: Backend,
 				ProxyTo:     serviceMap.Backend,
 				ProxyHost:   StaticHost,
 				ProxyPort:   balancer.PickOneRoundRobin(ports),
@@ -116,6 +123,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 				// 前后端分离服务
 				req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Frontend)
 				return RuleResult{
+					ProxyToType: Frontend,
 					ProxyTo:     serviceMap.Frontend,
 					ProxyHost:   r.cfg.PxyFrontend.Host,
 					ProxyPort:   r.cfg.PxyFrontend.Port,
@@ -169,6 +177,39 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 	}
 
 	return RuleResult{}, false
+}
+
+func (r *Ruler) IsCustomServiceEnabled() bool {
+	return r.cfg.PxyCustomService.Enable
+}
+
+// ResolveCustomService 处理自定义后端服务转发
+func (r *Ruler) ResolveCustomService(host string) RuleResult {
+	for _, serviceConfig := range r.cfg.PxyCustomService.CustomService {
+		if host == serviceConfig.Domain {
+			var addrs []struct {
+				Host string
+				Port int
+			}
+			for _, upstream := range serviceConfig.Upstream {
+				addrs = append(addrs, struct {
+					Host string
+					Port int
+				}{Host: upstream.Host, Port: upstream.Port})
+			}
+			realHost, port := balancer.PickOneAddrRoundRobin(addrs)
+			return RuleResult{
+				ProxyToType: Backend,
+				ProxyTo:     "",
+				ProxyHost:   realHost,
+				ProxyPort:   port,
+				ProxyScheme: StaticSchema,
+			}
+		}
+	}
+	return RuleResult{
+		ProxyError: errors.New("unknown host"),
+	}
 }
 
 func IsBackend(req *http.Request) bool {

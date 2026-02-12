@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"Hamburger/gateway/stat"
 	"Hamburger/internal/config"
 	"Hamburger/internal/serror"
 	"fmt"
@@ -33,6 +34,11 @@ func OneResolver(cfg *config.Config, logger *zerolog.Logger) *Resolver {
 	return &resolver
 }
 
+func (r *Resolver) FastCheckFront(request *http.Request) bool {
+	result := r.ruler.Parse(request)
+	return result.ProxyToType == Frontend
+}
+
 func (r *Resolver) Parse(request *http.Request) *url.URL {
 	host := request.Host
 	result := r.ruler.Parse(request)
@@ -40,6 +46,12 @@ func (r *Resolver) Parse(request *http.Request) *url.URL {
 	r.logger.Debug().Any("Result", result).Err(result.ProxyError).Msg("rule-parse request")
 	if r.ResolveError(result, request) {
 		return nil
+	}
+
+	if result.ProxyToType == Frontend {
+		stat.Add(stat.Static)
+	} else if result.ProxyToType == Backend {
+		stat.Add(stat.API)
 	}
 
 	request.URL.Scheme = result.ProxyScheme

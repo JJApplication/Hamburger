@@ -89,3 +89,17 @@ func PickOneRoundRobin(ports []int) int {
 	}
 	return balancer.PickOne()
 }
+
+func PickOneAddrRoundRobin(addrs []struct {
+	Host string
+	Port int
+}) (host string, port int) {
+	if len(addrs) == 0 {
+		return
+	}
+	i := mathutil.RandomInt(0, len(addrs)-1)
+	host = addrs[i].Host
+	port = addrs[i].Port
+
+	return
+}

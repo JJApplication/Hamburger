@@ -106,6 +106,13 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 			}
 		}
 
+		// 请求次数
+		stat.Add(stat.Total)
+		// 统计域名
+		stat.AddDomainStat(request.Host)
+		// 统计远程地址
+		stat.AddGeo(request.RemoteAddr)
+
 		pm := prehandler.GetManager()
 		for _, handler := range pm.GetPreHandlers() {
 			if err := handler.Handle(request); err != nil {

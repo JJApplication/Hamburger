@@ -35,6 +35,9 @@ func syncGEOStat() {
 // AddGeo 使用协程处理 减少耗时
 func AddGeo(addr string) {
 	go func() {
+		if addr == "" || addr == "127.0.0.1" {
+			return
+		}
 		cfg := config.Get()
 		if !cfg.Stat.EnableStat {
 			return

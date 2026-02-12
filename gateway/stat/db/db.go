@@ -19,7 +19,7 @@ var (
 // 成功后根据配置设置启用状态与时间间隔
 func Init(cfg *config.Config) error {
 	enabled = cfg.Stat.UseDB
-	if !enabled || cfg.Stat.DBFile == "" {
+	if !enabled || cfg.Stat.DBFile == "" || !cfg.Stat.EnableStat {
 		return nil
 	}
 

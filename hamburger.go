@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-	"Hamburger/app"
+	"Hamburger/app/cli"
 )
 
 var (
@@ -16,8 +17,8 @@ var (
 func main() {
 	fmt.Printf("%s - %s\n", AppName, Description)
 	fmt.Printf("Version: %s\nBuildHash: %s\n\n", Version, BuildHash)
-	hamburger := app.NewHamburgerApp()
-	hamburger.Run()
-
-	select {}
+	if err := cli.Execute(); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 }

@@ -15,14 +15,14 @@ var (
 func GetManager() *PreHandlerManager {
 	once.Do(func() {
 		if m == nil {
-			m = NewModifierManager()
+			m = NewPreHandlerManager()
 		}
 	})
 	return m
 }
 
-// NewModifierManager 创建新的修改器管理器
-func NewModifierManager() *PreHandlerManager {
+// NewPreHandlerManager 创建新的修改器管理器
+func NewPreHandlerManager() *PreHandlerManager {
 	manager := &PreHandlerManager{
 		lock:      sync.RWMutex{},
 		modifiers: make([]PreHandler, 0),

@@ -23,9 +23,9 @@ func LoadDomainStat() *structure.Map[*int64] {
 func SaveDomainStat() {
 	cfg := config.Get()
 	if cfg.Stat.UseDB {
-		domainFileSaver(cfg)
-	} else {
 		domainDBSaver()
+	} else {
+		domainFileSaver(cfg)
 	}
 }
 

@@ -83,6 +83,10 @@ func (s *HeliosServer) setupGin() {
 	s.gin.Use(RoutingMiddleware(s))
 }
 
+func (s *HeliosServer) GetHandler() http.Handler {
+	return s.gin
+}
+
 // HandleStaticFile 处理静态文件请求
 func (s *HeliosServer) HandleStaticFile(c *gin.Context, serverConfig *config.FrontServerConfig) {
 	requestPath := c.Request.URL.Path

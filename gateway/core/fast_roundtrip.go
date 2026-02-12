@@ -1,14 +1,13 @@
 package core
 
 import (
+	"Hamburger/internal/config"
+	"Hamburger/internal/logger"
 	"bytes"
 	"io"
 	"net/http"
 	"strings"
 	"time"
-
-	"Hamburger/internal/config"
-	"Hamburger/internal/logger"
 
 	"github.com/valyala/fasthttp"
 )
@@ -85,11 +84,7 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 	}
 
-	logger.L().Debug().Any("URL", req.URL).Str("Host", req.Host).Str("RequestURL", req.RequestURI).Msg("OriginalRequest")
-	logger.L().Debug().Any("URL", fr.URI()).Str("Host", string(fr.Host())).Str("RequestURL", string(fr.RequestURI())).Msg("FastHttpRequest")
 	logger.L().Debug().Str("Host", string(fr.Host())).Msg("fasthttp client")
-
-	// 代理到真实服务器必须重置Host
 
 	// 复制请求体（尽量流式）
 	if req.Body != nil {

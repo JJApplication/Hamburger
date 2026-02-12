@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package grpc_server;
+
+option go_package = "Hamburger/app/grpc_server";
+
+service AppService {
+    // 获取Gateway状态
+    rpc GetGatewayStatus (Empty) returns (GatewayStatusResponse);
+    // 获取FrontProxy状态
+    rpc GetFrontProxyStatus (Empty) returns (FrontProxyStatusResponse);
+    // 获取ModifierManager信息
+    rpc GetModifierManagerInfo (Empty) returns (ModifierManagerInfoResponse);
+    // 获取StatServer配置
+    rpc GetStatServerConfig (Empty) returns (StatServerConfigResponse);
+}
+
+message Empty {}
+
+message GatewayStatusResponse {
+    repeated ServerStatus servers = 1;
+    repeated ServerStatus http3_servers = 2;
+}
+
+message ServerStatus {
+    string name = 1;
+    bool running = 2;
+    string address = 3;
+}
+
+message FrontProxyStatusResponse {
+    bool running = 1;
+    string mode = 2;
+    string root = 3;
+}
+
+message ModifierManagerInfoResponse {
+    int32 modifier_count = 1;
+    repeated ModifierInfo modifiers = 2;
+}
+
+message ModifierInfo {
+    string name = 1;
+    bool enabled = 2;
+}
+
+message StatServerConfigResponse {
+    bool enabled = 1;
+    string host = 2;
+    int32 port = 3;
+}

@@ -1,12 +1,12 @@
 package modifier
 
 import (
+	"Hamburger/internal/config"
 	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"Hamburger/internal/config"
 	"strings"
 	"testing"
 	"time"
@@ -47,7 +47,7 @@ func generateJSONData(size int) []byte {
 func createTestResponse(data []byte, contentType string) *http.Response {
 	req := httptest.NewRequest("GET", "/test", nil)
 	req.Header.Set("Accept-Encoding", "gzip, deflate")
-	
+
 	resp := &http.Response{
 		StatusCode: 200,
 		Header:     make(http.Header),
@@ -56,7 +56,7 @@ func createTestResponse(data []byte, contentType string) *http.Response {
 	}
 	resp.Header.Set("Content-Type", contentType)
 	resp.Header.Set("Content-Length", string(rune(len(data))))
-	
+
 	return resp
 }
 
@@ -81,21 +81,18 @@ func BenchmarkGzipModifier_VeryLargeData(b *testing.B) {
 func benchmarkGzipModifier(b *testing.B, dataSize int) {
 	// 初始化配置
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html", "application/json"}
-	cfg.Features.Gzip.Threshold = 1024
-	
-	// 使用ConfigLoader设置配置
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
 	testData := generateTestData(dataSize)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(testData, "text/html")
 		err := modifier.ModifyResponse(resp)
@@ -121,20 +118,18 @@ func BenchmarkGzipModifier_Level9(b *testing.B) {
 
 func benchmarkGzipLevel(b *testing.B, level int) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = level
-	cfg.Features.Gzip.Types = []string{"text/html", "application/json"}
-	cfg.Features.Gzip.Threshold = 1024
-	
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = level
+	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024) // 50KB
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(testData, "text/html")
 		err := modifier.ModifyResponse(resp)
@@ -161,19 +156,17 @@ func BenchmarkGzipModifier_CSS(b *testing.B) {
 
 func benchmarkGzipContentType(b *testing.B, contentType string, data []byte) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html", "application/json", "text/css"}
-	cfg.Features.Gzip.Threshold = 1024
-	
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json", "text/css"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(data, contentType)
 		err := modifier.ModifyResponse(resp)
@@ -187,20 +180,18 @@ func benchmarkGzipContentType(b *testing.B, contentType string, data []byte) {
 // 基准测试：对象池效果
 func BenchmarkGzipModifier_WithPool(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-	
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(testData, "text/html")
 		err := modifier.ModifyResponse(resp)
@@ -214,19 +205,19 @@ func BenchmarkGzipModifier_WithPool(b *testing.B) {
 // 基准测试：不使用对象池（对比）
 func BenchmarkGzipModifier_WithoutPool(b *testing.B) {
 	testData := generateTestData(50 * 1024)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(testData, "text/html")
-		
+
 		// 直接压缩，不使用对象池
 		var buf bytes.Buffer
 		writer, _ := gzip.NewWriterLevel(&buf, 6)
 		writer.Write(testData)
 		writer.Close()
-		
+
 		resp.Body.Close()
 	}
 }
@@ -234,20 +225,18 @@ func BenchmarkGzipModifier_WithoutPool(b *testing.B) {
 // 基准测试：阈值检查的影响
 func BenchmarkGzipModifier_BelowThreshold(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 10240 // 10KB阈值
-	
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 10240 // 10KB阈值
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
 	testData := generateTestData(5 * 1024) // 5KB数据，低于阈值
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(testData, "text/html")
 		err := modifier.ModifyResponse(resp)
@@ -261,20 +250,18 @@ func BenchmarkGzipModifier_BelowThreshold(b *testing.B) {
 // 基准测试：并发压缩
 func BenchmarkGzipModifier_Concurrent(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-	
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp := createTestResponse(testData, "text/html")
@@ -290,19 +277,17 @@ func BenchmarkGzipModifier_Concurrent(b *testing.B) {
 // 性能分析：压缩比和时间的关系
 func BenchmarkGzipModifier_CompressionRatio(b *testing.B) {
 	cfg := config.GetDefaultConfig()
-	cfg.Features.Gzip.Enabled = true
-	cfg.Features.Gzip.Level = 6
-	cfg.Features.Gzip.Types = []string{"text/html"}
-	cfg.Features.Gzip.Threshold = 1024
-	
-	loader := config.NewConfigLoader("")
-	loader.RegisterGlobalConfig(cfg)
-	
+	cfg.Middleware.Gzip.Enabled = true
+	cfg.Middleware.Gzip.Level = 6
+	cfg.Middleware.Gzip.Types = []string{"text/html"}
+	cfg.Middleware.Gzip.Threshold = 1024
+	config.Set(config.Merge(cfg))
+
 	modifier := NewGzipModifier()
 	testData := generateTestData(100 * 1024)
-	
+
 	b.ResetTimer()
-	
+
 	start := time.Now()
 	for i := 0; i < b.N; i++ {
 		resp := createTestResponse(testData, "text/html")
@@ -313,7 +298,7 @@ func BenchmarkGzipModifier_CompressionRatio(b *testing.B) {
 		resp.Body.Close()
 	}
 	duration := time.Since(start)
-	
+
 	b.ReportMetric(float64(len(testData)), "original_bytes")
 	b.ReportMetric(duration.Seconds()/float64(b.N), "seconds_per_op")
 }
