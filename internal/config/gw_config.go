@@ -38,11 +38,16 @@ type ServerConfig struct {
 	MaxHeaderBytes    int64 `yaml:"max_header_bytes" json:"max_header_bytes"`
 }
 
+type CertConfig struct {
+	Domains  []string `yaml:"domains" json:"domains"`     // 域名组
+	CertFile string   `yaml:"cert_file" json:"cert_file"` // 证书文件路径
+	KeyFile  string   `yaml:"key_file" json:"key_file"`   // 私钥文件路径
+}
+
 // TLSConfig TLS证书配置结构体
 type TLSConfig struct {
-	CertFile string `yaml:"cert_file" json:"cert_file"` // 证书文件路径
-	KeyFile  string `yaml:"key_file" json:"key_file"`   // 私钥文件路径
-	AutoTLS  bool   `yaml:"auto_tls" json:"auto_tls"`   // 是否启用自动TLS
+	CertMap map[string]CertConfig `yaml:"cert_map" json:"cert_map"`
+	AutoTLS bool                  `yaml:"auto_tls" json:"auto_tls"` // 是否启用自动TLS
 }
 
 // DomainConfig 域名配置结构体
@@ -319,9 +324,14 @@ func GetDefaultConfig() *AppConfig {
 				Enabled:        false,
 				MaxRequestBody: 32 * 1024 * 1024, // 32MB
 				TLS: &TLSConfig{
-					CertFile: "/path/to/cert.pem",
-					KeyFile:  "/path/to/key.pem",
-					AutoTLS:  false,
+					CertMap: map[string]CertConfig{
+						"renj.io": {
+							[]string{""},
+							"/path/to/cert.pem",
+							"/path/to/key.pem",
+						},
+					},
+					AutoTLS: false,
 				},
 			},
 		},

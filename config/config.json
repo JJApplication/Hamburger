@@ -36,8 +36,13 @@
       "enabled": true,
       "max_request_body": 52428800,
       "tls": {
-        "cert_file": "config/ssl/fullchain.cer",
-        "key_file": "config/ssl/ssl.key",
+        "cert_map": {
+          "renj.io": {
+            "domains": [],
+            "cert_file": "config/ssl/fullchain.cer",
+            "key_file": "config/ssl/ssl.key"
+          }
+        },
         "auto_tls": false
       },
       "domains": [

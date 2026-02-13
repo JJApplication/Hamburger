@@ -21,6 +21,9 @@ type TLSManager struct {
 	AcmeMgr *autocert.Manager  // autocert 管理器
 	acmeMU  sync.Mutex         // 刷新证书过程的互斥锁，避免并发冲突
 	sf      singleflight.Group // 用于合并并发的证书请求
+	// cert map
+	certMu  sync.RWMutex
+	certMap map[string]config.CertConfig
 
 	beforeAutoCert func() error
 	afterAutoCert  func() error
@@ -107,15 +110,9 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 		return base, lis, nil
 	}
 
-	// 加载证书和私钥
-	cert, err := tls.LoadX509KeyPair(tlsConfig.CertFile, tlsConfig.KeyFile)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load TLS certificate: %v", err)
-	}
-
 	// 配置 TLS
 	tlsCfg := &tls.Config{
-		Certificates: []tls.Certificate{cert},
+		GetCertificate: m.GetCertificateFunc(),
 		// 设置最低 TLS 版本
 		MinVersion: tls.VersionTLS12,
 		// 优先使用服务器的密码套件顺序
@@ -128,14 +125,9 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 	return tlsCfg, lis, nil
 }
 
-func (m *TLSManager) GetTlsConfig(tlsConfig *config.TLSConfig) *tls.Config {
-	// 加载证书和私钥
-	cert, err := tls.LoadX509KeyPair(tlsConfig.CertFile, tlsConfig.KeyFile)
-	if err != nil {
-		return nil
-	}
+func (m *TLSManager) GetTlsConfig() *tls.Config {
 	tlsCfg := &tls.Config{
-		Certificates: []tls.Certificate{cert},
+		GetCertificate: m.GetCertificateFunc(),
 		// 设置最低 TLS 版本
 		MinVersion: tls.VersionTLS12,
 		// 优先使用服务器的密码套件顺序

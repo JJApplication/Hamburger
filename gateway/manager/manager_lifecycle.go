@@ -30,6 +30,7 @@ func NewManager(cfg *config.Config, logger *zerolog.Logger, handler http.Handler
 		cancel:      cancel,
 		logger:      logger,
 	}
+	tlsManager.InitCertMap()
 	tlsManager.RegisterBeforeAutoCert(m.beforeHandleAutoCert)
 	tlsManager.RegisterBeforeAutoCert(m.afterHandleAutoCert)
 	m.tlsManager = tlsManager
@@ -110,7 +111,7 @@ func (m *Manager) startHttp3Server(cfg config.HTTP3Config, serverConfig config.S
 	go func() {
 		http3Srv.Name = serverConfig.Name
 		http3Srv.Address = addr
-		err := http3Srv.Start(addr, m.tlsManager.GetTlsConfig(serverConfig.TLS))
+		err := http3Srv.Start(addr, m.tlsManager.GetTlsConfig())
 		if err != nil {
 			m.logger.Error().Err(err).Str("server", serverConfig.Name).Msg("failed to start http3 service")
 		}
