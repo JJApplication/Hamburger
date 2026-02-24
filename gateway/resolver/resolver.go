@@ -39,13 +39,13 @@ func (r *Resolver) FastCheckFront(request *http.Request) bool {
 	return result.ProxyToType == Frontend
 }
 
-func (r *Resolver) Parse(request *http.Request) *url.URL {
+func (r *Resolver) Parse(request *http.Request) (*url.URL, RuleResult) {
 	host := request.Host
 	result := r.ruler.Parse(request)
 
 	r.logger.Debug().Any("Result", result).Err(result.ProxyError).Msg("rule-parse request")
 	if r.ResolveError(result, request) {
-		return nil
+		return nil, RuleResult{}
 	}
 
 	if result.ProxyToType == Frontend {
@@ -59,7 +59,7 @@ func (r *Resolver) Parse(request *http.Request) *url.URL {
 	request.Header.Set("Host", host)                               // 设置真实HOST
 	request.Header.Set(r.cfg.ProxyHeader.FrontendHostHeader, host) // 设置真实HOST
 
-	return request.URL
+	return request.URL, result
 }
 
 func (r *Resolver) ResolveError(result RuleResult, req *http.Request) (hasError bool) {

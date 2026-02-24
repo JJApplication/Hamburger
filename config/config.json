@@ -121,6 +121,14 @@
         "storage_type": "file",
         "retention_period": "30d"
       }
+    },
+    "websocket": {
+      "enabled": true
+    },
+    "proxy_cache": {
+      "enabled": true,
+      "cache_size": 2048,
+      "cache_ttl": 3600
     }
   },
   "database": {

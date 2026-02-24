@@ -137,6 +137,15 @@ type FeatureConfig struct {
 	GrpcProxy   GrpcProxyConfig   `yaml:"grpc_proxy" json:"grpc_proxy"`     // gRPC代理配置
 	FlowControl FlowControlConfig `yaml:"flow_control" json:"flow_control"` // 流控配置
 	Break       BreakConfig       `yaml:"break" json:"break"`               // 熔断配置
+	ProxyCache  ProxyCacheConfig  `yaml:"proxy_cache" json:"proxy_cache"`   // 代理缓存
+}
+
+type ProxyCacheConfig struct {
+	Enabled   bool   `yaml:"enabled" json:"enabled"`
+	LayerType string `yaml:"layer_type" json:"layer_type"` // 存储层类型 file|db|cache
+	CacheSize int    `yaml:"cache_size" json:"cache_size"`
+	CacheTTL  int    `yaml:"cache_ttl" json:"cache_ttl"`
+	CachePath string `yaml:"cache_path" json:"cache_path"` // 缓存路径
 }
 
 // HTTP3Config HTTP/3协议配置结构体

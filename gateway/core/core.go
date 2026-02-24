@@ -2,6 +2,7 @@ package core
 
 import (
 	"Hamburger/gateway/prehandler"
+	"Hamburger/gateway/proxy_cache"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -121,7 +122,22 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 				return
 			}
 		}
-		request.URL = resolver.OneResolver(cfg, logger).Parse(request)
+		// 处理解析缓存 只缓存后端前端由Helios控制
+		if cfg.Features.ProxyCache.Enabled {
+			cache, ok := proxy_cache.M().Get(request)
+			if ok {
+				request.URL = cache.CacheToURL(request)
+			} else {
+				// 缓存未命中
+				finalURL, result := resolver.OneResolver(cfg, logger).Parse(request)
+				request.URL = finalURL
+				if result.ProxyToType != resolver.Frontend {
+					proxy_cache.M().Set(request, result.ProxyHost, result.ProxyPort, result.ProxyScheme)
+				}
+			}
+		} else {
+			request.URL, _ = resolver.OneResolver(cfg, logger).Parse(request)
+		}
 		logger.Debug().Any("URL", request.URL).Msg("parse request")
 	}
 }
