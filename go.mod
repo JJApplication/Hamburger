@@ -10,6 +10,8 @@ require (
 	github.com/gookit/goutil v0.5.5
 	github.com/json-iterator/go v1.1.12
 	github.com/kamva/mgm/v3 v3.5.0
+	github.com/lesismal/llib v1.2.2
+	github.com/lesismal/nbio v1.6.8
 	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 	github.com/quic-go/quic-go v0.54.0
 	github.com/rs/zerolog v1.34.0

@@ -12,6 +12,7 @@ type ProxyConfig struct {
 	BufSize         int    `yaml:"buf_size" json:"buf_size"`
 	Transport       string `yaml:"transport" json:"transport"`                   // 传统 | fast
 	ProxyMode       string `yaml:"proxy_mode" json:"proxy_mode"`                 // 代理模式: http | fasthttp
+	NetIO           string `yaml:"net_io" json:"net_io"`                         // fasthttp | nbio | http
 	MaxConnsPerHost int    `yaml:"max_conns_per_host" json:"max_conns_per_host"` // 每个主机最大连接数
 	IdleConnTimeout int    `yaml:"idle_conn_timeout" json:"idle_conn_timeout"`   // 空闲连接超时
 }

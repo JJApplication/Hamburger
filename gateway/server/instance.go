@@ -2,15 +2,22 @@ package server
 
 import (
 	"Hamburger/internal/config"
-	"github.com/rs/zerolog"
+	"context"
 	"net"
-	"net/http"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
+
+type serverRunner interface {
+	Serve(net.Listener) error
+	Shutdown(context.Context) error
+	Close() error
+}
 
 type ServerInstance struct {
 	Name     string              // 服务器名称
-	Server   *http.Server        // HTTP 服务器
+	Server   serverRunner        // HTTP 服务器
 	Listener net.Listener        // 网络监听器
 	TLS      bool                // 是否启用 TLS
 	Started  bool                // 是否已启动

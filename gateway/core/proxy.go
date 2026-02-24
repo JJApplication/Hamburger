@@ -2,6 +2,7 @@ package core
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
 	"github.com/rs/zerolog"
 	"net/http"
 	"sync"
@@ -28,9 +29,9 @@ func NewProxy(conf *config.Config, logger *zerolog.Logger) *Proxy {
 func (p *Proxy) Create() http.Handler {
 	p.once.Do(func() {
 		switch p.conf.CoreProxy.ProxyMode {
-		case "http":
+		case constant.ProxyMode_HTTP:
 			p.handler = NewHttpProxy(p.conf, p.logger)
-		case "fasthttp":
+		case constant.ProxyMode_FastHTTP:
 			p.handler = NewFastProxy(p.conf, p.logger)
 		default:
 			p.handler = NewHttpProxy(p.conf, p.logger)

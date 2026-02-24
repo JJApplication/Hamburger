@@ -9,6 +9,7 @@ import (
 	"net"
 	"sync"
 
+	lltls "github.com/lesismal/llib/std/crypto/tls"
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/singleflight"
@@ -135,6 +136,114 @@ func (m *TLSManager) GetTlsConfig() *tls.Config {
 	}
 
 	return tlsCfg
+}
+
+func (m *TLSManager) GetNbioTLSConfig(tlsConfig *config.TLSConfig) (*lltls.Config, error) {
+	if tlsConfig == nil {
+		return nil, fmt.Errorf("HTTPS server missing TLS configuration")
+	}
+
+	if tlsConfig.AutoTLS {
+		domains := GetTlsDomains(m.config)
+		if len(domains) == 0 {
+			return nil, fmt.Errorf("autotls enabled but no domains configured, cannot request certificate")
+		}
+
+		if m.AcmeMgr == nil {
+			m.AcmeMgr = autocert2.NewCertManager(domains, m.config.Features.AutoCert.Email)
+		}
+
+		origGetCert := m.AcmeMgr.GetCertificate
+		getCert := func(hello *lltls.ClientHelloInfo) (*lltls.Certificate, error) {
+			if hello == nil {
+				return nil, nil
+			}
+			val, err, _ := m.sf.Do("cert:"+hello.ServerName, func() (interface{}, error) {
+				m.acmeMU.Lock()
+				defer m.acmeMU.Unlock()
+
+				if m.beforeAutoCert != nil {
+					if err := m.beforeAutoCert(); err != nil {
+						m.logger.Error().Err(err).Msg("autotls: beforehandleautocert failed")
+					}
+				}
+
+				stdHello := &tls.ClientHelloInfo{
+					ServerName: hello.ServerName,
+				}
+				stdCert, err := origGetCert(stdHello)
+
+				if m.afterAutoCert != nil {
+					if err2 := m.afterAutoCert(); err2 != nil {
+						m.logger.Error().Err(err2).Msg("autotls: afterhandleautocert failed")
+					}
+				}
+
+				if err != nil {
+					m.logger.Error().Err(err).Msg("autotls: failed to obtain certificate")
+					return nil, err
+				}
+
+				return toNbioCertificate(stdCert), nil
+			})
+			if err != nil {
+				return nil, err
+			}
+			return val.(*lltls.Certificate), nil
+		}
+
+		tlsCfg := &lltls.Config{
+			GetCertificate: getCert,
+			MinVersion:     lltls.VersionTLS12,
+		}
+		tlsCfg.PreferServerCipherSuites = true
+		return tlsCfg, nil
+	}
+
+	tlsCfg := &lltls.Config{
+		GetCertificate: func(info *lltls.ClientHelloInfo) (*lltls.Certificate, error) {
+			if info == nil {
+				return nil, nil
+			}
+			sniName := info.ServerName
+			if sniName == "" {
+				return nil, nil
+			}
+			domainCert, domainKey := m.GetCert(sniName)
+			if domainCert == "" || domainKey == "" {
+				return nil, nil
+			}
+			cert, err := lltls.LoadX509KeyPair(domainCert, domainKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load TLS certificate: %v", err)
+			}
+			return &cert, nil
+		},
+		MinVersion: lltls.VersionTLS12,
+	}
+	tlsCfg.PreferServerCipherSuites = true
+	return tlsCfg, nil
+}
+
+func toNbioCertificate(cert *tls.Certificate) *lltls.Certificate {
+	if cert == nil {
+		return nil
+	}
+	var sigAlgs []lltls.SignatureScheme
+	if len(cert.SupportedSignatureAlgorithms) > 0 {
+		sigAlgs = make([]lltls.SignatureScheme, len(cert.SupportedSignatureAlgorithms))
+		for i, alg := range cert.SupportedSignatureAlgorithms {
+			sigAlgs[i] = lltls.SignatureScheme(alg)
+		}
+	}
+	return &lltls.Certificate{
+		Certificate:                   cert.Certificate,
+		PrivateKey:                    cert.PrivateKey,
+		SupportedSignatureAlgorithms:  sigAlgs,
+		OCSPStaple:                    cert.OCSPStaple,
+		SignedCertificateTimestamps:   cert.SignedCertificateTimestamps,
+		Leaf:                          cert.Leaf,
+	}
 }
 
 // GetTlsDomains 获取sever和autoCert配置中的ssl域名 取交集

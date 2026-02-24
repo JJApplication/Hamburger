@@ -39,12 +39,12 @@ var (
 func getOptimizedTransport(transport string) *myTransport {
 	transportOnce.Do(func() {
 		switch transport {
-		case "http":
+		case constant.ProxyMode_HTTP:
 			sharedTransport = &myTransport{
 				Transport: OriginRoundTrip(),
 				conf:      config.Get(),
 			}
-		case "fasthttp":
+		case constant.ProxyMode_FastHTTP:
 			sharedTransport = &myTransport{
 				Transport: NewFastRoundTripper(),
 				conf:      config.Get(),

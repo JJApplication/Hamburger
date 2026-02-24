@@ -144,7 +144,7 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 		originHandler = wrapHandlerWithTag(h, "http80")
 	}
 	// 创建 HTTP 服务器
-	instance.Server = &http.Server{
+	httpServer := &http.Server{
 		Addr:    addr,
 		Handler: originHandler,
 		// 设置合理的超时时间
@@ -159,10 +159,10 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 
 	// 配置最大请求体大小和自动重定向
 	if serverConfig.MaxRequestBody > 0 {
-		instance.Server.Handler = wrapHandlerWithMaxBody(instance.Server.Handler, logger, serverConfig)
+		httpServer.Handler = wrapHandlerWithMaxBody(httpServer.Handler, logger, serverConfig)
 	}
 	if serverConfig.Protocol == "http" {
-		instance.Server.Handler = wrapHandlerWithAutoHttpsRedirect(instance.Server.Handler, logger, serverConfig)
+		httpServer.Handler = wrapHandlerWithAutoHttpsRedirect(httpServer.Handler, logger, serverConfig)
 	}
 
 	// 创建监听器
@@ -182,12 +182,13 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 				return nil, fmt.Errorf("failed to configure TLS: %v", err)
 			}
 			instance.Listener = lis
-			instance.Server.TLSConfig = tlsConfig
+			httpServer.TLSConfig = tlsConfig
 			instance.lock.Unlock()
 		}
 	}
 	logger.Info().Msgf("server %s starting listener on %s (protocol: %s)",
 		serverConfig.Name, addr, serverConfig.Protocol)
 
+	instance.Server = httpServer
 	return instance, nil
 }

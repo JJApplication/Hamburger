@@ -1,11 +1,13 @@
 package manager
 
 import (
+	"Hamburger/internal/constant"
 	"context"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -87,7 +89,17 @@ func (m *Manager) Start() error {
 
 // startServer 启动单个服务器
 func (m *Manager) startServer(serverConfig config.ServerConfig, logger *zerolog.Logger) error {
-	instance, err := server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager)
+	netIO := strings.TrimSpace(strings.ToLower(m.config.CoreProxy.NetIO))
+	var instance *server.ServerInstance
+	var err error
+	switch netIO {
+	case constant.NetIO_NBIO:
+		instance, err = server.CommonNbioServer(serverConfig, logger, m.handler, m.tlsManager)
+	case constant.NetIO_NET:
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager)
+	default:
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager)
+	}
 	if err != nil {
 		return err
 	}

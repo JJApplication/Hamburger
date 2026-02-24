@@ -2,6 +2,7 @@ package core
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
 	"Hamburger/internal/utils"
 	"github.com/rs/zerolog"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 func NewFastProxy(cfg *config.Config, logger *zerolog.Logger) http.Handler {
 	proxy := &httputil.ReverseProxy{
 		Director:       ProxyDirector(cfg, logger),
-		Transport:      getOptimizedTransport("fasthttp"), // 使用fasthttp transport
+		Transport:      getOptimizedTransport(constant.ProxyMode_FastHTTP), // 使用fasthttp transport
 		FlushInterval:  time.Duration(utils.DefaultInt64(cfg.CoreProxy.FlushInterval, FlushInterval)) * time.Millisecond,
 		ErrorLog:       nil,
 		BufferPool:     getBufferPool(utils.DefaultInt(cfg.CoreProxy.BufSize, BufferSize)),
