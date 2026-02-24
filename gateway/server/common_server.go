@@ -164,6 +164,7 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 	if serverConfig.Protocol == "http" {
 		httpServer.Handler = wrapHandlerWithAutoHttpsRedirect(httpServer.Handler, logger, serverConfig)
 	}
+	httpServer.Handler = wrapHandlerWithWebSocket(httpServer.Handler, logger, serverConfig)
 
 	// 创建监听器
 	listener, err := net.Listen("tcp", addr)

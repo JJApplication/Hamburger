@@ -54,6 +54,7 @@ type TLSConfig struct {
 // DomainConfig 域名配置结构体
 type DomainConfig struct {
 	Domains        []string `yaml:"domains" json:"domains"`                 // 域名
+	WsDomains      []string `yaml:"ws_domains" json:"ws_domains"`           // websocket域名
 	UseTLS         bool     `yaml:"use_tls" json:"use_tls"`                 // 监听在https
 	AutoRedirect   bool     `yaml:"auto_redirect" json:"auto_redirect"`     // 自动重定向
 	UseWebsocket   bool     `yaml:"use_websocket" json:"use_websocket"`     // 开启websocket
