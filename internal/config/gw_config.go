@@ -1,12 +1,5 @@
 package config
 
-import (
-	"os"
-
-	"Hamburger/internal/constant"
-	"Hamburger/internal/json"
-)
-
 type ProxyConfig struct {
 	FlushInterval   int64  `yaml:"flush_interval" json:"flush_interval"`
 	BufSize         int    `yaml:"buf_size" json:"buf_size"`
@@ -63,59 +56,6 @@ type DomainConfig struct {
 	HSTSPreload    bool     `yaml:"hsts_preload" json:"hsts_preload"`       // HSTS是否启用预加载
 }
 
-// BreakConfig 熔断配置
-type BreakConfig struct {
-	Bucket   int `yaml:"bucket" json:"bucket"`       // 桶数量
-	MaxError int `yaml:"max_error" json:"max_error"` // 最大允许错误
-	Reset    int `yaml:"reset" json:"reset"`         // 重置时间
-}
-
-// FlowControlRule 流控规则配置结构体
-type FlowControlRule struct {
-	Name        string      `yaml:"name" json:"name"`               // 规则名称
-	Enabled     bool        `yaml:"enabled" json:"enabled"`         // 是否启用
-	Priority    int         `yaml:"priority" json:"priority"`       // 优先级，数字越小优先级越高
-	MatchType   string      `yaml:"match_type" json:"match_type"`   // 匹配类型: host, header, ip
-	MatchValue  string      `yaml:"match_value" json:"match_value"` // 匹配值
-	HeaderKey   string      `yaml:"header_key" json:"header_key"`   // 当match_type为header时的header键名
-	Limits      []RateLimit `yaml:"limits" json:"limits"`           // 速率限制配置列表
-	Action      string      `yaml:"action" json:"action"`           // 限流动作: block, delay
-	Description string      `yaml:"description" json:"description"` // 规则描述
-}
-
-// RateLimit 速率限制配置结构体
-type RateLimit struct {
-	Requests int    `yaml:"requests" json:"requests"` // 允许的请求数
-	Window   string `yaml:"window" json:"window"`     // 时间窗口，如 "100s"、"10min"
-	Unit     string `yaml:"unit" json:"unit"`         // 时间单位: s, min
-	Mode     string `yaml:"mode" json:"mode"`         // 限流模式: fixed, leaky, token, sliding
-}
-
-// FlowControlConfig 流控配置结构体
-type FlowControlConfig struct {
-	Enabled     bool              `yaml:"enabled" json:"enabled"`           // 是否启用流控
-	GlobalLimit RateLimit         `yaml:"global_limit" json:"global_limit"` // 全局限流配置
-	Rules       []FlowControlRule `yaml:"rules" json:"rules"`               // 流控规则列表
-	Recording   FlowRecordConfig  `yaml:"recording" json:"recording"`       // 流控记录配置
-}
-
-// FlowRecordConfig 流控记录配置结构体
-type FlowRecordConfig struct {
-	Enabled         bool   `yaml:"enabled" json:"enabled"`                   // 是否启用限流记录
-	RecordBlocked   bool   `yaml:"record_blocked" json:"record_blocked"`     // 是否记录被限流的请求
-	RecordAllowed   bool   `yaml:"record_allowed" json:"record_allowed"`     // 是否记录通过的请求
-	StorageType     string `yaml:"storage_type" json:"storage_type"`         // 存储类型: influx, mongo, file
-	RetentionPeriod string `yaml:"retention_period" json:"retention_period"` // 数据保留期
-}
-
-type Sanitizer struct {
-	Enabled bool `yaml:"enabled" json:"enabled"` // 是否启用缓存
-}
-
-type DomainCheck struct {
-	Enabled bool `yaml:"enabled" json:"enabled"`
-}
-
 // MiddlewareConfig 中间件配置结构体
 type MiddlewareConfig struct {
 	Gzip         GzipConfig   `yaml:"gzip" json:"gzip"` // Gzip压缩配置
@@ -140,86 +80,10 @@ type FeatureConfig struct {
 	ProxyCache  ProxyCacheConfig  `yaml:"proxy_cache" json:"proxy_cache"`   // 代理缓存
 }
 
-type ProxyCacheConfig struct {
-	Enabled   bool   `yaml:"enabled" json:"enabled"`
-	LayerType string `yaml:"layer_type" json:"layer_type"` // 存储层类型 file|db|cache
-	CacheSize int    `yaml:"cache_size" json:"cache_size"`
-	CacheTTL  int    `yaml:"cache_ttl" json:"cache_ttl"`
-	CachePath string `yaml:"cache_path" json:"cache_path"` // 缓存路径
-}
-
-// HTTP3Config HTTP/3协议配置结构体
-type HTTP3Config struct {
-	Enabled        bool `yaml:"enabled" json:"enabled"`                 // 是否启用HTTP/3
-	MaxConnections int  `yaml:"max_connections" json:"max_connections"` // 最大连接数
-	IdleTimeout    int  `yaml:"idle_timeout" json:"idle_timeout"`       // 空闲超时时间
-	KeepAlive      int  `yaml:"keep_alive" json:"keep_alive"`           // 保活时间
-}
-
-// WebSocketConfig WebSocket协议配置结构体
-type WebSocketConfig struct {
-	Enabled        bool  `yaml:"enabled" json:"enabled"`                   // 是否启用WebSocket
-	PingInterval   int   `yaml:"ping_interval" json:"ping_interval"`       // 心跳间隔
-	PongTimeout    int   `yaml:"pong_timeout" json:"pong_timeout"`         // 心跳响应超时
-	MaxMessageSize int64 `yaml:"max_message_size" json:"max_message_size"` // 最大消息大小
-	BufferSize     int   `yaml:"buffer_size" json:"buffer_size"`           // 缓冲区大小
-}
-
-// GzipConfig Gzip压缩配置结构体
-type GzipConfig struct {
-	Enabled   bool     `yaml:"enabled" json:"enabled"`     // 是否启用Gzip压缩
-	Level     int      `yaml:"level" json:"level"`         // 压缩级别 1-9
-	Types     []string `yaml:"types" json:"types"`         // 压缩的MIME类型列表
-	Threshold int      `yaml:"threshold" json:"threshold"` // 开启压缩的阈值
-}
-
-// CacheConfig 缓存配置结构体
-type CacheConfig struct {
-	Enabled  bool   `yaml:"enabled" json:"enabled"`   // 是否启用缓存
-	Size     int    `yaml:"size" json:"size"`         // 缓存大小
-	TTL      int    `yaml:"ttl" json:"ttl"`           // 缓存过期时间
-	Strategy string `yaml:"strategy" json:"strategy"` // 缓存策略: lru, lfu, fifo
-}
-
-type TraceConfig struct {
-	Enabled bool   `yaml:"enabled" json:"enabled"`
-	TraceId string `yaml:"trace_id" json:"trace_id"`
-}
-
-// AutoCertConfig 自动证书配置结构体
-type AutoCertConfig struct {
-	Email   string   `yaml:"email" json:"email"`     // 注册邮箱
-	Domains []string `yaml:"domains" json:"domains"` // 域名列表
-}
-
-type GrpcProxyConfig struct {
-	Enabled    bool     `yaml:"enabled" json:"enabled"`         // 是否启用gRPC代理
-	Hosts      []string `yaml:"hosts" json:"hosts"`             // 目标gRPC主机列表
-	GrpcHeader string   `yaml:"grpc_header" json:"grpc_header"` // gRPC识别请求头
-	GrpcAddr   string   `yaml:"grpc_addr" json:"grpc_addr"`     // 目标gRPC地址
-}
-
 // DatabaseConfig 数据库配置结构体
 type DatabaseConfig struct {
 	Mongo  MongoConfig  `yaml:"mongo" json:"mongo"`   // MongoDB配置
 	Influx InfluxConfig `yaml:"influx" json:"influx"` // InfluxDB配置
-}
-
-// MongoConfig MongoDB配置结构体
-type MongoConfig struct {
-	URL      string `yaml:"url" json:"url"`           // MongoDB连接URL
-	Database string `yaml:"database" json:"database"` // 数据库名称
-	Timeout  int    `yaml:"timeout" json:"timeout"`   // 连接超时时间
-}
-
-// InfluxConfig InfluxDB配置结构体
-type InfluxConfig struct {
-	Enabled  bool   `yaml:"enabled" json:"enabled"`   // 是否启用InfluxDB
-	URL      string `yaml:"url" json:"url"`           // InfluxDB连接URL
-	Token    string `yaml:"token" json:"token"`       // 访问令牌
-	Org      string `yaml:"org" json:"org"`           // 组织名称
-	Bucket   string `yaml:"bucket" json:"bucket"`     // 存储桶名称
-	Password string `yaml:"password" json:"password"` // 密码
 }
 
 // MonitorConfig 监控配置结构体
@@ -229,13 +93,6 @@ type MonitorConfig struct {
 	Path       string `yaml:"path" json:"path"`             // 监控路径
 	Interval   int    `yaml:"interval" json:"interval"`     // 监控间隔
 	Prometheus bool   `yaml:"prometheus" json:"prometheus"` // 是否启用Prometheus
-}
-
-type CorsConfig struct {
-	Enabled bool     `yaml:"enabled" json:"enabled"`
-	Method  []string `yaml:"method" json:"method"`
-	Origin  []string `yaml:"origin" json:"origin"` // 默认*
-	Header  []string `yaml:"header" json:"header"`
 }
 
 // SecurityConfig 安全配置结构体
@@ -251,13 +108,6 @@ type SecurityConfig struct {
 	XssProtection    bool `yaml:"xss_protection" json:"xss_protection"` // XSS保护
 	IFrameProtection bool `yaml:"iframe_protection" json:"iframe_protection"`
 	SameSite         bool `yaml:"same_site" json:"same_site"` // 同源策略
-}
-
-type FrontProxyConfig struct {
-	GrpcAddr     string `yaml:"grpc_addr" json:"grpc_addr"`
-	FrontendFlag string `yaml:"frontend_flag" json:"frontend_flag"`
-	FrontendHost string `yaml:"frontend_host" json:"frontend_host"`
-	FrontendPort int    `yaml:"frontend_port" json:"frontend_port"`
 }
 
 type ProxyHeader struct {
@@ -304,123 +154,7 @@ type SequenceConfig struct {
 	Interval int  `yaml:"interval" json:"interval"` // 时序间隔，例如"1h"表示每小时一个时序表
 }
 
-type ImageProtect struct {
-	Enabled      bool     `yaml:"enabled" json:"enabled"`             // 是否启用
-	ImageType    []string `yaml:"image_type" json:"image_type"`       // 过滤的图片类型
-	AllowReferer []string `yaml:"allow_referer" json:"allow_referer"` // 允许的请求头
-}
-
 type PProf struct {
 	Enable bool `yaml:"enable" json:"enable"`
 	Port   int  `yaml:"port" json:"port"`
-}
-
-// GetDefaultConfig 获取默认配置
-func GetDefaultConfig() *AppConfig {
-	return &AppConfig{
-		Servers: []ServerConfig{
-			{
-				Name:           "http-server",
-				Host:           "0.0.0.0",
-				Port:           80,
-				Protocol:       "http",
-				Enabled:        true,
-				MaxRequestBody: 32 * 1024 * 1024, // 32MB
-			},
-			{
-				Name:           "https-server",
-				Host:           "0.0.0.0",
-				Port:           443,
-				Protocol:       "https",
-				Enabled:        false,
-				MaxRequestBody: 32 * 1024 * 1024, // 32MB
-				TLS: &TLSConfig{
-					CertMap: map[string]CertConfig{
-						"renj.io": {
-							[]string{""},
-							"/path/to/cert.pem",
-							"/path/to/key.pem",
-						},
-					},
-					AutoTLS: false,
-				},
-			},
-		},
-		Middleware: MiddlewareConfig{
-			Gzip: GzipConfig{
-				Enabled: true,
-				Level:   6,
-				Types:   []string{"text/html", "text/css", "text/javascript", "application/json"},
-			},
-		},
-		Features: FeatureConfig{
-			HTTP3: HTTP3Config{
-				Enabled:        false,
-				MaxConnections: 1000,
-				IdleTimeout:    60,
-				KeepAlive:      30,
-			},
-			WebSocket: WebSocketConfig{
-				Enabled:        false,
-				PingInterval:   10,
-				PongTimeout:    10,
-				MaxMessageSize: 1048576, // 1MB
-				BufferSize:     1024,
-			},
-			Cache: CacheConfig{
-				Enabled:  true,
-				Size:     1000,
-				TTL:      60,
-				Strategy: "lru",
-			},
-		},
-		Database: DatabaseConfig{
-			Mongo: MongoConfig{
-				URL:      "mongodb://localhost:27017",
-				Database: "sandwich",
-				Timeout:  10,
-			},
-			Influx: InfluxConfig{
-				Enabled:  false,
-				URL:      "http://localhost:8086",
-				Token:    "",
-				Org:      "sandwich",
-				Bucket:   "metrics",
-				Password: "",
-			},
-		},
-		Security: SecurityConfig{
-			StrictMode: false,
-			AllowIPs:   []string{},
-			DenyIPs:    []string{},
-			RateLimit:  1000,
-		},
-		ProxyHeader: ProxyHeader{
-			TraceId:            "X-Gateway-Trace-Id",
-			FrontendHostHeader: "X-Proxy-Internal-Host",
-			BackendHeader:      "X-Proxy-Internal-Local",
-			ProxyApp:           "X-Proxy-Backend",
-		},
-		CustomHeader: map[string]string{
-			"Proxy-Server":    constant.AppName,
-			"Proxy-Copyright": constant.Copyright,
-		},
-		Stat: StatConfig{
-			DBFile: "stat.db",
-			Sequence: SequenceConfig{
-				Enabled:  true,
-				Interval: 3600,
-			},
-		},
-	}
-}
-
-// CreateConfig 生成默认配置文件
-func CreateConfig() error {
-	config := GetDefaultConfig()
-	data, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile("config.default.json", data, 0644)
 }

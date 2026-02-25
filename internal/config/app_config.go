@@ -1,5 +1,11 @@
 package config
 
+import (
+	"Hamburger/internal/constant"
+	"Hamburger/internal/json"
+	"os"
+)
+
 // AppConfig 配置文件格式模型
 type AppConfig struct {
 	PxyBackendFile  string `yaml:"pxy_backend_file" json:"pxy_backend_file"` // 配置文件路径
@@ -25,4 +31,114 @@ type AppConfig struct {
 	// 第二优先级
 	PxyBackend  PxyBackendConfig `yaml:"pxy_backend" json:"pxy_backend"`
 	PxyFrontend PxyFrontConfig   `yaml:"pxy_frontend" json:"pxy_frontend"`
+}
+
+// GetDefaultConfig 获取默认配置
+func GetDefaultConfig() *AppConfig {
+	return &AppConfig{
+		Servers: []ServerConfig{
+			{
+				Name:           "http-server",
+				Host:           "0.0.0.0",
+				Port:           80,
+				Protocol:       "http",
+				Enabled:        true,
+				MaxRequestBody: 32 * 1024 * 1024, // 32MB
+			},
+			{
+				Name:           "https-server",
+				Host:           "0.0.0.0",
+				Port:           443,
+				Protocol:       "https",
+				Enabled:        false,
+				MaxRequestBody: 32 * 1024 * 1024, // 32MB
+				TLS: &TLSConfig{
+					CertMap: map[string]CertConfig{
+						"renj.io": {
+							[]string{""},
+							"/path/to/cert.pem",
+							"/path/to/key.pem",
+						},
+					},
+					AutoTLS: false,
+				},
+			},
+		},
+		Middleware: MiddlewareConfig{
+			Gzip: GzipConfig{
+				Enabled: true,
+				Level:   6,
+				Types:   []string{"text/html", "text/css", "text/javascript", "application/json"},
+			},
+		},
+		Features: FeatureConfig{
+			HTTP3: HTTP3Config{
+				Enabled:        false,
+				MaxConnections: 1000,
+				IdleTimeout:    60,
+				KeepAlive:      30,
+			},
+			WebSocket: WebSocketConfig{
+				Enabled:        false,
+				PingInterval:   10,
+				PongTimeout:    10,
+				MaxMessageSize: 1048576, // 1MB
+				BufferSize:     1024,
+			},
+			Cache: CacheConfig{
+				Enabled:  true,
+				Size:     1000,
+				TTL:      60,
+				Strategy: "lru",
+			},
+		},
+		Database: DatabaseConfig{
+			Mongo: MongoConfig{
+				URL:      "mongodb://localhost:27017",
+				Database: "sandwich",
+				Timeout:  10,
+			},
+			Influx: InfluxConfig{
+				Enabled:  false,
+				URL:      "http://localhost:8086",
+				Token:    "",
+				Org:      "sandwich",
+				Bucket:   "metrics",
+				Password: "",
+			},
+		},
+		Security: SecurityConfig{
+			StrictMode: false,
+			AllowIPs:   []string{},
+			DenyIPs:    []string{},
+			RateLimit:  1000,
+		},
+		ProxyHeader: ProxyHeader{
+			TraceId:            "X-Gateway-Trace-Id",
+			FrontendHostHeader: "X-Proxy-Internal-Host",
+			BackendHeader:      "X-Proxy-Internal-Local",
+			ProxyApp:           "X-Proxy-Backend",
+		},
+		CustomHeader: map[string]string{
+			"Proxy-Server":    constant.AppName,
+			"Proxy-Copyright": constant.Copyright,
+		},
+		Stat: StatConfig{
+			DBFile: "stat.db",
+			Sequence: SequenceConfig{
+				Enabled:  true,
+				Interval: 3600,
+			},
+		},
+	}
+}
+
+// CreateConfig 生成默认配置文件
+func CreateConfig() error {
+	config := GetDefaultConfig()
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile("config.default.json", data, 0644)
 }
