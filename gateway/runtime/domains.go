@@ -68,3 +68,34 @@ func loadDefaultDomainsMap() {
 		DomainFrontMap *structure.Map[string]
 	}{Domains: nil, DomainsMap: structure.NewMap[serviceMap](), DomainFrontMap: structure.NewMap[string]()}
 }
+
+func GetDomainsSnapshot() ([]string, map[string]map[string]string, map[string]string) {
+	DomainLock.RLock()
+	defer DomainLock.RUnlock()
+
+	domains := make([]string, len(DomainsRuntimeMap.Domains))
+	copy(domains, DomainsRuntimeMap.Domains)
+
+	domainMap := map[string]map[string]string{}
+	for _, domain := range DomainsRuntimeMap.DomainsMap.Keys() {
+		item, ok := DomainsRuntimeMap.DomainsMap.Get(domain)
+		if !ok {
+			continue
+		}
+		domainMap[domain] = map[string]string{
+			"frontend": item.Frontend,
+			"backend":  item.Backend,
+		}
+	}
+
+	frontMap := map[string]string{}
+	for _, key := range DomainsRuntimeMap.DomainFrontMap.Keys() {
+		val, ok := DomainsRuntimeMap.DomainFrontMap.Get(key)
+		if !ok {
+			continue
+		}
+		frontMap[key] = val
+	}
+
+	return domains, domainMap, frontMap
+}

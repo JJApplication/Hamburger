@@ -29,6 +29,7 @@ type Config struct {
 type Syncer struct {
 	JobSyncDomainsMap  SyncerTime `yaml:"job_sync_domains" json:"job_sync_domains"`           // 同步域名映射文件的任务
 	JobSyncDomainPorts SyncerTime `yaml:"job_sync_domain_ports" json:"job_sync_domain_ports"` // 同步域名和服务端口映射
+	JobSyncHealthProbe SyncerTime `yaml:"job_sync_health_probe" json:"job_sync_health_probe"` // 同步域名探针状态
 }
 
 type SyncerTime int64

@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package grpc_server;
+
+option go_package = "Hamburger/app/grpc";
+
+service AppService {
+    // 获取Gateway状态
+    rpc GetGatewayStatus (Empty) returns (GatewayStatusResponse);
+    // 获取FrontProxy状态
+    rpc GetFrontProxyStatus (Empty) returns (FrontProxyStatusResponse);
+    // 获取ModifierManager信息
+    rpc GetModifierManagerInfo (Empty) returns (ModifierManagerInfoResponse);
+    // 获取StatServer配置
+    rpc GetStatServerConfig (Empty) returns (StatServerConfigResponse);
+    // 获取运行时信息
+    rpc GetRuntime (Empty) returns (RuntimeResponse);
+    // 获取域名映射数据
+    rpc GetDomainMap (Empty) returns (DomainMapResponse);
+    // 获取域名端口数据
+    rpc GetDomainPorts (Empty) returns (DomainPortsResponse);
+    // 重新加载配置
+    rpc ReloadConfig (ReloadConfigRequest) returns (ReloadConfigResponse);
+    // 重启前端服务器
+    rpc ReStartFrontServer (Empty) returns (ActionResponse);
+    // 重启网关服务器
+    rpc ReStartGateway (Empty) returns (ActionResponse);
+    // 重启Stat服务器
+    rpc ReStartStatServer (Empty) returns (ActionResponse);
+    // Dump运行时到文件
+    rpc DumpRuntime (DumpRuntimeRequest) returns (ActionResponse);
+}
+
+message Empty {}
+
+message GatewayStatusResponse {
+    repeated ServerStatus servers = 1;
+    repeated ServerStatus http3_servers = 2;
+    repeated GatewayServerConfig server_configs = 3;
+    MiddlewareStatus middleware = 4;
+}
+
+message ServerStatus {
+    string name = 1;
+    bool running = 2;
+    string address = 3;
+}
+
+message FrontProxyStatusResponse {
+    bool running = 1;
+    string mode = 2;
+    string root = 3;
+    string host = 4;
+    int32 port = 5;
+    string balancer = 6;
+    bool cache_enabled = 7;
+    int32 server_count = 8;
+}
+
+message ModifierManagerInfoResponse {
+    int32 modifier_count = 1;
+    repeated ModifierInfo modifiers = 2;
+}
+
+message ModifierInfo {
+    string name = 1;
+    bool enabled = 2;
+}
+
+message StatServerConfigResponse {
+    bool enabled = 1;
+    string host = 2;
+    int32 port = 3;
+    bool enable_stat = 4;
+    int32 sync_duration = 5;
+    int32 save_duration = 6;
+    string save_file = 7;
+    string geo_file = 8;
+    string domain_file = 9;
+    string geo_db = 10;
+    bool sequence_enabled = 11;
+    int32 sequence_interval = 12;
+}
+
+message RuntimeResponse {
+    double cpu = 1;
+    int64 memory_bytes = 2;
+    int64 rss_bytes = 3;
+    int32 goroutines = 4;
+    bool net_io_block = 5;
+}
+
+message DomainMapResponse {
+    repeated string domains = 1;
+    map<string, ServiceMap> domains_map = 2;
+    map<string, string> domain_front_map = 3;
+}
+
+message ServiceMap {
+    string frontend = 1;
+    string backend = 2;
+}
+
+message DomainPortsResponse {
+    repeated DomainPorts ports = 1;
+}
+
+message DomainPorts {
+    string domain = 1;
+    repeated int32 ports = 2;
+}
+
+message ReloadConfigRequest {
+    string file = 1;
+}
+
+message ReloadConfigResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message DumpRuntimeRequest {
+    string path = 1;
+}
+
+message ActionResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GatewayServerConfig {
+    string name = 1;
+    string host = 2;
+    int32 port = 3;
+    bool use_http2 = 4;
+    string protocol = 5;
+    bool enabled = 6;
+    int64 max_request_body = 7;
+    repeated string domains = 8;
+    bool auto_redirect = 9;
+    bool use_websocket = 10;
+    repeated string ws_domains = 11;
+}
+
+message MiddlewareStatus {
+    bool gzip_enabled = 1;
+    int32 gzip_level = 2;
+    repeated string gzip_types = 3;
+    bool no_cache = 4;
+    bool secure_header = 5;
+    bool trace_enabled = 6;
+    string trace_id = 7;
+    bool cors_enabled = 8;
+    repeated string cors_method = 9;
+    repeated string cors_origin = 10;
+    repeated string cors_header = 11;
+    bool sanitizer_enabled = 12;
+    bool domain_check_enabled = 13;
+    bool image_protect_enabled = 14;
+    repeated string image_type = 15;
+    repeated string allow_referer = 16;
+}

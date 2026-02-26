@@ -1,6 +1,7 @@
 package stat
 
 import (
+	"Hamburger/gateway/health_probe"
 	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"context"
@@ -99,5 +100,18 @@ func registerMux(mux *http.ServeMux) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Write(result)
+	})
+
+	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		result := health_probe.GetAllProbes()
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		data, err := json.Marshal(result)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(data)
 	})
 }

@@ -62,6 +62,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitStatManager())
 	i.Register(i.InitStatServer())
 	i.Register(i.InitLatencyServer())
+	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPProf())
 
 	// 按优先级排序

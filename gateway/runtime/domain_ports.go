@@ -71,3 +71,14 @@ func DomainReflect(host string) []string {
 
 	return dGroup
 }
+
+func GetDomainPortsSnapshot() map[string][]int {
+	result := map[string][]int{}
+	DomainPortsMap.Range(func(key string, value []int) bool {
+		ports := make([]int, len(value))
+		copy(ports, value)
+		result[key] = ports
+		return true
+	})
+	return result
+}

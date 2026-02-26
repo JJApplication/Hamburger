@@ -5,10 +5,11 @@ import (
 	"Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
 	"errors"
-	"github.com/rs/zerolog"
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
 
 // 配置的API转发规则解析
@@ -16,6 +17,14 @@ import (
 const (
 	StaticHost   = "127.0.0.1"
 	StaticSchema = "http"
+)
+
+var (
+	errHostEmpty        = errors.New("host is empty")
+	errDomainsMapEmpty  = errors.New("domains map is empty")
+	errDomainsPortEmpty = errors.New("domains port is empty")
+	errUnknownPath      = errors.New("unknown path")
+	errUnknownHost      = errors.New("unknown host")
 )
 
 type Ruler struct {
@@ -65,7 +74,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 	// 代理服务都是http协议服务器
 	if host == "" {
 		return RuleResult{
-			ProxyError: errors.New("host is empty"),
+			ProxyError: errHostEmpty,
 		}
 	}
 	if host == "localhost" || host == StaticHost {
@@ -79,7 +88,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 				return r.ResolveCustomService(host)
 			}
 			return RuleResult{
-				ProxyError: errors.New("domains map is empty"),
+				ProxyError: errDomainsMapEmpty,
 			}
 		}
 		r.rwLock.RLock()
@@ -103,7 +112,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			ports, ok := runtime.DomainPortsMap.Get(host)
 			if !ok {
 				return RuleResult{
-					ProxyError: errors.New("domains port is empty"),
+					ProxyError: errDomainsPortEmpty,
 				}
 			}
 			return RuleResult{
@@ -133,10 +142,11 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		}
 	}
 	return RuleResult{
-		ProxyError: errors.New("unknown path"),
+		ProxyError: errUnknownPath,
 	}
 }
 
+//go:inline
 func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool) {
 	requestPath := req.URL.Path
 	host := req.Host
@@ -147,55 +157,55 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 		}
 
 		// 检查请求路径是否匹配backend.api
-		if strings.HasPrefix(requestPath, rule.API) {
-			// 执行后端代理转发
+		if !strings.HasPrefix(requestPath, rule.API) {
+			continue
+		}
+		// 执行后端代理转发
 
-			// 是否rewrite url
-			targetPath := req.URL.Path
-			if rule.UseRewrite {
-				// 将API路径重写为指定的rewrite路径
-				if strings.HasPrefix(targetPath, rule.API) {
-					targetPath = strings.Replace(targetPath, rule.API, rule.Rewrite, 1)
-				}
-			}
+		// 是否rewrite url
+		targetPath := requestPath
+		if rule.UseRewrite {
+			targetPath = rule.Rewrite + requestPath[len(rule.API):]
+		}
 
-			ports, ok := runtime.DomainPortsMap.Get(host)
-			if !ok {
-				return RuleResult{
-					ProxyError: errors.New("domains port is empty"),
-				}, true
-			}
+		ports, ok := runtime.DomainPortsMap.Get(host)
+		if !ok {
 			return RuleResult{
-				ProxyTo:     rule.Backend,
-				ProxyHost:   StaticHost,
-				ProxyPath:   targetPath,
-				ProxyPort:   balancer.PickOneRoundRobin(ports),
-				ProxyScheme: StaticSchema,
+				ProxyError: errDomainsPortEmpty,
 			}, true
 		}
-		return RuleResult{}, false
+		return RuleResult{
+			ProxyTo:     rule.Backend,
+			ProxyHost:   StaticHost,
+			ProxyPath:   targetPath,
+			ProxyPort:   balancer.PickOneRoundRobin(ports),
+			ProxyScheme: StaticSchema,
+		}, true
 	}
 
 	return RuleResult{}, false
 }
 
+//go:inline
 func (r *Ruler) IsCustomServiceEnabled() bool {
 	return r.cfg.PxyCustomService.Enable
 }
 
 // ResolveCustomService 处理自定义后端服务转发
+//
+//go:inline
 func (r *Ruler) ResolveCustomService(host string) RuleResult {
 	for _, serviceConfig := range r.cfg.PxyCustomService.CustomService {
 		if host == serviceConfig.Domain {
-			var addrs []struct {
+			addrs := make([]struct {
 				Host string
 				Port int
-			}
-			for _, upstream := range serviceConfig.Upstream {
-				addrs = append(addrs, struct {
+			}, len(serviceConfig.Upstream))
+			for i, upstream := range serviceConfig.Upstream {
+				addrs[i] = struct {
 					Host string
 					Port int
-				}{Host: upstream.Host, Port: upstream.Port})
+				}{Host: upstream.Host, Port: upstream.Port}
 			}
 			realHost, port := balancer.PickOneAddrRoundRobin(addrs)
 			return RuleResult{
@@ -208,10 +218,11 @@ func (r *Ruler) ResolveCustomService(host string) RuleResult {
 		}
 	}
 	return RuleResult{
-		ProxyError: errors.New("unknown host"),
+		ProxyError: errUnknownHost,
 	}
 }
 
+//go:inline
 func IsBackend(req *http.Request) bool {
 	if req.Header.Get("X-Hamburger-Backend") != "" {
 		return true
