@@ -4,6 +4,7 @@ import (
 	"Hamburger/backend_proxy"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/core"
+	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/stat"
@@ -27,6 +28,7 @@ type Initializer struct {
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
 	StatServer      *stat.StatServer
+	LatencyServer   *latency.LatencyServer
 }
 
 type Runner struct {
@@ -59,6 +61,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitPreHandlerManager())
 	i.Register(i.InitStatManager())
 	i.Register(i.InitStatServer())
+	i.Register(i.InitLatencyServer())
 	i.Register(i.InitPProf())
 
 	// 按优先级排序

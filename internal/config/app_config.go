@@ -22,6 +22,7 @@ type AppConfig struct {
 	Log          LogConfig         `yaml:"log" json:"log"`                     // 日志配置
 	Module       []ModuleConfig    `yaml:"module" json:"module"`               // 模块
 	Stat         StatConfig        `yaml:"stat" json:"stat"`                   // 状态统计配置
+	Latency      LatencyConfig     `yaml:"latency" json:"latency"`             // 延迟统计配置
 	CustomHeader map[string]string `yaml:"custom_header" json:"custom_header"` // 自定义Header
 	Syncer       Syncer            `yaml:"syncer" json:"syncer"`               // 定时器时间
 	Debug        bool              `yaml:"debug" json:"debug"`                 // 调试模式
