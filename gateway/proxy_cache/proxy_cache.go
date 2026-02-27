@@ -1,3 +1,8 @@
+/*
+Package proxy_cache
+代理转发缓存
+记录代理规则解析后的真实Host转发缓存
+*/
 package proxy_cache
 
 import (

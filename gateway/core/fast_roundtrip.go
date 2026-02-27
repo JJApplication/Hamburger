@@ -69,7 +69,9 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 			fr.Header.SetHost(req.URL.Host) // 请求头的Host
 			forwardHost := config.Get().ProxyHeader.ForwardHostHeader
 			if forwardHost != "" {
-				fr.Header.Set(forwardHost, req.Host) // 为方便后端服务获取原始Host 使用X-Forward-Host
+				if fr.Header.Peek(forwardHost) == nil {
+					fr.Header.Set(forwardHost, req.Host) // 为方便后端服务获取原始Host 使用X-Forward-Host
+				}
 			}
 		}
 	}
