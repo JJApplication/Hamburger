@@ -93,5 +93,9 @@
   },
   "love.renj.io": {
     "frontend": "LoveLetter"
+  },
+  "home.renj.io": {
+    "frontend": "MyHome",
+    "backend": "MyHome"
   }
 }

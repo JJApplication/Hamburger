@@ -1,12 +1,16 @@
-package backend_proxy
+package svr
 
 import (
 	"Hamburger/internal/config"
 	"context"
 	"fmt"
-	"github.com/rs/zerolog"
 	"net/http"
+	"strings"
+
+	"github.com/rs/zerolog"
 )
+
+// 传统的HTTP服务器
 
 // 后端Server服务器
 
@@ -20,7 +24,7 @@ type Server struct {
 	started     bool
 }
 
-func NewBackendServer(cfg *config.Config, logger *zerolog.Logger, backendConf config.BackendServer) *Server {
+func NewHttpServer(cfg *config.Config, logger *zerolog.Logger, backendConf config.BackendServer) *Server {
 	return &Server{
 		cfg:         cfg,
 		logger:      logger,
@@ -33,7 +37,7 @@ func NewBackendServer(cfg *config.Config, logger *zerolog.Logger, backendConf co
 // GetHandler 处理后端配置生成handler
 func (s *Server) GetHandler() http.Handler {
 	mux := http.NewServeMux()
-	for _, rs := range s.backendConf.Response {
+	for _, rs := range s.backendConf.Http.Response {
 		mux.HandleFunc(rs.Path, func(w http.ResponseWriter, r *http.Request) {
 			for k, v := range rs.Headers {
 				w.Header().Set(k, v)
@@ -43,7 +47,41 @@ func (s *Server) GetHandler() http.Handler {
 		})
 	}
 
-	return mux
+	if s.backendConf.Http.EnableStatic {
+		staticDir := strings.TrimSpace(s.backendConf.Http.StaticDir)
+		if staticDir != "" {
+			fileServer := http.FileServer(http.Dir(staticDir))
+			staticPrefix := strings.TrimSpace(s.backendConf.Http.StaticPrefix)
+			if staticPrefix == "" {
+				mux.Handle("/", fileServer)
+			} else {
+				if !strings.HasPrefix(staticPrefix, "/") {
+					staticPrefix = "/" + staticPrefix
+				}
+				mux.Handle(staticPrefix, http.StripPrefix(staticPrefix, fileServer))
+				mux.Handle(staticPrefix+"/", http.StripPrefix(staticPrefix, fileServer))
+			}
+		}
+	}
+
+	return s.auth(mux)
+}
+
+func (s *Server) auth(next http.Handler) http.Handler {
+	user := s.backendConf.Http.User
+	pass := s.backendConf.Http.Password
+	if user == "" && pass == "" {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		u, p, ok := r.BasicAuth()
+		if !ok || u != user || p != pass {
+			w.Header().Set("WWW-Authenticate", "Basic realm=\"http\"")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) Start() {

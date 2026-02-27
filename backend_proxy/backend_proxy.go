@@ -1,14 +1,24 @@
 package backend_proxy
 
 import (
+	"Hamburger/backend_proxy/svr"
 	"Hamburger/internal/config"
+	"strings"
+
 	"github.com/rs/zerolog"
+)
+
+const (
+	ServerTypeWebDav      = "webdav"
+	ServerTypeWeb         = "web"
+	ServerTypeTransparent = "transparent"
+	ServerTypeTCP         = "tcp"
 )
 
 type BackendProxy struct {
 	cfg     *config.Config
 	logger  *zerolog.Logger
-	servers map[string]*Server
+	servers map[string]svr.BackendSvr
 }
 
 func NewBackendProxy(cfg *config.Config, logger *zerolog.Logger) *BackendProxy {
@@ -21,26 +31,37 @@ func NewBackendProxy(cfg *config.Config, logger *zerolog.Logger) *BackendProxy {
 	bp := BackendProxy{
 		cfg:     cfg,
 		logger:  logger,
-		servers: make(map[string]*Server),
+		servers: make(map[string]svr.BackendSvr),
 	}
 	for _, server := range cfg.PxyBackend.Servers {
-		svr := NewBackendServer(cfg, logger, server)
-		bp.servers[server.ServiceName] = svr
+		serverType := strings.TrimSpace(strings.ToLower(server.Type))
+		var bsvr svr.BackendSvr
+		switch serverType {
+		case ServerTypeWebDav:
+			bsvr = svr.NewWebDavServer(cfg, logger, server)
+		case ServerTypeTransparent:
+			bsvr = svr.NewTransparentServer(cfg, logger, server)
+		case ServerTypeTCP:
+			bsvr = svr.NewTcpProxyServer(cfg, logger, server)
+		default:
+			bsvr = svr.NewHttpServer(cfg, logger, server)
+		}
+		bp.servers[server.ServiceName] = bsvr
 	}
 
 	return &bp
 }
 
 func (bp *BackendProxy) Start() {
-	for _, svr := range bp.servers {
-		svr.Start()
+	for _, s := range bp.servers {
+		s.Start()
 	}
 }
 
 func (bp *BackendProxy) Stop() {
-	for _, svr := range bp.servers {
-		if err := svr.Stop(); err != nil {
-			bp.logger.Error().Err(err).Str("service", svr.Name()).Msg("failed to stop server")
+	for _, s := range bp.servers {
+		if err := s.Stop(); err != nil {
+			bp.logger.Error().Err(err).Str("service", s.Name()).Msg("failed to stop server")
 		}
 	}
 }
@@ -50,7 +71,7 @@ func (bp *BackendProxy) Status() {
 		bp.logger.Info().Msg("backend proxy no servers available")
 		return
 	}
-	for _, svr := range bp.servers {
-		bp.logger.Info().Str("service", svr.Name()).Bool("running", svr.IsStarted()).Msg("backend proxy status")
+	for _, s := range bp.servers {
+		bp.logger.Info().Str("service", s.Name()).Bool("running", s.IsStarted()).Msg("backend proxy status")
 	}
 }

@@ -230,6 +230,27 @@
       "try_file": "index.html",
       "access": false,
       "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "MyHome",
+      "root": "/renj.io/app/MyHome",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "backends": [
+        {
+          "api": "/api",
+          "service": "MyHome",
+          "use_rewrite": false
+        },
+        {
+          "api": "/uploads",
+          "service": "MyHome",
+          "use_rewrite": false
+        }
+      ]
     }
   ]
 }
