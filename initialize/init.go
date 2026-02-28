@@ -12,8 +12,10 @@ import (
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
 	"Hamburger/static_direct"
-	"github.com/rs/zerolog"
+	"Hamburger/vpn_proxy"
 	"slices"
+
+	"github.com/rs/zerolog"
 )
 
 type Initializer struct {
@@ -31,6 +33,7 @@ type Initializer struct {
 	StatServer      *stat.StatServer
 	LatencyServer   *latency.LatencyServer
 	StaticDirectSvr *static_direct.StaticDirectServer
+	VpnServer       *vpn_proxy.VpnServer
 }
 
 type Runner struct {
@@ -65,6 +68,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitStatServer())
 	i.Register(i.InitLatencyServer())
 	i.Register(i.InitStaticDirect())
+	i.Register(i.InitVpnServer())
 	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPProf())
 

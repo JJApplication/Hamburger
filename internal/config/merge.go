@@ -24,6 +24,7 @@ func Merge(appConfig *AppConfig) *Config {
 		MaxCores:     appConfig.MaxCores,
 		PxyBackend:   appConfig.PxyBackend,
 		PxyFrontend:  appConfig.PxyFrontend,
+		VpnServer:    appConfig.VpnServer,
 	}
 
 	if appConfig.PxyFrontendFile != "" {

@@ -18,6 +18,7 @@ import (
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
+	"Hamburger/vpn_proxy"
 
 	"github.com/rs/zerolog"
 )
@@ -39,6 +40,7 @@ type HamburgerApp struct {
 	StatServer      *stat.StatServer
 	LatencyServer   *latency.LatencyServer
 	StaticDirectSvr *static_direct.StaticDirectServer
+	VpnServer       *vpn_proxy.VpnServer
 }
 
 const (
@@ -79,6 +81,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.StatServer = i.StatServer
 	app.LatencyServer = i.LatencyServer
 	app.StaticDirectSvr = i.StaticDirectSvr
+	app.VpnServer = i.VpnServer
 	app.logger = i.GetLogger()
 
 	return nil
@@ -94,7 +97,7 @@ func (app *HamburgerApp) Run() {
 	app.LifeCycle()
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -121,6 +124,13 @@ func (app *HamburgerApp) Run() {
 		defer wg.Done()
 		if err := app.StaticDirectSvr.Start(); err != nil {
 			app.logger.Fatal().Err(err).Msg("static direct server error")
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := app.VpnServer.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("vpn server error")
 		}
 	}()
 
@@ -157,6 +167,9 @@ func (app *HamburgerApp) LifeCycle() {
 		app.FrontServer.Shutdown()
 		if err := app.Manager.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("gateway server shutdown failed")
+		}
+		if app.VpnServer != nil {
+			_ = app.VpnServer.Stop()
 		}
 		app.removePidFile()
 		os.Exit(0)

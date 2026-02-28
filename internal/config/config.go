@@ -24,6 +24,7 @@ type Config struct {
 	PxyFrontend        PxyFrontConfig         `yaml:"pxy_frontend" json:"pxy_frontend"`
 	PxyCustomService   PxyCustomServiceConfig `yaml:"pxy_custom_service" json:"pxy_custom_service"`     // 定义的转发服务
 	StaticDirectServer StaticDirectSvrConfig  `yaml:"static_direct_server" json:"static_direct_server"` // 静态直通
+	VpnServer          VpnServerConfig        `yaml:"vpn_server" json:"vpn_server"`
 }
 
 // Syncer 定时器时间

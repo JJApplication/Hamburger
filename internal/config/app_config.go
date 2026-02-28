@@ -28,6 +28,7 @@ type AppConfig struct {
 	Debug        bool              `yaml:"debug" json:"debug"`                 // 调试模式
 	PProf        PProf             `yaml:"pprof" json:"pprof"`
 	MaxCores     int               `yaml:"max_cores" json:"max_cores"`
+	VpnServer    VpnServerConfig   `yaml:"vpn_server" json:"vpn_server"`
 
 	// 第二优先级
 	PxyBackend  PxyBackendConfig `yaml:"pxy_backend" json:"pxy_backend"`
@@ -130,6 +131,13 @@ func GetDefaultConfig() *AppConfig {
 				Enabled:  true,
 				Interval: 3600,
 			},
+		},
+		VpnServer: VpnServerConfig{
+			Enabled:   false,
+			Host:      "0.0.0.0",
+			HttpPort:  0,
+			SocksPort: 0,
+			Timeout:   30,
 		},
 	}
 }
