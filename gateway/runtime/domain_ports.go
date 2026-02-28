@@ -36,11 +36,12 @@ func loadDomainPortsMap() {
 	// 托管随机端口服务和固定端口服务
 	for _, d := range portsData {
 		logger.GetLogger().Info().Str("app", d.Meta.Name).Msg("load app to pool")
-		if d.Meta.Meta.Domain != "" {
+		// 仅代理有端口的域名服务
+		if d.Meta.Meta.Domain != "" && len(d.Meta.RunData.Ports) > 0 {
 			DomainPortsMap.Put(d.Meta.Meta.Domain, d.Meta.RunData.Ports)
-		}
-		if d.Meta.RunData.RandomPort {
-			logger.GetLogger().Info().Str("app", d.Meta.Name).Msg("load app of random port")
+			if d.Meta.RunData.RandomPort {
+				logger.GetLogger().Info().Str("app", d.Meta.Name).Msg("load app of random port")
+			}
 		}
 	}
 

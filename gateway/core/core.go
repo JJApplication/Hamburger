@@ -18,6 +18,7 @@ import (
 	"Hamburger/internal/constant"
 	"Hamburger/internal/serror"
 	"Hamburger/internal/utils"
+
 	"github.com/rs/zerolog"
 )
 
@@ -177,24 +178,24 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 		// 熔断判断
 		switch request.Header.Get(serror.SandwichInternalFlag) {
 		case serror.SandwichBucketLimit:
-			logger.Debug().Msg("reach breaker limit")
+			logger.Error().Str("host", request.Host).Msg("reach breaker limit")
 			writer.WriteHeader(http.StatusGatewayTimeout)
 			return
 		case serror.SandwichReqLimit:
-			logger.Debug().Msg("reach flow control limit")
+			logger.Error().Str("host", request.Host).Msg("reach flow control limit")
 			error_page.Cache(http.StatusTooManyRequests, writer, request, error_page.Forbidden)
 			return
 		case serror.SandwichDomainNotAllow:
-			logger.Debug().Msg("http: no host in request url")
+			logger.Error().Str("host", request.Host).Msg("http: no host in request url")
 			error_page.Cache(http.StatusForbidden, writer, request, error_page.Forbidden)
 			return
 		case serror.SandwichBackendError:
 			breaker.Set(request.Host)
-			logger.Debug().Msg("backend: service is down")
+			logger.Error().Str("host", request.Host).Msg("backend: service is down")
 			error_page.Cache(http.StatusBadGateway, writer, request, error_page.Unavailable)
 			return
 		}
-		logger.Debug().Err(err).Msg("proxy connect error")
+		logger.Error().Err(err).Str("host", request.Host).Msg("proxy connect error")
 		error_page.Cache(http.StatusBadGateway, writer, request, error_page.Unavailable)
 	}
 }

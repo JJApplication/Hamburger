@@ -37,7 +37,7 @@ type SyncerTime int64
 // Get 获取默认值如果不存在
 func (s *SyncerTime) Get(defaultValue time.Duration) time.Duration {
 	if *s == 0 {
-		return defaultValue
+		return defaultValue * time.Second
 	}
 	return time.Duration(*s) * time.Second
 }

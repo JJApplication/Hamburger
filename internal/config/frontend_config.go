@@ -17,10 +17,22 @@ type FrontCacheConfig struct {
 
 // BackendConfig 后端配置
 type BackendConfig struct {
-	API        string `json:"api" toml:"api"`
-	Service    string `json:"service" toml:"service"`
-	UseRewrite bool   `json:"use_rewrite" toml:"use_rewrite"`
-	Rewrite    string `json:"rewrite" toml:"rewrite"`
+	API          string       `json:"api" toml:"api"`
+	Service      string       `json:"service" toml:"service"`
+	UseRewrite   bool         `json:"use_rewrite" toml:"use_rewrite"`
+	Rewrite      string       `json:"rewrite" toml:"rewrite"`
+	IsStatic     bool         `json:"is_static" toml:"is_static"` // 是否为静态目录
+	StaticDirect StaticDirect `json:"static_direct" toml:"static_direct"`
+}
+
+// StaticDirect 静态代理直连
+//
+// 对于需要权限控制的静态资源会绕过原本的权限控制
+// 拼接方式/API/xxx -> StaticRoot/xxx
+type StaticDirect struct {
+	DirectAccess bool   `json:"direct_access" toml:"direct_access"` // 直连静态目录
+	StaticRoot   string `json:"static_root" toml:"static_root"`     // 静态根目录
+	AllowExt     string `json:"allow_ext" toml:"allow_ext"`         // 安全配置允许的后缀名
 }
 
 // FrontServerConfig 服务器配置
