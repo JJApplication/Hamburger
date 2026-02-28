@@ -11,6 +11,7 @@ import (
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
+	"Hamburger/static_direct"
 	"github.com/rs/zerolog"
 	"slices"
 )
@@ -29,6 +30,7 @@ type Initializer struct {
 	ModifierManager *modifier.ModifierManager
 	StatServer      *stat.StatServer
 	LatencyServer   *latency.LatencyServer
+	StaticDirectSvr *static_direct.StaticDirectServer
 }
 
 type Runner struct {
@@ -62,6 +64,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitStatManager())
 	i.Register(i.InitStatServer())
 	i.Register(i.InitLatencyServer())
+	i.Register(i.InitStaticDirect())
 	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPProf())
 

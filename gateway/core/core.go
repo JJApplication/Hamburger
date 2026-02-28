@@ -3,6 +3,7 @@ package core
 import (
 	"Hamburger/gateway/prehandler"
 	"Hamburger/gateway/proxy_cache"
+	"Hamburger/static_direct"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -104,6 +105,14 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 				logger.Debug().Msg("detected gRPC proxy request")
 				// 设置特殊的scheme来标识gRPC请求，后续在Transport中处理
 				request.URL = &url.URL{Scheme: constant.SchemeGrpc}
+				return
+			}
+		}
+
+		if static_direct.IsEnabled() {
+			sd := static_direct.GetSvr()
+			if uri, ok := sd.IsStaticDirect(request); ok {
+				request.URL = uri
 				return
 			}
 		}

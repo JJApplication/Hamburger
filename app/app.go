@@ -1,7 +1,9 @@
 package app
 
 import (
+	"Hamburger/gateway/latency"
 	"Hamburger/gateway/stat"
+	"Hamburger/static_direct"
 	"os"
 	"os/signal"
 	"sync"
@@ -35,6 +37,8 @@ type HamburgerApp struct {
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
 	StatServer      *stat.StatServer
+	LatencyServer   *latency.LatencyServer
+	StaticDirectSvr *static_direct.StaticDirectServer
 }
 
 const (
@@ -73,6 +77,8 @@ func (app *HamburgerApp) InitApp() error {
 	app.GrpcProxy = i.GrpcProxy
 	app.ModifierManager = i.ModifierManager
 	app.StatServer = i.StatServer
+	app.LatencyServer = i.LatencyServer
+	app.StaticDirectSvr = i.StaticDirectSvr
 	app.logger = i.GetLogger()
 
 	return nil
@@ -108,6 +114,13 @@ func (app *HamburgerApp) Run() {
 		defer wg.Done()
 		if err := app.StatServer.Start(); err != nil {
 			app.logger.Fatal().Err(err).Msg("stat server error")
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := app.StaticDirectSvr.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("static direct server error")
 		}
 	}()
 

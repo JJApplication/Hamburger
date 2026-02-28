@@ -30,9 +30,9 @@ type BackendConfig struct {
 // 对于需要权限控制的静态资源会绕过原本的权限控制
 // 拼接方式/API/xxx -> StaticRoot/xxx
 type StaticDirect struct {
-	DirectAccess bool   `json:"direct_access" toml:"direct_access"` // 直连静态目录
-	StaticRoot   string `json:"static_root" toml:"static_root"`     // 静态根目录
-	AllowExt     string `json:"allow_ext" toml:"allow_ext"`         // 安全配置允许的后缀名
+	DirectAccess bool     `json:"direct_access" toml:"direct_access"` // 直连静态目录
+	StaticRoot   string   `json:"static_root" toml:"static_root"`     // 静态根目录
+	AllowExt     []string `json:"allow_ext" toml:"allow_ext"`         // 安全配置允许的后缀名
 }
 
 // FrontServerConfig 服务器配置
