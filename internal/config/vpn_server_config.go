@@ -18,15 +18,16 @@ type VpnAuthConfig struct {
 }
 
 type VpnTLSConfig struct {
-	Enabled    bool   `yaml:"enabled" json:"enabled"`
-	EnableHTTP bool   `yaml:"enable_http" json:"enable_http"`
-	EnableSocks bool  `yaml:"enable_socks" json:"enable_socks"`
-	CertFile   string `yaml:"cert_file" json:"cert_file"`
-	KeyFile    string `yaml:"key_file" json:"key_file"`
+	Enabled     bool   `yaml:"enabled" json:"enabled"`
+	EnableHTTP  bool   `yaml:"enable_http" json:"enable_http"`
+	EnableSocks bool   `yaml:"enable_socks" json:"enable_socks"`
+	CertFile    string `yaml:"cert_file" json:"cert_file"`
+	KeyFile     string `yaml:"key_file" json:"key_file"`
 }
 
 type VpnObfsConfig struct {
 	Enabled            bool   `yaml:"enabled" json:"enabled"`
+	Mode               string `yaml:"mode" json:"mode"`
 	MinChunkSize       int    `yaml:"min_chunk_size" json:"min_chunk_size"`
 	MaxChunkSize       int    `yaml:"max_chunk_size" json:"max_chunk_size"`
 	MinDelayMs         int    `yaml:"min_delay_ms" json:"min_delay_ms"`

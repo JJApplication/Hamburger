@@ -138,6 +138,14 @@ func GetDefaultConfig() *AppConfig {
 			HttpPort:  0,
 			SocksPort: 0,
 			Timeout:   30,
+			Obfs: VpnObfsConfig{
+				Enabled:      false,
+				Mode:         "reflect",
+				MinChunkSize: 1024,
+				MaxChunkSize: 4096,
+				MinDelayMs:   0,
+				MaxDelayMs:   15,
+			},
 		},
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net"
 	"net/http"
 	"strconv"
@@ -475,81 +474,27 @@ func (s *VpnServer) pipeConn(client net.Conn, server net.Conn) {
 		_ = client.SetDeadline(time.Now().Add(timeout))
 		_ = server.SetDeadline(time.Now().Add(timeout))
 	}
+	engine := newObfsEngine(s.cfg.VpnServer.Obfs)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, _ = s.copyWithObfs(server, client)
+		_, _ = s.copyWithObfs(engine, server, client)
 	}()
 	go func() {
 		defer wg.Done()
-		_, _ = s.copyWithObfs(client, server)
+		_, _ = s.copyWithObfs(engine, client, server)
 	}()
 	wg.Wait()
 	_ = client.Close()
 	_ = server.Close()
 }
 
-func (s *VpnServer) copyWithObfs(dst io.Writer, src io.Reader) (int64, error) {
-	obfs := s.cfg.VpnServer.Obfs
-	if !obfs.Enabled {
+func (s *VpnServer) copyWithObfs(engine *obfsEngine, dst io.Writer, src io.Reader) (int64, error) {
+	if engine == nil {
 		return io.Copy(dst, src)
 	}
-	minChunk := obfs.MinChunkSize
-	maxChunk := obfs.MaxChunkSize
-	if minChunk <= 0 {
-		minChunk = 1024
-	}
-	if maxChunk < minChunk {
-		maxChunk = minChunk
-	}
-	minDelay := obfs.MinDelayMs
-	maxDelay := obfs.MaxDelayMs
-	if maxDelay < minDelay {
-		maxDelay = minDelay
-	}
-	buf := make([]byte, maxChunk)
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	var total int64
-	for {
-		n, err := src.Read(buf)
-		if n > 0 {
-			offset := 0
-			for offset < n {
-				chunk := minChunk
-				if maxChunk > minChunk {
-					chunk = rng.Intn(maxChunk-minChunk+1) + minChunk
-				}
-				if chunk > n-offset {
-					chunk = n - offset
-				}
-				w, werr := dst.Write(buf[offset : offset+chunk])
-				total += int64(w)
-				if w <= 0 && werr == nil {
-					return total, io.ErrUnexpectedEOF
-				}
-				offset += w
-				if werr != nil {
-					return total, werr
-				}
-				if maxDelay > 0 {
-					delay := minDelay
-					if maxDelay > minDelay {
-						delay = rng.Intn(maxDelay-minDelay+1) + minDelay
-					}
-					if delay > 0 {
-						time.Sleep(time.Duration(delay) * time.Millisecond)
-					}
-				}
-			}
-		}
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return total, nil
-			}
-			return total, err
-		}
-	}
+	return engine.Copy(dst, src)
 }
 
 func (s *VpnServer) removeHopHeaders(h http.Header) {
