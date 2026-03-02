@@ -15,6 +15,7 @@ import (
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/resolver"
 	"Hamburger/gateway/stat"
+	"Hamburger/gateway/wasm_plugin"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 	"Hamburger/internal/serror"
@@ -131,6 +132,17 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 		// 统计远程地址
 		stat.AddGeo(request.RemoteAddr)
 
+		if err := wasm_plugin.Init(cfg, logger); err != nil {
+			logger.Error().Err(err).Msg("wasm plugin init failed")
+		} else {
+			if err := wasm_plugin.HandleRequest(logger, request); err != nil {
+				logger.Debug().Err(err).Msg("wasm request plugin rejected")
+				request.Header.Set(serror.SandwichInternalFlag, serror.SandwichPluginError)
+				request.URL = &url.URL{Scheme: constant.SchemeSandwich}
+				return
+			}
+		}
+
 		pm := prehandler.GetManager()
 		for _, handler := range pm.GetPreHandlers() {
 			if err := handler.Handle(request); err != nil {
@@ -176,6 +188,14 @@ func ProxyModifyResponse(cfg *config.Config, logger *zerolog.Logger) func(respon
 
 		for _, mod := range mods {
 			mod.Use(response)
+		}
+		if err := wasm_plugin.Init(cfg, logger); err != nil {
+			logger.Error().Err(err).Msg("wasm plugin init failed")
+			return nil
+		}
+		if err := wasm_plugin.HandleResponse(logger, response); err != nil {
+			logger.Debug().Err(err).Msg("wasm response plugin failed")
+			response.Header.Set(serror.SandwichInternalFlag, serror.SandwichPluginError)
 		}
 		return nil
 	}

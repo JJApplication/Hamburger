@@ -8,9 +8,10 @@ import (
 
 // AppConfig 配置文件格式模型
 type AppConfig struct {
-	PxyBackendFile  string `yaml:"pxy_backend_file" json:"pxy_backend_file"` // 配置文件路径
-	PxyFrontendFile string `yaml:"pxy_frontend_file" json:"pxy_frontend_file"`
-	DomainMap       string `yaml:"domain_map" json:"domain_map"` // 域名映射文件
+	PxyBackendFile  string       `yaml:"pxy_backend_file" json:"pxy_backend_file"` // 配置文件路径
+	PxyFrontendFile string       `yaml:"pxy_frontend_file" json:"pxy_frontend_file"`
+	DomainMap       string       `yaml:"domain_map" json:"domain_map"` // 域名映射文件
+	Plugin          PluginConfig `yaml:"plugin" json:"plugin"`         // 插件配置
 
 	CoreProxy    ProxyConfig       `yaml:"proxy" json:"proxy"`                 // 核心代理配置
 	Servers      []ServerConfig    `yaml:"servers" json:"servers"`             // 服务器配置列表
@@ -38,6 +39,11 @@ type AppConfig struct {
 // GetDefaultConfig 获取默认配置
 func GetDefaultConfig() *AppConfig {
 	return &AppConfig{
+		Plugin: PluginConfig{
+			Enabled: true,
+			Root:    "plugins",
+			Plugins: []PluginItem{},
+		},
 		Servers: []ServerConfig{
 			{
 				Name:           "http-server",

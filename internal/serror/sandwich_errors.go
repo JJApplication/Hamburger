@@ -20,4 +20,6 @@ const (
 	SandwichDomainNotAllow = "SandwichDomainNotAllow"
 	// SandwichBackendError 后端服务异常 针对API类服务异常
 	SandwichBackendError = "SandwichBackendError"
+	// SandwichPluginError wasm插件异常
+	SandwichPluginError = "SandwichPluginError"
 )

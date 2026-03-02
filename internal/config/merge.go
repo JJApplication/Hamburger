@@ -18,6 +18,7 @@ func Merge(appConfig *AppConfig) *Config {
 		Module:       appConfig.Module,
 		Stat:         appConfig.Stat,
 		CustomHeader: appConfig.CustomHeader,
+		Plugin:       appConfig.Plugin,
 		Syncer:       appConfig.Syncer,
 		Debug:        appConfig.Debug,
 		PProf:        appConfig.PProf,

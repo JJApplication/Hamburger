@@ -16,6 +16,7 @@ type Config struct {
 	Stat               StatConfig             `yaml:"stat" json:"stat"`                   // 状态统计配置
 	Latency            LatencyConfig          `yaml:"latency" json:"latency"`             // 延迟统计配置
 	CustomHeader       map[string]string      `yaml:"custom_header" json:"custom_header"` // 自定义Header
+	Plugin             PluginConfig           `yaml:"plugin" json:"plugin"`               // 插件配置
 	Syncer             Syncer                 `yaml:"syncer" json:"syncer"`               // 定时器时间
 	Debug              bool                   `yaml:"debug" json:"debug"`                 // 调试模式
 	PProf              PProf                  `yaml:"pprof" json:"pprof"`
@@ -25,6 +26,20 @@ type Config struct {
 	PxyCustomService   PxyCustomServiceConfig `yaml:"pxy_custom_service" json:"pxy_custom_service"`     // 定义的转发服务
 	StaticDirectServer StaticDirectSvrConfig  `yaml:"static_direct_server" json:"static_direct_server"` // 静态直通
 	VpnServer          VpnServerConfig        `yaml:"vpn_server" json:"vpn_server"`
+}
+
+// PluginConfig 插件配置
+type PluginConfig struct {
+	Enabled bool         `yaml:"enabled" json:"enabled"` // 是否启用
+	Root    string       `yaml:"root" json:"root"`       // 插件根目录
+	Plugins []PluginItem `yaml:"plugins" json:"plugins"` // 插件列表
+}
+
+// PluginItem 单个插件配置
+type PluginItem struct {
+	Name    string                 `yaml:"name" json:"name"`       // 插件名称
+	Enabled bool                   `yaml:"enabled" json:"enabled"` // 是否启用
+	Params  map[string]interface{} `yaml:"params" json:"params"`   // 扩展配置
 }
 
 // Syncer 定时器时间

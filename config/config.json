@@ -2,6 +2,11 @@
   "pxy_backend_file": "config/backend.json",
   "pxy_frontend_file": "config/frontend.json",
   "domain_map": "config/domains.json",
+  "plugin": {
+    "enabled": true,
+    "root": "plugins",
+    "plugins": []
+  },
   "proxy": {
     "flush_interval": 0,
     "buf_size": 65536,
