@@ -6,13 +6,22 @@ import (
 	"Hamburger/internal/constant"
 	"Hamburger/internal/utils"
 	"bytes"
+	"crypto/tls"
+	"fmt"
+	"net"
 	"net/http"
 	"time"
+
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
+	"golang.org/x/net/http2"
 )
 
 type myTransport struct {
-	conf      *config.Config
-	Transport http.RoundTripper
+	conf         *config.Config
+	Transport    http.RoundTripper
+	h2cTransport http.RoundTripper
+	h3Transport  http.RoundTripper
 }
 
 func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -24,9 +33,22 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return t.handleGrpcProxy(req)
 	}
 
+	transport := t.Transport
+	if h3Target, ok := t.shouldUseH3(req); ok && t.h3Transport != nil {
+		if req.URL != nil {
+			req.URL.Scheme = "https"
+			if h3Target != "" {
+				req.URL.Host = h3Target
+			}
+		}
+		transport = t.h3Transport
+	} else if t.shouldUseH2C(req) && t.h2cTransport != nil {
+		transport = t.h2cTransport
+	}
+
 	if t.conf.Debug {
 		start := time.Now()
-		resp, err := t.Transport.RoundTrip(req)
+		resp, err := transport.RoundTrip(req)
 
 		if t.conf.Debug {
 			utils.PerformCalc("round-trip", start)
@@ -35,7 +57,103 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 
-	return t.Transport.RoundTrip(req)
+	return transport.RoundTrip(req)
+}
+
+func (t *myTransport) shouldUseH3(req *http.Request) (string, bool) {
+	if t.conf == nil {
+		return "", false
+	}
+	if !t.conf.CoreProxy.EnableHTTP3 {
+		return "", false
+	}
+	if !t.conf.PxyFrontend.ExpFastConnect.Http3.Enabled {
+		return "", false
+	}
+	if req.URL == nil || req.URL.Host == "" {
+		return "", false
+	}
+	defaultTarget := fmt.Sprintf("%s:%d", t.conf.PxyFrontend.Host, t.conf.PxyFrontend.Port)
+	h3Target := t.frontHttp3Target()
+	if h3Target == "" {
+		return "", false
+	}
+	if req.URL.Host != defaultTarget && req.URL.Host != h3Target {
+		return "", false
+	}
+	return h3Target, true
+}
+
+func (t *myTransport) shouldUseH2C(req *http.Request) bool {
+	if t.conf == nil {
+		return false
+	}
+	if !t.conf.PxyFrontend.ExpFastConnect.Enabled {
+		return false
+	}
+	if req.URL == nil || req.URL.Scheme != "http" || req.URL.Host == "" {
+		return false
+	}
+	target := fmt.Sprintf("%s:%d", t.conf.PxyFrontend.Host, t.conf.PxyFrontend.Port)
+	return req.URL.Host == target
+}
+
+func (t *myTransport) frontHttp3Target() string {
+	host := t.conf.PxyFrontend.ExpFastConnect.Http3.Host
+	if host == "" {
+		host = t.conf.PxyFrontend.Host
+	}
+	port := t.conf.PxyFrontend.ExpFastConnect.Http3.Port
+	if port == 0 {
+		port = t.conf.PxyFrontend.Port
+	}
+	if host == "" || port == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s:%d", host, port)
+}
+
+func newH2CTransport(cfg *config.Config) http.RoundTripper {
+	dialer := &net.Dialer{
+		Timeout: 30 * time.Second,
+	}
+	if cfg != nil && cfg.PxyFrontend.ExpFastConnect.Http2.KeepAlive > 0 {
+		dialer.KeepAlive = time.Duration(cfg.PxyFrontend.ExpFastConnect.Http2.KeepAlive) * time.Second
+	}
+	return &http2.Transport{
+		AllowHTTP: true,
+		DialTLS: func(network, addr string, _ *tls.Config) (net.Conn, error) {
+			return dialer.Dial(network, addr)
+		},
+	}
+}
+
+func newH3Transport(cfg *config.Config) http.RoundTripper {
+	h3cfg := cfg.PxyFrontend.ExpFastConnect.Http3
+	host := h3cfg.Host
+	if host == "" {
+		host = cfg.PxyFrontend.Host
+	}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: h3cfg.InsecureSkipVerify,
+	}
+	if host != "" && net.ParseIP(host) == nil {
+		tlsConfig.ServerName = host
+	}
+	quicConfig := &quic.Config{}
+	if h3cfg.MaxConnections > 0 {
+		quicConfig.MaxIncomingStreams = int64(h3cfg.MaxConnections)
+	}
+	if h3cfg.IdleTimeout > 0 {
+		quicConfig.MaxIdleTimeout = time.Duration(h3cfg.IdleTimeout) * time.Second
+	}
+	if h3cfg.KeepAlive > 0 {
+		quicConfig.KeepAlivePeriod = time.Duration(h3cfg.KeepAlive) * time.Second
+	}
+	return &http3.Transport{
+		TLSClientConfig: tlsConfig,
+		QUICConfig:      quicConfig,
+	}
 }
 
 // handleGrpcProxy 处理gRPC代理请求

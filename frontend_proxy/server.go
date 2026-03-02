@@ -2,8 +2,11 @@ package frontend_proxy
 
 import (
 	"Hamburger/internal/config"
+	"context"
+	"crypto/tls"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/rs/zerolog"
 
 	"github.com/gin-gonic/gin"
@@ -292,8 +297,15 @@ func (s *HeliosServer) HandleError(c *gin.Context, statusCode int, message strin
 // Start 启动服务器
 func (s *HeliosServer) Start() error {
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
-	s.logger.Info().Str("address", addr).Msg("starting helios server")
-	return s.gin.Run(addr)
+	if s.config.ExpFastConnect.Http3.Enabled {
+		return s.http3Server(addr)
+	}
+	if !s.config.ExpFastConnect.Enabled {
+		s.logger.Info().Str("address", addr).Msg("starting helios server")
+		return s.httpServer(addr)
+	}
+
+	return s.http2Server(addr)
 }
 
 // Shutdown 优雅关闭服务器
@@ -307,4 +319,84 @@ func (s *HeliosServer) Status() {
 	s.logger.Info().Str("version", Version).Msg("starting helios server")
 	s.logger.Info().Msgf("[Helios] server running on %s:%d", s.config.Host, s.config.Port)
 	s.logger.Info().Msgf("[Helios] cache enabled: %v", s.config.Cache.Enable)
+}
+
+func (s *HeliosServer) httpServer(addr string) error {
+	return s.gin.Run(addr)
+}
+
+func (s *HeliosServer) http2Server(addr string) error {
+	proto := &http.Protocols{}
+	proto.SetHTTP2(true)
+	proto.SetHTTP1(true)
+	proto.SetUnencryptedHTTP2(true)
+
+	httpServer := &http.Server{
+		Addr:              addr,
+		Handler:           s.gin,
+		ReadTimeout:       time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.ReadTimeout, 30)),
+		WriteTimeout:      time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.WriteTimeout, 30)),
+		IdleTimeout:       time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.IdleTimeout, 60)),
+		ReadHeaderTimeout: time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.ReadHeaderTimeout, 10)),
+		MaxHeaderBytes:    int(defaultInt64(s.config.ExpFastConnect.Http2.MaxHeaderBytes, 5<<20)),
+		Protocols:         proto,
+	}
+
+	listener, err := listenWithKeepAlive(addr, s.config.ExpFastConnect.Http2.KeepAlive)
+	if err != nil {
+		return err
+	}
+
+	s.logger.Info().Str("address", addr).Msg("starting helios http2 server")
+	return httpServer.Serve(listener)
+}
+
+func (s *HeliosServer) http3Server(addr string) error {
+	h3cfg := s.config.ExpFastConnect.Http3
+	if h3cfg.CertFile == "" || h3cfg.KeyFile == "" {
+		return fmt.Errorf("http3 cert or key not configured")
+	}
+	cert, err := tls.LoadX509KeyPair(h3cfg.CertFile, h3cfg.KeyFile)
+	if err != nil {
+		return err
+	}
+	tlsConfig := http3.ConfigureTLSConfig(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS13,
+	})
+	quicConfig := &quic.Config{
+		EnableDatagrams: true,
+	}
+	if h3cfg.MaxConnections > 0 {
+		quicConfig.MaxIncomingStreams = int64(h3cfg.MaxConnections)
+	}
+	if h3cfg.IdleTimeout > 0 {
+		quicConfig.MaxIdleTimeout = time.Duration(h3cfg.IdleTimeout) * time.Second
+	}
+	if h3cfg.KeepAlive > 0 {
+		quicConfig.KeepAlivePeriod = time.Duration(h3cfg.KeepAlive) * time.Second
+	}
+	server := http3.Server{
+		Addr:       addr,
+		Handler:    s.gin,
+		TLSConfig:  tlsConfig,
+		QUICConfig: quicConfig,
+	}
+	s.logger.Info().Str("address", addr).Msg("starting helios http3 server")
+	return server.ListenAndServe()
+}
+
+func listenWithKeepAlive(addr string, keepAliveSeconds int64) (net.Listener, error) {
+	listenerConfig := net.ListenConfig{}
+	if keepAliveSeconds > 0 {
+		listenerConfig.KeepAlive = time.Duration(keepAliveSeconds) * time.Second
+	}
+	return listenerConfig.Listen(context.Background(), "tcp", addr)
+}
+
+func defaultInt64(value int64, fallback int64) int64 {
+	if value > 0 {
+		return value
+	}
+	return fallback
 }

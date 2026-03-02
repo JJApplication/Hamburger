@@ -2,9 +2,10 @@ package config
 
 import (
 	"Hamburger/internal/json"
-	"github.com/BurntSushi/toml"
 	"os"
 	"path/filepath"
+
+	"github.com/BurntSushi/toml"
 )
 
 // FrontCacheConfig 缓存配置
@@ -13,6 +14,34 @@ type FrontCacheConfig struct {
 	Dir     string   `json:"dir" toml:"dir"`
 	Expire  int      `json:"expire" toml:"expire"`
 	Matcher []string `json:"matcher" toml:"matcher"`
+}
+
+type FrontHttp2Config struct {
+	ReadTimeout       int64 `json:"read_timeout" toml:"read_timeout"`
+	WriteTimeout      int64 `json:"write_timeout" toml:"write_timeout"`
+	IdleTimeout       int64 `json:"idle_timeout" toml:"idle_timeout"`
+	ReadHeaderTimeout int64 `json:"read_header_timeout" toml:"read_header_timeout"`
+	MaxHeaderBytes    int64 `json:"max_header_bytes" toml:"max_header_bytes"`
+	KeepAlive         int64 `json:"keep_alive" toml:"keep_alive"`
+}
+
+// FrontHttp3Config 前端HTTP/3转发配置
+type FrontHttp3Config struct {
+	Enabled            bool   `json:"enabled" toml:"enabled"`                           // 是否启用
+	Host               string `json:"host" toml:"host"`                                 // 目标主机
+	Port               int    `json:"port" toml:"port"`                                 // 目标端口
+	CertFile           string `json:"cert_file" toml:"cert_file"`                       // 证书文件路径
+	KeyFile            string `json:"key_file" toml:"key_file"`                         // 私钥文件路径
+	MaxConnections     int    `json:"max_connections" toml:"max_connections"`           // 最大连接数
+	IdleTimeout        int64  `json:"idle_timeout" toml:"idle_timeout"`                 // 空闲超时(秒)
+	KeepAlive          int64  `json:"keep_alive" toml:"keep_alive"`                     // 保活间隔(秒)
+	InsecureSkipVerify bool   `json:"insecure_skip_verify" toml:"insecure_skip_verify"` // 跳过证书校验
+}
+
+type FrontFastConnectConfig struct {
+	Enabled bool             `json:"enabled" toml:"enabled"`
+	Http2   FrontHttp2Config `json:"http2" toml:"http2"`
+	Http3   FrontHttp3Config `json:"http3" toml:"http3"` // HTTP/3配置
 }
 
 // BackendConfig 后端配置
@@ -62,17 +91,18 @@ type CustomHeaderConfig struct {
 
 // PxyFrontConfig 前端服务器配置
 type PxyFrontConfig struct {
-	Host                string               `json:"host" toml:"host"`
-	Port                int                  `json:"port" toml:"port"`
-	Balancer            string               `json:"balancer" toml:"balancer"`
-	Cache               FrontCacheConfig     `json:"cache" toml:"cache"`
-	InternalFlag        string               `json:"internal_flag" toml:"internal_flag"`
-	InternalLocalFlag   string               `json:"internal_local_flag" toml:"internal_local_flag"`
-	InternalBackendFlag string               `json:"internal_backend_flag" toml:"internal_backend_flag"`
-	CacheHeader         string               `json:"cache_header" toml:"cache_header"`
-	Servers             []FrontServerConfig  `json:"servers" toml:"servers"`
-	Error               ErrorConfig          `json:"error" toml:"error"`
-	CustomHeaders       []CustomHeaderConfig `json:"custom_headers" toml:"custom_headers"`
+	Host                string                 `json:"host" toml:"host"`
+	Port                int                    `json:"port" toml:"port"`
+	Balancer            string                 `json:"balancer" toml:"balancer"`
+	ExpFastConnect      FrontFastConnectConfig `json:"exp_fast_connect" toml:"exp_fast_connect"`
+	Cache               FrontCacheConfig       `json:"cache" toml:"cache"`
+	InternalFlag        string                 `json:"internal_flag" toml:"internal_flag"`
+	InternalLocalFlag   string                 `json:"internal_local_flag" toml:"internal_local_flag"`
+	InternalBackendFlag string                 `json:"internal_backend_flag" toml:"internal_backend_flag"`
+	CacheHeader         string                 `json:"cache_header" toml:"cache_header"`
+	Servers             []FrontServerConfig    `json:"servers" toml:"servers"`
+	Error               ErrorConfig            `json:"error" toml:"error"`
+	CustomHeaders       []CustomHeaderConfig   `json:"custom_headers" toml:"custom_headers"`
 }
 
 func LoadFrontConfig(file string) (PxyFrontConfig, error) {

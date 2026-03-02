@@ -2,6 +2,28 @@
   "host": "127.0.0.1",
   "port": 7777,
   "balancer": "http://127.0.0.1:80",
+  "exp_fast_connect": {
+    "enabled": true,
+    "http2": {
+      "read_timeout": 30,
+      "write_timeout": 30,
+      "idle_timeout": 60,
+      "read_header_timeout": 10,
+      "max_header_bytes": 5242880,
+      "keep_alive": 30
+    },
+    "http3": {
+      "enabled": false,
+      "host": "",
+      "port": 0,
+      "cert_file": "",
+      "key_file": "",
+      "max_connections": 100,
+      "idle_timeout": 60,
+      "keep_alive": 30,
+      "insecure_skip_verify": true
+    }
+  },
   "cache": {
     "enable": true,
     "dir": "/renj.io/cache",

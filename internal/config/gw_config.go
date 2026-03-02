@@ -8,6 +8,7 @@ type ProxyConfig struct {
 	NetIO           string `yaml:"net_io" json:"net_io"`                         // fasthttp | nbio | http
 	MaxConnsPerHost int    `yaml:"max_conns_per_host" json:"max_conns_per_host"` // 每个主机最大连接数
 	IdleConnTimeout int    `yaml:"idle_conn_timeout" json:"idle_conn_timeout"`   // 空闲连接超时
+	EnableHTTP3     bool   `yaml:"enable_http3" json:"enable_http3"`             // 是否启用HTTP/3
 }
 
 // ServerConfig 服务器配置结构体

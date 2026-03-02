@@ -41,22 +41,29 @@ var (
 //go:inline
 func getOptimizedTransport(transport string) *myTransport {
 	transportOnce.Do(func() {
+		cfg := config.Get()
 		switch transport {
 		case constant.ProxyMode_HTTP:
 			sharedTransport = &myTransport{
 				Transport: OriginRoundTrip(),
-				conf:      config.Get(),
+				conf:      cfg,
 			}
 		case constant.ProxyMode_FastHTTP:
 			sharedTransport = &myTransport{
 				Transport: NewFastRoundTripper(),
-				conf:      config.Get(),
+				conf:      cfg,
 			}
 		default:
 			sharedTransport = &myTransport{
 				Transport: OriginRoundTrip(),
-				conf:      config.Get(),
+				conf:      cfg,
 			}
+		}
+		if cfg != nil && cfg.PxyFrontend.ExpFastConnect.Enabled {
+			sharedTransport.h2cTransport = newH2CTransport(cfg)
+		}
+		if cfg != nil && cfg.CoreProxy.EnableHTTP3 && cfg.PxyFrontend.ExpFastConnect.Http3.Enabled {
+			sharedTransport.h3Transport = newH3Transport(cfg)
 		}
 	})
 	return sharedTransport
