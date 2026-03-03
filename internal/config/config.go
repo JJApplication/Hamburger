@@ -4,7 +4,8 @@ import "time"
 
 // Config 主配置结构体，包含所有服务配置信息
 type Config struct {
-	CoreProxy          ProxyConfig            `yaml:"proxy" json:"proxy"`                 // 核心代理配置
+	CoreProxy          ProxyConfig            `yaml:"proxy" json:"proxy"` // 核心代理配置
+	ErrorConfig        ProxyErrorConfig       `yaml:"error_config" json:"error_config"`
 	Servers            []ServerConfig         `yaml:"servers" json:"servers"`             // 服务器配置列表
 	Middleware         MiddlewareConfig       `yaml:"middleware" json:"middleware"`       // 中间件配置列表
 	Features           FeatureConfig          `yaml:"features" json:"features"`           // 功能特性配置

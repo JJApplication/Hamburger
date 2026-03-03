@@ -11,6 +11,13 @@ type ProxyConfig struct {
 	EnableHTTP3     bool   `yaml:"enable_http3" json:"enable_http3"`             // 是否启用HTTP/3
 }
 
+// ProxyErrorConfig 网关错误配置
+type ProxyErrorConfig struct {
+	ErrorMode       string         `yaml:"error_mode" json:"error_mode"`               // 传统text格式错误页面 | html页面
+	ErrorPage       map[int]string `yaml:"error_page" json:"error_page"`               // 不同状态码对应的页面
+	EnablePageCache bool           `yaml:"enable_page_cache" json:"enable_page_cache"` // 开启缓存
+}
+
 // ServerConfig 服务器配置结构体
 type ServerConfig struct {
 	Name           string         `yaml:"name" json:"name"`                         // 服务器名称

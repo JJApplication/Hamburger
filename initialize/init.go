@@ -70,6 +70,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitStaticDirect())
 	i.Register(i.InitVpnServer())
 	i.Register(i.InitProbeSyncer())
+	i.Register(i.InitPxyErrorPage())
 	i.Register(i.InitPProf())
 
 	// 按优先级排序

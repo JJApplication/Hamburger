@@ -219,19 +219,19 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			return
 		case serror.SandwichReqLimit:
 			logger.Error().Str("host", request.Host).Msg("reach flow control limit")
-			error_page.Cache(http.StatusTooManyRequests, writer, request, error_page.Forbidden)
+			error_page.EPM.Response(http.StatusTooManyRequests, writer, request)
 			return
 		case serror.SandwichDomainNotAllow:
 			logger.Error().Str("host", request.Host).Msg("http: no host in request url")
-			error_page.Cache(http.StatusForbidden, writer, request, error_page.Forbidden)
+			error_page.EPM.Response(http.StatusForbidden, writer, request)
 			return
 		case serror.SandwichBackendError:
 			breaker.Set(request.Host)
 			logger.Error().Str("host", request.Host).Msg("backend: service is down")
-			error_page.Cache(http.StatusBadGateway, writer, request, error_page.Unavailable)
+			error_page.EPM.Response(http.StatusBadGateway, writer, request)
 			return
 		}
 		logger.Error().Err(err).Str("host", request.Host).Msg("proxy connect error")
-		error_page.Cache(http.StatusBadGateway, writer, request, error_page.Unavailable)
+		error_page.EPM.Response(http.StatusBadGateway, writer, request)
 	}
 }

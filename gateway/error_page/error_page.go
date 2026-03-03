@@ -11,8 +11,11 @@ import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/serror"
+	"github.com/rs/zerolog"
 	"net/http"
+	"os"
 	"strings"
+	"sync"
 )
 
 // 静态文件的缓存
@@ -30,31 +33,154 @@ const (
 	Other
 )
 
+const (
+	ErrorModeText         = "text"
+	ErrorModeJSON         = "json"
+	ErrorModeHTML         = "html"          // 自定义页面
+	ErrorModeInternalHTML = "internal_html" // 内置页面
+)
+
 var CodeMap = map[int][]byte{
 	Forbidden:   ForbiddenPage,
 	Unavailable: UnavailablePage,
 	Other:       []byte(serror.ERRORSendProxy),
 }
 
+type ErrorPageManager struct {
+	cfg                *config.Config
+	logger             *zerolog.Logger
+	lo                 sync.RWMutex
+	Mode               string
+	ErrorPage          map[int]string
+	ErrorPageCache     map[int][]byte // 自定义页面缓存
+	ErrorPageCacheGzip map[int][]byte // 自定义页面 带gzip的缓存
+	EnablePageCache    bool           // 是否开启gzip缓存 默认为byte流缓存
+}
+
+var EPM *ErrorPageManager
+
+func InitErrorPageManager(cfg *config.Config, logger *zerolog.Logger) {
+	EPM = &ErrorPageManager{
+		cfg:                cfg,
+		logger:             logger,
+		Mode:               cfg.ErrorConfig.ErrorMode,
+		ErrorPage:          cfg.ErrorConfig.ErrorPage,
+		ErrorPageCache:     make(map[int][]byte),
+		ErrorPageCacheGzip: make(map[int][]byte),
+		EnablePageCache:    cfg.ErrorConfig.EnablePageCache,
+	}
+	EPM.Init()
+}
+
+func (em *ErrorPageManager) Init() {
+	switch em.Mode {
+	case ErrorModeHTML:
+		for code, file := range em.ErrorPage {
+			data, err := os.ReadFile(file)
+			if err != nil {
+				continue
+			}
+			em.lo.Lock()
+			em.ErrorPageCache[code] = data
+			em.lo.Unlock()
+			if em.EnablePageCache {
+				em.lo.Lock()
+				gzipData, err := compressData(data)
+				if err == nil {
+					em.ErrorPageCacheGzip[code] = gzipData
+				}
+				em.lo.Unlock()
+			}
+		}
+	case ErrorModeInternalHTML:
+		InitErrorPageCache()
+	}
+}
+
+func (em *ErrorPageManager) Response(code int, w http.ResponseWriter, r *http.Request) {
+	switch em.Mode {
+	case ErrorModeText:
+		em.textWriter(code, w, r)
+		return
+	case ErrorModeJSON:
+		em.jsonWriter(code, w, r)
+		return
+	case ErrorModeHTML:
+		em.htmlWriter(code, w, r)
+		return
+	case ErrorModeInternalHTML:
+		em.internalHtmlWriter(code, w, r)
+		return
+	default:
+		em.textWriter(code, w, r)
+	}
+}
+
 //go:inline
-func Cache(code int, w http.ResponseWriter, r *http.Request, resType int) {
-	cf := config.Get()
-	if cf.Security.StrictMode || !acceptHTML(r) {
+func (em *ErrorPageManager) textWriter(code int, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(code)
+	w.Write([]byte(serror.ERRORSendProxy))
+}
+
+//go:inline
+func (em *ErrorPageManager) jsonWriter(code int, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(code)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Write([]byte(serror.ErrorProxyErrorJSON))
+}
+
+//go:inline
+func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.Request) {
+	if em.EnablePageCache {
+		em.lo.RLock()
+		defer em.lo.RUnlock()
+		if data, ok := em.ErrorPageCacheGzip[code]; ok {
+			w.WriteHeader(code)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Content-Encoding", "gzip")
+			w.Write(data)
+			return
+		} else {
+			// 没有缓存时压缩后计入缓存
+			if data, ok = em.ErrorPageCache[code]; ok {
+				w.WriteHeader(code)
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				minify(w, data)
+				em.lo.Lock()
+				defer em.lo.Unlock()
+				if gzipData, err := compressData(data); err == nil {
+					em.ErrorPageCacheGzip[code] = gzipData
+				}
+			} else {
+				em.textWriter(code, w, r)
+				return
+			}
+		}
+		em.textWriter(code, w, r)
+	} else {
+		if data, ok := em.ErrorPageCache[code]; ok {
+			w.WriteHeader(code)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(data)
+			return
+		}
+		em.textWriter(code, w, r)
+	}
+}
+
+//go:inline
+func (em *ErrorPageManager) internalHtmlWriter(code int, w http.ResponseWriter, r *http.Request) {
+	// 严格模式直接按响应码返回
+	if em.cfg.Security.StrictMode {
 		strictWrite(code, w)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	switch resType {
-	case Forbidden:
-		writeResponse(w, r, Forbidden)
-		return
-	case Unavailable:
+	if code == http.StatusBadGateway {
 		writeResponse(w, r, Unavailable)
-		return
-	default:
-		writeResponse(w, r, Other)
-		return
+	} else {
+		writeResponse(w, r, Forbidden)
 	}
 }
 

@@ -8,6 +8,7 @@ func Merge(appConfig *AppConfig) *Config {
 
 	conf := &Config{
 		CoreProxy:    appConfig.CoreProxy,
+		ErrorConfig:  appConfig.ErrorConfig,
 		Servers:      appConfig.Servers,
 		Middleware:   appConfig.Middleware,
 		Features:     appConfig.Features,
