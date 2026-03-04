@@ -15,6 +15,7 @@ import (
 
 	"github.com/lesismal/nbio/lmux"
 	"github.com/rs/zerolog"
+	"golang.org/x/net/http2"
 )
 
 // 注入handler时提前判断为http2前置响应时直接返回不处理
@@ -166,6 +167,48 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 		// 设置最大请求体大小
 		MaxHeaderBytes: utils.DefaultInt(int(serverConfig.MaxHeaderBytes), 5<<20), // 1MB header limit
 		Protocols:      proto,
+	}
+	if serverConfig.UseHttp2 {
+		h2s := &http2.Server{}
+		if serverConfig.Http2 != nil {
+			if serverConfig.Http2.MaxHandlers > 0 {
+				h2s.MaxHandlers = serverConfig.Http2.MaxHandlers
+			}
+			if serverConfig.Http2.MaxConcurrentStreams > 0 {
+				h2s.MaxConcurrentStreams = uint32(serverConfig.Http2.MaxConcurrentStreams)
+			}
+			if serverConfig.Http2.MaxReadFrameSize > 0 {
+				h2s.MaxReadFrameSize = uint32(serverConfig.Http2.MaxReadFrameSize)
+			}
+			if serverConfig.Http2.MaxDecoderHeaderTableSize > 0 {
+				h2s.MaxDecoderHeaderTableSize = uint32(serverConfig.Http2.MaxDecoderHeaderTableSize)
+			}
+			if serverConfig.Http2.MaxEncoderHeaderTableSize > 0 {
+				h2s.MaxEncoderHeaderTableSize = uint32(serverConfig.Http2.MaxEncoderHeaderTableSize)
+			}
+			if serverConfig.Http2.MaxUploadBufferPerConnection > 0 {
+				h2s.MaxUploadBufferPerConnection = int32(serverConfig.Http2.MaxUploadBufferPerConnection)
+			}
+			if serverConfig.Http2.MaxUploadBufferPerStream > 0 {
+				h2s.MaxUploadBufferPerStream = int32(serverConfig.Http2.MaxUploadBufferPerStream)
+			}
+			if serverConfig.Http2.IdleTimeout > 0 {
+				h2s.IdleTimeout = time.Second * time.Duration(serverConfig.Http2.IdleTimeout)
+			}
+			if serverConfig.Http2.ReadIdleTimeout > 0 {
+				h2s.ReadIdleTimeout = time.Second * time.Duration(serverConfig.Http2.ReadIdleTimeout)
+			}
+			if serverConfig.Http2.PingTimeout > 0 {
+				h2s.PingTimeout = time.Second * time.Duration(serverConfig.Http2.PingTimeout)
+			}
+			if serverConfig.Http2.WriteByteTimeout > 0 {
+				h2s.WriteByteTimeout = time.Second * time.Duration(serverConfig.Http2.WriteByteTimeout)
+			}
+			h2s.PermitProhibitedCipherSuites = serverConfig.Http2.PermitProhibitedCipherSuites
+		}
+		if err := http2.ConfigureServer(httpServer, h2s); err != nil {
+			return nil, fmt.Errorf("failed to configure http2 server: %v", err)
+		}
 	}
 
 	// 配置最大请求体大小和自动重定向

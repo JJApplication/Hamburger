@@ -15,6 +15,15 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+var (
+	TLSVersionMap = map[string]uint16{
+		"TLS10": tls.VersionTLS10,
+		"TLS11": tls.VersionTLS11,
+		"TLS12": tls.VersionTLS12,
+		"TLS13": tls.VersionTLS13,
+	}
+)
+
 type TLSManager struct {
 	config *config.Config
 	logger *zerolog.Logger
@@ -102,7 +111,7 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 		}
 
 		// 强化TLS安全参数
-		base.MinVersion = tls.VersionTLS12
+		base.MinVersion = GetTLSVersion(tlsConfig.MinVersion)
 		base.PreferServerCipherSuites = true
 
 		// 开启h2
@@ -118,7 +127,7 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 	tlsCfg := &tls.Config{
 		GetCertificate: m.GetCertificateFunc(),
 		// 设置最低 TLS 版本
-		MinVersion: tls.VersionTLS12,
+		MinVersion: GetTLSVersion(tlsConfig.MinVersion),
 		// 优先使用服务器的密码套件顺序
 		PreferServerCipherSuites: true,
 		NextProtos:               []string{"h2", "http/1.1"},
@@ -130,11 +139,11 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 	return tlsCfg, lis, nil
 }
 
-func (m *TLSManager) GetTlsConfig() *tls.Config {
+func (m *TLSManager) GetTlsConfig(minVersion string) *tls.Config {
 	tlsCfg := &tls.Config{
 		GetCertificate: m.GetCertificateFunc(),
 		// 设置最低 TLS 版本
-		MinVersion: tls.VersionTLS12,
+		MinVersion: GetTLSVersion(minVersion),
 		// 优先使用服务器的密码套件顺序
 		PreferServerCipherSuites: true,
 		NextProtos:               []string{"h3", "h2", "http/1.1"},
@@ -198,20 +207,21 @@ func (m *TLSManager) GetNbioTLSConfig(tlsConfig *config.TLSConfig) (*lltls.Confi
 		}
 
 		tlsCfg := &lltls.Config{
-			GetCertificate: getCert,
-			MinVersion:     lltls.VersionTLS12,
-			NextProtos:     []string{"h2", "http/1.1"},
+			GetCertificate:           getCert,
+			MinVersion:               lltls.VersionTLS12,
+			NextProtos:               []string{"h2", "http/1.1"},
+			PreferServerCipherSuites: true,
 		}
 		tlsCfg.PreferServerCipherSuites = true
 		return tlsCfg, nil
 	}
 
 	tlsCfg := &lltls.Config{
-		GetCertificate: m.GetNBIOCertificateFunc(),
-		MinVersion:     lltls.VersionTLS12,
-		NextProtos:     []string{"h2", "http/1.1"},
+		GetCertificate:           m.GetNBIOCertificateFunc(),
+		MinVersion:               lltls.VersionTLS12,
+		NextProtos:               []string{"h2", "http/1.1"},
+		PreferServerCipherSuites: true,
 	}
-	tlsCfg.PreferServerCipherSuites = true
 	return tlsCfg, nil
 }
 
@@ -253,4 +263,14 @@ func GetTlsDomains(config *config.Config) []string {
 		return config.Features.AutoCert.Domains
 	}
 	return domains.List()
+}
+
+func GetTLSVersion(minVersion string) uint16 {
+	if minVersion == "" {
+		return tls.VersionTLS12
+	}
+	if v, ok := TLSVersionMap[minVersion]; ok {
+		return v
+	}
+	return tls.VersionTLS12
 }

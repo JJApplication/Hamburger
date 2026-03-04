@@ -49,9 +49,16 @@
       "port": 443,
       "use_http2": true,
       "protocol": "https",
+      "http2": {
+        "max_concurrent_streams": 128,
+        "max_handlers": 100,
+        "idle_timeout": 60,
+        "read_idle_timeout": 60
+      },
       "enabled": true,
       "max_request_body": 52428800,
       "tls": {
+        "min_version": "TLS13",
         "cert_map": {
           "renj.io": {
             "domains": [],

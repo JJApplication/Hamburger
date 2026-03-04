@@ -24,6 +24,7 @@ type ServerConfig struct {
 	Host           string         `yaml:"host" json:"host"`                         // 监听主机地址
 	Port           int            `yaml:"port" json:"port"`                         // 监听端口
 	UseHttp2       bool           `yaml:"use_http2" json:"use_http2"`               // 使用HTTP2
+	Http2          *HTTP2Config   `yaml:"http2" json:"http2"`                       // HTTP2配置
 	Protocol       string         `yaml:"protocol" json:"protocol"`                 // 协议类型: http, https, http3
 	Enabled        bool           `yaml:"enabled" json:"enabled"`                   // 是否启用
 	MaxRequestBody int64          `yaml:"max_request_body" json:"max_request_body"` // 最大请求体大小（字节）
@@ -40,6 +41,22 @@ type ServerConfig struct {
 	MaxHeaderBytes    int64 `yaml:"max_header_bytes" json:"max_header_bytes"`
 }
 
+// HTTP2Config HTTP2服务器配置结构体
+type HTTP2Config struct {
+	MaxHandlers                  int   `yaml:"max_handlers" json:"max_handlers"`                                         // 最大处理协程
+	MaxConcurrentStreams         int64 `yaml:"max_concurrent_streams" json:"max_concurrent_streams"`                     // 最大并发流
+	MaxReadFrameSize             int64 `yaml:"max_read_frame_size" json:"max_read_frame_size"`                           // 最大帧大小
+	MaxDecoderHeaderTableSize    int64 `yaml:"max_decoder_header_table_size" json:"max_decoder_header_table_size"`       // 解码端头表大小
+	MaxEncoderHeaderTableSize    int64 `yaml:"max_encoder_header_table_size" json:"max_encoder_header_table_size"`       // 编码端头表大小
+	MaxUploadBufferPerConnection int64 `yaml:"max_upload_buffer_per_connection" json:"max_upload_buffer_per_connection"` // 连接级上传缓冲
+	MaxUploadBufferPerStream     int64 `yaml:"max_upload_buffer_per_stream" json:"max_upload_buffer_per_stream"`         // 流级上传缓冲
+	IdleTimeout                  int64 `yaml:"idle_timeout" json:"idle_timeout"`                                         // 空闲超时
+	ReadIdleTimeout              int64 `yaml:"read_idle_timeout" json:"read_idle_timeout"`                               // 读空闲超时
+	PingTimeout                  int64 `yaml:"ping_timeout" json:"ping_timeout"`                                         // Ping超时
+	WriteByteTimeout             int64 `yaml:"write_byte_timeout" json:"write_byte_timeout"`                             // 写超时
+	PermitProhibitedCipherSuites bool  `yaml:"permit_prohibited_cipher_suites" json:"permit_prohibited_cipher_suites"`   // 允许弱密码套件
+}
+
 type CertConfig struct {
 	Domains  []string `yaml:"domains" json:"domains"`     // 域名组
 	CertFile string   `yaml:"cert_file" json:"cert_file"` // 证书文件路径
@@ -48,8 +65,9 @@ type CertConfig struct {
 
 // TLSConfig TLS证书配置结构体
 type TLSConfig struct {
-	CertMap map[string]CertConfig `yaml:"cert_map" json:"cert_map"`
-	AutoTLS bool                  `yaml:"auto_tls" json:"auto_tls"` // 是否启用自动TLS
+	CertMap    map[string]CertConfig `yaml:"cert_map" json:"cert_map"`
+	AutoTLS    bool                  `yaml:"auto_tls" json:"auto_tls"`       // 是否启用自动TLS
+	MinVersion string                `yaml:"min_version" json:"min_version"` // 最小TLS版本
 }
 
 // DomainConfig 域名配置结构体
