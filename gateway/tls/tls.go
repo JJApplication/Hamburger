@@ -105,6 +105,9 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 		base.MinVersion = tls.VersionTLS12
 		base.PreferServerCipherSuites = true
 
+		// 开启h2
+		base.NextProtos = []string{"h2", "http/1.1"}
+
 		// 应用 TLS 配置
 		lis := tls.NewListener(listener, base)
 
@@ -118,6 +121,7 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 		MinVersion: tls.VersionTLS12,
 		// 优先使用服务器的密码套件顺序
 		PreferServerCipherSuites: true,
+		NextProtos:               []string{"h2", "http/1.1"},
 	}
 
 	// 应用 TLS 配置
@@ -133,6 +137,7 @@ func (m *TLSManager) GetTlsConfig() *tls.Config {
 		MinVersion: tls.VersionTLS12,
 		// 优先使用服务器的密码套件顺序
 		PreferServerCipherSuites: true,
+		NextProtos:               []string{"h3", "h2", "http/1.1"},
 	}
 
 	return tlsCfg
@@ -195,31 +200,16 @@ func (m *TLSManager) GetNbioTLSConfig(tlsConfig *config.TLSConfig) (*lltls.Confi
 		tlsCfg := &lltls.Config{
 			GetCertificate: getCert,
 			MinVersion:     lltls.VersionTLS12,
+			NextProtos:     []string{"h2", "http/1.1"},
 		}
 		tlsCfg.PreferServerCipherSuites = true
 		return tlsCfg, nil
 	}
 
 	tlsCfg := &lltls.Config{
-		GetCertificate: func(info *lltls.ClientHelloInfo) (*lltls.Certificate, error) {
-			if info == nil {
-				return nil, nil
-			}
-			sniName := info.ServerName
-			if sniName == "" {
-				return nil, nil
-			}
-			domainCert, domainKey := m.GetCert(sniName)
-			if domainCert == "" || domainKey == "" {
-				return nil, nil
-			}
-			cert, err := lltls.LoadX509KeyPair(domainCert, domainKey)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load TLS certificate: %v", err)
-			}
-			return &cert, nil
-		},
-		MinVersion: lltls.VersionTLS12,
+		GetCertificate: m.GetNBIOCertificateFunc(),
+		MinVersion:     lltls.VersionTLS12,
+		NextProtos:     []string{"h2", "http/1.1"},
 	}
 	tlsCfg.PreferServerCipherSuites = true
 	return tlsCfg, nil
@@ -237,12 +227,12 @@ func toNbioCertificate(cert *tls.Certificate) *lltls.Certificate {
 		}
 	}
 	return &lltls.Certificate{
-		Certificate:                   cert.Certificate,
-		PrivateKey:                    cert.PrivateKey,
-		SupportedSignatureAlgorithms:  sigAlgs,
-		OCSPStaple:                    cert.OCSPStaple,
-		SignedCertificateTimestamps:   cert.SignedCertificateTimestamps,
-		Leaf:                          cert.Leaf,
+		Certificate:                  cert.Certificate,
+		PrivateKey:                   cert.PrivateKey,
+		SupportedSignatureAlgorithms: sigAlgs,
+		OCSPStaple:                   cert.OCSPStaple,
+		SignedCertificateTimestamps:  cert.SignedCertificateTimestamps,
+		Leaf:                         cert.Leaf,
 	}
 }
 

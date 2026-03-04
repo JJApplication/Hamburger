@@ -94,11 +94,11 @@ func (m *Manager) startServer(serverConfig config.ServerConfig, logger *zerolog.
 	var err error
 	switch netIO {
 	case constant.NetIO_NBIO:
-		instance, err = server.CommonNbioServer(serverConfig, logger, m.handler, m.tlsManager)
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, true)
 	case constant.NetIO_NET:
-		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager)
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, false)
 	default:
-		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager)
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, false)
 	}
 	if err != nil {
 		return err

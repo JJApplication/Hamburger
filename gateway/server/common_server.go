@@ -13,8 +13,19 @@ import (
 	"Hamburger/internal/logger"
 	"Hamburger/internal/utils"
 
+	"github.com/lesismal/nbio/lmux"
 	"github.com/rs/zerolog"
 )
+
+// 注入handler时提前判断为http2前置响应时直接返回不处理
+func http2Handler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "PRI" && r.RequestURI == "*" {
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
 
 func wrapHandlerWithTag(h http.Handler, tagName string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +123,7 @@ func wrapHandlerWithAutoHttpsRedirect(h http.Handler, logger *zerolog.Logger, se
 }
 
 // CommonHttpServer 通用http服务器
-func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager) (*ServerInstance, error) {
+func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager, useNBIO bool) (*ServerInstance, error) {
 	// 创建服务器实例
 	instance := &ServerInstance{
 		Name:   serverConfig.Name,
@@ -139,7 +150,7 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 
 	var originHandler http.Handler
 	if instance.TLS {
-		originHandler = wrapHandlerWithTag(h, "https443")
+		originHandler = http2Handler(wrapHandlerWithTag(h, "https443"))
 	} else {
 		originHandler = wrapHandlerWithTag(h, "http80")
 	}
@@ -171,7 +182,14 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener: %v", err)
 	}
-	instance.Listener = listener
+	if useNBIO {
+		mux := lmux.New(1024 * 64)
+		chanListener, _ := mux.Mux(listener)
+		mux.Start()
+		instance.Listener = &nbioMuxListener{base: chanListener, mux: mux}
+	} else {
+		instance.Listener = listener
+	}
 
 	// 如果是 HTTPS，配置 TLS
 	if instance.TLS {
@@ -179,7 +197,7 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 			instance.lock.Lock()
 			tlsConfig, lis, err := tlsManager.ConfigureTLS(instance.Config.TLS, instance.Listener)
 			if err != nil {
-				listener.Close()
+				_ = instance.Listener.Close()
 				return nil, fmt.Errorf("failed to configure TLS: %v", err)
 			}
 			instance.Listener = lis

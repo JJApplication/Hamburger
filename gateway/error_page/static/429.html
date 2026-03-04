@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>429 TOO MANY REQUESTS</title>
+  <style>
+    :root {
+      --m1: hsl(220, 100%, 85%);
+      --m2: hsl(220, 100%, 77%);
+      --m3: hsl(220, 100%, 69%);
+      --m4: hsl(220, 100%, 61%);
+      --m5: hsl(220, 100%, 53%);
+      --m6: hsl(220, 100%, 45%);
+      --m7: hsl(220, 100%, 37%);
+      --m8: hsl(220, 100%, 29%);
+      --m9: hsl(220, 100%, 21%);
+      --m10: hsl(220, 100%, 13%);
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: #000;
+    }
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        var(--m1) 0%, var(--m1) 10%,
+        var(--m2) 10%, var(--m2) 20%,
+        var(--m3) 20%, var(--m3) 30%,
+        var(--m4) 30%, var(--m4) 40%,
+        var(--m5) 40%, var(--m5) 50%,
+        var(--m6) 50%, var(--m6) 60%,
+        var(--m7) 60%, var(--m7) 70%,
+        var(--m8) 70%, var(--m8) 80%,
+        var(--m9) 80%, var(--m9) 90%,
+        var(--m10) 90%, var(--m10) 100%
+      );
+    }
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: -5% 0;
+      mix-blend-mode: soft-light;
+      opacity: 0.9;
+      background-repeat: repeat-x;
+      background-size: 180px 100%;
+      background-image:
+        radial-gradient(100% 50% at 50% 50%, rgba(255,255,255,0.16) 0 40%, rgba(255,255,255,0) 60%);
+      animation: wave-flow 10s linear infinite;
+    }
+    @keyframes wave-flow {
+      from { background-position: 0 0; }
+      to   { background-position: 100% 0; }
+    }
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      color: #ffffff;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-align: center;
+      font-size: min(16vw, 140px);
+      text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .footer {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      z-index: 2;
+      color: rgba(255,255,255,0.92);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      user-select: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <h1>429 TOO MANY REQUESTS</h1>
+  </div>
+  <div class="footer">Copyright renj.io</div>
+</body>
+</html>

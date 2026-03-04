@@ -228,7 +228,7 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 		case serror.SandwichBackendError:
 			breaker.Set(request.Host)
 			logger.Error().Str("host", request.Host).Msg("backend: service is down")
-			error_page.EPM.Response(http.StatusBadGateway, writer, request)
+			error_page.EPM.Response(http.StatusInternalServerError, writer, request)
 			return
 		}
 		logger.Error().Err(err).Str("host", request.Host).Msg("proxy connect error")

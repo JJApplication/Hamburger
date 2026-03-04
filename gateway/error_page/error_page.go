@@ -132,10 +132,8 @@ func (em *ErrorPageManager) jsonWriter(code int, w http.ResponseWriter, r *http.
 //go:inline
 func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.Request) {
 	if em.EnablePageCache {
-		em.lo.RLock()
-		defer em.lo.RUnlock()
 		if data, ok := em.ErrorPageCacheGzip[code]; ok {
-			w.WriteHeader(code)
+			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.Header().Set("Content-Encoding", "gzip")
 			w.Write(data)
@@ -143,7 +141,7 @@ func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.
 		} else {
 			// 没有缓存时压缩后计入缓存
 			if data, ok = em.ErrorPageCache[code]; ok {
-				w.WriteHeader(code)
+				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				minify(w, data)
 				em.lo.Lock()
@@ -152,6 +150,18 @@ func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.
 					em.ErrorPageCacheGzip[code] = gzipData
 				}
 			} else {
+				// 未映射的页面统一使用默认502对应的页面 如果不存在再降级到text
+				if data, ok = em.ErrorPageCache[http.StatusBadGateway]; ok {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					minify(w, data)
+					em.lo.Lock()
+					defer em.lo.Unlock()
+					if gzipData, err := compressData(data); err == nil {
+						em.ErrorPageCacheGzip[code] = gzipData
+					}
+					return
+				}
 				em.textWriter(code, w, r)
 				return
 			}
@@ -160,6 +170,13 @@ func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.
 	} else {
 		if data, ok := em.ErrorPageCache[code]; ok {
 			w.WriteHeader(code)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(data)
+			return
+		}
+		// 未映射的页面统一使用默认502对应的页面 如果不存在再降级到text
+		if data, ok := em.ErrorPageCache[http.StatusBadGateway]; ok {
+			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.Write(data)
 			return
@@ -177,7 +194,7 @@ func (em *ErrorPageManager) internalHtmlWriter(code int, w http.ResponseWriter, 
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	if code == http.StatusBadGateway {
+	if code == http.StatusInternalServerError {
 		writeResponse(w, r, Unavailable)
 	} else {
 		writeResponse(w, r, Forbidden)
