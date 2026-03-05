@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 go clean
 export GOEXPERIMENT=greenteagc
+export GONOSUMDB=*
 Version=0.1.0
 BuildHash=$(git rev-parse HEAD)
 GC_FLAGS="-d=loopvar=2"

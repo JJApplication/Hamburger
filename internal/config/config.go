@@ -9,6 +9,7 @@ type Config struct {
 	Servers            []ServerConfig         `yaml:"servers" json:"servers"`             // 服务器配置列表
 	Middleware         MiddlewareConfig       `yaml:"middleware" json:"middleware"`       // 中间件配置列表
 	Features           FeatureConfig          `yaml:"features" json:"features"`           // 功能特性配置
+	GRPC               GRPCConfig             `yaml:"grpc" json:"grpc"`                   // gRPC服务配置
 	Database           DatabaseConfig         `yaml:"database" json:"database"`           // 数据库配置
 	Security           SecurityConfig         `yaml:"security" json:"security"`           // 安全配置
 	ProxyHeader        ProxyHeader            `yaml:"proxy_header" json:"proxy_header"`   // 内置的代理头配置
@@ -26,7 +27,13 @@ type Config struct {
 	PxyFrontend        PxyFrontConfig         `yaml:"pxy_frontend" json:"pxy_frontend"`
 	PxyCustomService   PxyCustomServiceConfig `yaml:"pxy_custom_service" json:"pxy_custom_service"`     // 定义的转发服务
 	StaticDirectServer StaticDirectSvrConfig  `yaml:"static_direct_server" json:"static_direct_server"` // 静态直通
-	VpnServer          VpnServerConfig        `yaml:"vpn_server" json:"vpn_server"`
+	ExpConfig          ExpConfig              `yaml:"exp_config" json:"exp_config"`
+}
+
+// GRPCConfig gRPC服务配置结构体
+type GRPCConfig struct {
+	Enabled bool   `yaml:"enabled" json:"enabled"` // 是否启用gRPC服务
+	Address string `yaml:"address" json:"address"` // gRPC监听地址
 }
 
 // PluginConfig 插件配置

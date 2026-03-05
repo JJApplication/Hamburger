@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JJApplication/octopus_meta v1.0.8
 	github.com/allegro/bigcache/v3 v3.1.0
+	github.com/anytls/sing-anytls v0.0.11
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gookit/goutil v0.5.5
 	github.com/json-iterator/go v1.1.12
@@ -15,6 +16,7 @@ require (
 	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 	github.com/quic-go/quic-go v0.54.0
 	github.com/rs/zerolog v1.34.0
+	github.com/sagernet/sing v0.8.1
 	github.com/spf13/cobra v1.10.1
 	github.com/tetratelabs/wazero v1.7.0
 	github.com/valyala/fasthttp v1.69.0

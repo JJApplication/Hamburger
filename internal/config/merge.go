@@ -12,6 +12,7 @@ func Merge(appConfig *AppConfig) *Config {
 		Servers:      appConfig.Servers,
 		Middleware:   appConfig.Middleware,
 		Features:     appConfig.Features,
+		GRPC:         appConfig.GRPC,
 		Database:     appConfig.Database,
 		Security:     appConfig.Security,
 		ProxyHeader:  appConfig.ProxyHeader,
@@ -26,7 +27,7 @@ func Merge(appConfig *AppConfig) *Config {
 		MaxCores:     appConfig.MaxCores,
 		PxyBackend:   appConfig.PxyBackend,
 		PxyFrontend:  appConfig.PxyFrontend,
-		VpnServer:    appConfig.VpnServer,
+		ExpConfig:    appConfig.ExpConfig,
 	}
 
 	if appConfig.PxyFrontendFile != "" {

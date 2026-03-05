@@ -47,13 +47,13 @@ func NewVpnServer(cfg *config.Config, logger *zerolog.Logger) *VpnServer {
 }
 
 func (s *VpnServer) Start() error {
-	if s.cfg == nil || !s.cfg.VpnServer.Enabled {
+	if s.cfg == nil || !s.cfg.ExpConfig.VpnServer.Enabled {
 		return nil
 	}
 	if s.started {
 		return nil
 	}
-	cfg := s.cfg.VpnServer
+	cfg := s.cfg.ExpConfig.VpnServer
 	if cfg.HttpPort > 0 {
 		addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.HttpPort)
 		ln, err := net.Listen("tcp", addr)
@@ -123,7 +123,7 @@ func (s *VpnServer) Stop() error {
 }
 
 func (s *VpnServer) loadTLSConfig() (*tls.Config, error) {
-	cfg := s.cfg.VpnServer.TLS
+	cfg := s.cfg.ExpConfig.VpnServer.TLS
 	if cfg.CertFile == "" || cfg.KeyFile == "" {
 		return nil, fmt.Errorf("vpn tls cert or key not configured")
 	}
@@ -211,7 +211,7 @@ func (s *VpnServer) handleHTTPConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *VpnServer) checkHTTPAuth(w http.ResponseWriter, r *http.Request) bool {
-	auth := s.cfg.VpnServer.Auth
+	auth := s.cfg.ExpConfig.VpnServer.Auth
 	if !auth.Enabled {
 		return true
 	}
@@ -244,7 +244,7 @@ func (s *VpnServer) writeProxyAuthRequired(w http.ResponseWriter) {
 }
 
 func (s *VpnServer) writeCamouflage(w http.ResponseWriter) {
-	obfs := s.cfg.VpnServer.Obfs
+	obfs := s.cfg.ExpConfig.VpnServer.Obfs
 	if !obfs.CamouflageEnabled {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
@@ -299,7 +299,7 @@ func (s *VpnServer) handleSocksConn(conn net.Conn) {
 		return
 	}
 	method := byte(0x00)
-	authEnabled := s.cfg.VpnServer.Auth.Enabled
+	authEnabled := s.cfg.ExpConfig.VpnServer.Auth.Enabled
 	if authEnabled {
 		method = 0xFF
 		for _, m := range methods {
@@ -378,7 +378,7 @@ func (s *VpnServer) socksAuth(conn net.Conn, br *bufio.Reader) bool {
 	if _, err := io.ReadFull(br, pbuf); err != nil {
 		return false
 	}
-	auth := s.cfg.VpnServer.Auth
+	auth := s.cfg.ExpConfig.VpnServer.Auth
 	if string(ubuf) != auth.Username || string(pbuf) != auth.Password {
 		_, _ = conn.Write([]byte{0x01, 0x01})
 		return false
@@ -474,7 +474,7 @@ func (s *VpnServer) pipeConn(client net.Conn, server net.Conn) {
 		_ = client.SetDeadline(time.Now().Add(timeout))
 		_ = server.SetDeadline(time.Now().Add(timeout))
 	}
-	engine := newObfsEngine(s.cfg.VpnServer.Obfs)
+	engine := newObfsEngine(s.cfg.ExpConfig.VpnServer.Obfs)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -530,7 +530,7 @@ func (s *VpnServer) cloneHeader(h http.Header) http.Header {
 }
 
 func (s *VpnServer) getTimeout() time.Duration {
-	timeout := s.cfg.VpnServer.Timeout
+	timeout := s.cfg.ExpConfig.VpnServer.Timeout
 	if timeout <= 0 {
 		return 30 * time.Second
 	}

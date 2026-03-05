@@ -18,6 +18,7 @@ type AppConfig struct {
 	Servers      []ServerConfig    `yaml:"servers" json:"servers"`             // 服务器配置列表
 	Middleware   MiddlewareConfig  `yaml:"middleware" json:"middleware"`       // 中间件配置列表
 	Features     FeatureConfig     `yaml:"features" json:"features"`           // 功能特性配置
+	GRPC         GRPCConfig        `yaml:"grpc" json:"grpc"`                   // gRPC服务配置
 	Database     DatabaseConfig    `yaml:"database" json:"database"`           // 数据库配置
 	Security     SecurityConfig    `yaml:"security" json:"security"`           // 安全配置
 	ProxyHeader  ProxyHeader       `yaml:"proxy_header" json:"proxy_header"`   // 内置的代理头配置
@@ -30,11 +31,12 @@ type AppConfig struct {
 	Debug        bool              `yaml:"debug" json:"debug"`                 // 调试模式
 	PProf        PProf             `yaml:"pprof" json:"pprof"`
 	MaxCores     int               `yaml:"max_cores" json:"max_cores"`
-	VpnServer    VpnServerConfig   `yaml:"vpn_server" json:"vpn_server"`
 
 	// 第二优先级
 	PxyBackend  PxyBackendConfig `yaml:"pxy_backend" json:"pxy_backend"`
 	PxyFrontend PxyFrontConfig   `yaml:"pxy_frontend" json:"pxy_frontend"`
+
+	ExpConfig ExpConfig `yaml:"exp_config" json:"exp_config"`
 }
 
 // GetDefaultConfig 获取默认配置
@@ -101,6 +103,10 @@ func GetDefaultConfig() *AppConfig {
 				Strategy: "lru",
 			},
 		},
+		GRPC: GRPCConfig{
+			Enabled: false,
+			Address: "",
+		},
 		Database: DatabaseConfig{
 			Mongo: MongoConfig{
 				URL:      "mongodb://localhost:27017",
@@ -137,21 +143,6 @@ func GetDefaultConfig() *AppConfig {
 			Sequence: SequenceConfig{
 				Enabled:  true,
 				Interval: 3600,
-			},
-		},
-		VpnServer: VpnServerConfig{
-			Enabled:   false,
-			Host:      "0.0.0.0",
-			HttpPort:  0,
-			SocksPort: 0,
-			Timeout:   30,
-			Obfs: VpnObfsConfig{
-				Enabled:      false,
-				Mode:         "reflect",
-				MinChunkSize: 1024,
-				MaxChunkSize: 4096,
-				MinDelayMs:   0,
-				MaxDelayMs:   15,
 			},
 		},
 	}

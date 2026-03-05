@@ -2,6 +2,8 @@ package initialize
 
 import (
 	"Hamburger/backend_proxy"
+	"Hamburger/exp/any_tls"
+	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/latency"
@@ -12,7 +14,6 @@ import (
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
 	"Hamburger/static_direct"
-	"Hamburger/vpn_proxy"
 	"slices"
 
 	"github.com/rs/zerolog"
@@ -34,6 +35,7 @@ type Initializer struct {
 	LatencyServer   *latency.LatencyServer
 	StaticDirectSvr *static_direct.StaticDirectServer
 	VpnServer       *vpn_proxy.VpnServer
+	AnyTLSServer    *any_tls.AnyTLSServer
 }
 
 type Runner struct {
@@ -69,6 +71,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitLatencyServer())
 	i.Register(i.InitStaticDirect())
 	i.Register(i.InitVpnServer())
+	i.Register(i.InitAnyTLSServer())
 	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPxyErrorPage())
 	i.Register(i.InitPProf())
