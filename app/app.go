@@ -1,7 +1,6 @@
 package app
 
 import (
-	appgrpc "Hamburger/app/grpc"
 	"Hamburger/backend_proxy"
 	"Hamburger/exp/any_tls"
 	"Hamburger/exp/vpn_proxy"
@@ -17,15 +16,12 @@ import (
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
 	"Hamburger/static_direct"
-	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 
 	"github.com/rs/zerolog"
-	"google.golang.org/grpc"
 )
 
 type HamburgerApp struct {
@@ -49,8 +45,7 @@ type HamburgerApp struct {
 	VpnServer       *vpn_proxy.VpnServer
 	AnyTLSServer    *any_tls.AnyTLSServer
 
-	grpcServer   *grpc.Server
-	grpcListener net.Listener
+	GrpcServer *grpc_server.AppServiceServer
 }
 
 const (
@@ -99,6 +94,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.registerServerCount(func() int { app.StaticDirectSvr = i.StaticDirectSvr; return 1 })
 	app.registerServerCount(func() int { app.VpnServer = i.VpnServer; return 1 })
 	app.registerServerCount(func() int { app.AnyTLSServer = i.AnyTLSServer; return 1 })
+	app.registerServerCount(func() int { app.GrpcServer = i.GrpcServer; return 1 })
 	app.logger = i.GetLogger()
 
 	return nil
@@ -116,32 +112,12 @@ func (app *HamburgerApp) Run() {
 	wg := sync.WaitGroup{}
 	wg.Add(app.serverCount)
 
-	grpcAddr := ""
-	if app.conf.GRPC.Enabled {
-		grpcAddr = strings.TrimSpace(app.conf.GRPC.Address)
-	}
-	if grpcAddr != "" {
-		listener, err := net.Listen("tcp", grpcAddr)
-		if err != nil {
-			app.logger.Fatal().Err(err).Str("address", grpcAddr).Msg("grpc server listen error")
+	go func() {
+		defer wg.Done()
+		if err := app.GrpcServer.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("grpc server start failed")
 		}
-		app.grpcListener = listener
-		app.grpcServer = grpc.NewServer()
-		appgrpc.RegisterAppServiceServer(app.grpcServer, grpc_server.NewAppService(
-			func() *manager.Manager { return app.Manager },
-			func() *frontend_proxy.HeliosServer { return app.FrontServer },
-			func() *modifier.ModifierManager { return app.ModifierManager },
-			func() *stat.StatServer { return app.StatServer },
-		))
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := app.grpcServer.Serve(listener); err != nil {
-				app.logger.Fatal().Err(err).Msg("grpc server error")
-			}
-		}()
-		app.logger.Info().Str("address", grpcAddr).Msg("grpc server started")
-	}
+	}()
 
 	go func() {
 		defer wg.Done()
@@ -241,11 +217,8 @@ func (app *HamburgerApp) LifeCycle() {
 		if app.VpnServer != nil {
 			_ = app.VpnServer.Stop()
 		}
-		if app.grpcServer != nil {
-			app.grpcServer.GracefulStop()
-		}
-		if app.grpcListener != nil {
-			_ = app.grpcListener.Close()
+		if app.GrpcServer != nil {
+			app.GrpcServer.Stop()
 		}
 		app.removePidFile()
 		os.Exit(0)

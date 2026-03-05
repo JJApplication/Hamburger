@@ -10,6 +10,7 @@ import (
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/stat"
+	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
@@ -36,6 +37,7 @@ type Initializer struct {
 	StaticDirectSvr *static_direct.StaticDirectServer
 	VpnServer       *vpn_proxy.VpnServer
 	AnyTLSServer    *any_tls.AnyTLSServer
+	GrpcServer      *grpc_server.AppServiceServer
 }
 
 type Runner struct {
@@ -47,6 +49,7 @@ const (
 	PriorityHigh = iota
 	PriorityNormal
 	PriorityLow
+	PriorityFinal // 最后初始化
 )
 
 func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, error) {
@@ -75,6 +78,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPxyErrorPage())
 	i.Register(i.InitPProf())
+	i.Register(i.InitGRPCServer())
 
 	// 按优先级排序
 	slices.SortFunc(i.runners, func(a Runner, b Runner) int {
