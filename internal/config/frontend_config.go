@@ -17,12 +17,19 @@ type FrontCacheConfig struct {
 }
 
 type FrontHttp2Config struct {
-	ReadTimeout       int64 `json:"read_timeout" toml:"read_timeout"`
-	WriteTimeout      int64 `json:"write_timeout" toml:"write_timeout"`
-	IdleTimeout       int64 `json:"idle_timeout" toml:"idle_timeout"`
-	ReadHeaderTimeout int64 `json:"read_header_timeout" toml:"read_header_timeout"`
-	MaxHeaderBytes    int64 `json:"max_header_bytes" toml:"max_header_bytes"`
-	KeepAlive         int64 `json:"keep_alive" toml:"keep_alive"`
+	ReadTimeout                  int64 `json:"read_timeout" toml:"read_timeout"`
+	WriteTimeout                 int64 `json:"write_timeout" toml:"write_timeout"`
+	IdleTimeout                  int64 `json:"idle_timeout" toml:"idle_timeout"`
+	ReadHeaderTimeout            int64 `json:"read_header_timeout" toml:"read_header_timeout"`
+	MaxHeaderBytes               int64 `json:"max_header_bytes" toml:"max_header_bytes"`
+	KeepAlive                    int64 `json:"keep_alive" toml:"keep_alive"`
+	MaxHandlers                  int   `yaml:"max_handlers" json:"max_handlers"`                                         // 最大处理协程
+	MaxConcurrentStreams         int64 `yaml:"max_concurrent_streams" json:"max_concurrent_streams"`                     // 最大并发流
+	MaxReadFrameSize             int64 `yaml:"max_read_frame_size" json:"max_read_frame_size"`                           // 最大帧大小
+	MaxDecoderHeaderTableSize    int64 `yaml:"max_decoder_header_table_size" json:"max_decoder_header_table_size"`       // 解码端头表大小
+	MaxEncoderHeaderTableSize    int64 `yaml:"max_encoder_header_table_size" json:"max_encoder_header_table_size"`       // 编码端头表大小
+	MaxUploadBufferPerConnection int64 `yaml:"max_upload_buffer_per_connection" json:"max_upload_buffer_per_connection"` // 连接级上传缓冲
+	MaxUploadBufferPerStream     int64 `yaml:"max_upload_buffer_per_stream" json:"max_upload_buffer_per_stream"`         // 流级上传缓冲
 }
 
 // FrontHttp3Config 前端HTTP/3转发配置

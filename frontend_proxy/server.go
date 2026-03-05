@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"golang.org/x/net/http2"
 	"html/template"
 	"net"
 	"net/http"
@@ -331,15 +332,32 @@ func (s *HeliosServer) http2Server(addr string) error {
 	proto.SetHTTP1(true)
 	proto.SetUnencryptedHTTP2(true)
 
+	h2c := s.config.ExpFastConnect.Http2
 	httpServer := &http.Server{
 		Addr:              addr,
 		Handler:           s.gin,
-		ReadTimeout:       time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.ReadTimeout, 30)),
-		WriteTimeout:      time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.WriteTimeout, 30)),
-		IdleTimeout:       time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.IdleTimeout, 60)),
-		ReadHeaderTimeout: time.Second * time.Duration(defaultInt64(s.config.ExpFastConnect.Http2.ReadHeaderTimeout, 10)),
-		MaxHeaderBytes:    int(defaultInt64(s.config.ExpFastConnect.Http2.MaxHeaderBytes, 5<<20)),
+		ReadTimeout:       time.Second * time.Duration(defaultInt64(h2c.ReadTimeout, 30)),
+		WriteTimeout:      time.Second * time.Duration(defaultInt64(h2c.WriteTimeout, 30)),
+		IdleTimeout:       time.Second * time.Duration(defaultInt64(h2c.IdleTimeout, 60)),
+		ReadHeaderTimeout: time.Second * time.Duration(defaultInt64(h2c.ReadHeaderTimeout, 10)),
+		MaxHeaderBytes:    int(defaultInt64(h2c.MaxHeaderBytes, 5<<20)),
 		Protocols:         proto,
+	}
+	h2s := &http2.Server{}
+	if h2c.MaxHandlers > 0 {
+		h2s.MaxHandlers = h2c.MaxHandlers
+	}
+	if h2c.MaxConcurrentStreams > 0 {
+		h2s.MaxConcurrentStreams = uint32(h2c.MaxConcurrentStreams)
+	}
+	if h2c.MaxUploadBufferPerConnection > 0 {
+		h2s.MaxUploadBufferPerConnection = int32(h2c.MaxUploadBufferPerConnection)
+	}
+	if h2c.MaxUploadBufferPerStream > 0 {
+		h2s.MaxUploadBufferPerStream = int32(h2c.MaxUploadBufferPerStream)
+	}
+	if err := http2.ConfigureServer(httpServer, h2s); err != nil {
+		return err
 	}
 
 	listener, err := listenWithKeepAlive(addr, s.config.ExpFastConnect.Http2.KeepAlive)
