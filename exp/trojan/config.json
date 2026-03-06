@@ -1,0 +1,61 @@
+{
+  "log": {
+    "log_level": 2,
+    "disable_console": true
+  },
+  "server": {
+    "listen_host": "0.0.0.0",
+    "listen_port": 8989,
+    "disable_http_check": true
+  },
+  "fallback": {
+    "host": "127.0.0.1",
+    "port": 80
+  },
+  "auth": {
+    "passwords": [
+      "UUID"
+    ]
+  },
+  "tls": {
+    "cert": "/renj.io/ssl/fullchain.cer",
+    "key": "/renj.io/ssl/ssl.key",
+    "sni": "dev.renj.io",
+    "alpn": [
+      "http/1.1"
+    ],
+    "prefer_server_cipher": true
+  },
+  "mux": {
+    "enabled": true,
+    "idle_timeout": 30,
+    "concurrency": 8
+  },
+  "router": {
+    "enabled": true,
+    "bypass": [
+      "geoip:cn",
+      "geoip:private",
+      "geosite:cn",
+      "geosite:geolocation-cn"
+    ],
+    "block": [
+      "geosite:category-ads"
+    ],
+    "proxy": [
+      "geosite:geolocation-!cn"
+    ],
+    "domain_strategy": "as_is",
+    "default_policy": "proxy",
+    "geoip": "geoip.dat",
+    "geosite": "geosite.dat"
+  },
+  "transport_plugin": {
+    "enabled": false,
+    "type": "plaintext",
+    "command": "",
+    "option": "",
+    "arg": [],
+    "env": []
+  }
+}

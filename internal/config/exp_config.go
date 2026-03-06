@@ -5,6 +5,7 @@ package config
 type ExpConfig struct {
 	VpnServer    VpnServerConfig `yaml:"vpn_server" json:"vpn_server"`
 	AnyTLSServer AnyTLSServer    `yaml:"any_tls_server" json:"any_tls_server"`
+	TrojanServer string          `yaml:"trojan_server" json:"trojan_server"`
 }
 
 type AnyTLSServer struct {

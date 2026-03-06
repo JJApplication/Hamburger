@@ -221,5 +221,8 @@
   },
   "max_cores": 4,
   "pxy_backend": {},
-  "pxy_frontend": {}
+  "pxy_frontend": {},
+  "exp_config": {
+    "trojan_server": "config/trojan.json"
+  }
 }
