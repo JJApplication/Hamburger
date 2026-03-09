@@ -91,7 +91,7 @@ func loadConfig(path string) (*liteConfig, error) {
 	cfg := &liteConfig{
 		Log: logConfig{
 			LogLevel:       int(log.InfoLevel),
-			LogFile:        "hamburger-trojan.log",
+			LogFile:        "",
 			DisableConsole: false,
 		},
 		Mux: muxConfig{

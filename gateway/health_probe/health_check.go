@@ -5,8 +5,9 @@ import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/job_syncer"
 	"fmt"
-	"github.com/lesismal/nbio"
-	"github.com/lesismal/nbio/logging"
+	"net"
+	"time"
+
 	"github.com/rs/zerolog"
 )
 
@@ -23,29 +24,22 @@ func InitProbeSyncer(cfg *config.Config, logger *zerolog.Logger) {
 
 func CheckDomainHealth() {
 	// 仅检查端口组的第一个端口
-	logging.SetLogger(nil)
-	logging.SetLevel(logging.LevelNone)
-	g := nbio.NewGopher(nbio.Config{})
-	g.Start()
-	defer g.Stop()
 	runtime.DomainPortsMap.Range(func(key string, value []int) bool {
 		if len(value) == 0 {
 			return true
 		}
 		port := value[0]
-		status := nbioChecker(g, fmt.Sprintf("%s:%d", "127.0.0.1", port))
+		status := netChecker(fmt.Sprintf("%s:%d", "127.0.0.1", port))
 		SetProbe(key, status)
 		return true
 	})
 }
 
-func nbioChecker(g *nbio.Gopher, addr string) []byte {
-	c, err := nbio.Dial("tcp", addr)
+func netChecker(addr string) []byte {
+	c, err := net.DialTimeout("tcp", addr, 2*time.Second)
 	if err != nil {
 		return HealthStatusDead
 	}
-	g.AddConn(c)
-
 	defer c.Close()
 	return HealthStatusLive
 }
