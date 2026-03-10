@@ -59,6 +59,13 @@ type BackendConfig struct {
 	Rewrite      string       `json:"rewrite" toml:"rewrite"`
 	IsStatic     bool         `json:"is_static" toml:"is_static"` // 是否为静态目录
 	StaticDirect StaticDirect `json:"static_direct" toml:"static_direct"`
+	// 通用转发配置
+	ProxyDirect ProxyDirect `json:"proxy_direct" toml:"proxy_direct"` // 后端代理转发
+}
+
+type ProxyDirect struct {
+	ProxyHost string `json:"proxy_host" toml:"proxy_host"`
+	ProxyPort int    `json:"proxy_port" toml:"proxy_port"`
 }
 
 // StaticDirect 静态代理直连

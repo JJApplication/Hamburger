@@ -39,6 +39,10 @@ type Rule struct {
 	Rewrite    string
 	UseRewrite bool
 	Backend    string
+	Proxy      struct {
+		Host string
+		Port int
+	}
 }
 
 func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
@@ -57,6 +61,10 @@ func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
 				Rewrite:    backend.Rewrite,
 				UseRewrite: backend.UseRewrite,
 				Backend:    backend.Service,
+				Proxy: struct {
+					Host string
+					Port int
+				}{Host: backend.ProxyDirect.ProxyHost, Port: backend.ProxyDirect.ProxyPort},
 			})
 		}
 	}
@@ -124,7 +132,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			}
 		}
 
-		result, ok := r.MatchAPIRule(req, rules)
+		result, ok := r.MatchAPIRule(req, rules, serviceMap.Backend)
 		if ok {
 			return result
 		} else {
@@ -147,7 +155,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 }
 
 //go:inline
-func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool) {
+func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule, backendService string) (RuleResult, bool) {
 	requestPath := req.URL.Path
 	host := req.Host
 	for _, rule := range rules {
@@ -166,6 +174,18 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 		targetPath := requestPath
 		if rule.UseRewrite {
 			targetPath = rule.Rewrite + requestPath[len(rule.API):]
+		}
+
+		// 是否为单纯proxy端口转发
+		if rule.Proxy.Host != "" && rule.Proxy.Port > 0 && backendService != "" && backendService == rule.Backend {
+			return RuleResult{
+				ProxyToType: Backend,
+				ProxyTo:     backendService,
+				ProxyPath:   targetPath,
+				ProxyHost:   rule.Proxy.Host,
+				ProxyPort:   rule.Proxy.Port,
+				ProxyScheme: StaticSchema,
+			}, true
 		}
 
 		ports, ok := runtime.DomainPortsMap.Get(host)
