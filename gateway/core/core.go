@@ -225,6 +225,10 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			logger.Error().Str("host", request.Host).Msg("http: no host in request url")
 			error_page.EPM.Response(http.StatusForbidden, writer, request)
 			return
+		case serror.SandwichPreAuthFailed:
+			logger.Error().Str("host", request.Host).Msg("pre auth failed")
+			error_page.EPM.Response(http.StatusUnauthorized, writer, request)
+			return
 		case serror.SandwichBackendError:
 			breaker.Set(request.Host)
 			logger.Error().Str("host", request.Host).Msg("backend: service is down")

@@ -33,6 +33,7 @@ func NewPreHandlerManager() *PreHandlerManager {
 
 func InitPreHandlerManager() {
 	pm := GetManager()
+	pm.Add(NewPreAuth())
 	pm.Add(NewHeaderSanitizer())
 	pm.Add(NewPreCheckDomains())
 	pm.Add(NewRateLimiter())

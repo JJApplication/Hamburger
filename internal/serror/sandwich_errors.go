@@ -22,4 +22,6 @@ const (
 	SandwichBackendError = "SandwichBackendError"
 	// SandwichPluginError wasm插件异常
 	SandwichPluginError = "SandwichPluginError"
+	// SandwichPreAuthFailed 前置认证失败
+	SandwichPreAuthFailed = "SandwichPreAuthFailed"
 )

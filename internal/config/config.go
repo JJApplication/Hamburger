@@ -28,6 +28,7 @@ type Config struct {
 	PxyCustomService   PxyCustomServiceConfig `yaml:"pxy_custom_service" json:"pxy_custom_service"`     // 定义的转发服务
 	StaticDirectServer StaticDirectSvrConfig  `yaml:"static_direct_server" json:"static_direct_server"` // 静态直通
 	ExpConfig          ExpConfig              `yaml:"exp_config" json:"exp_config"`
+	PreAuthConfig      PreAuthConfig          `yaml:"pre_auth_config" json:"pre_auth_config"`
 }
 
 // GRPCConfig gRPC服务配置结构体

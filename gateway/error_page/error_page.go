@@ -11,11 +11,12 @@ import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/serror"
-	"github.com/rs/zerolog"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
 
 // 静态文件的缓存
@@ -133,27 +134,31 @@ func (em *ErrorPageManager) jsonWriter(code int, w http.ResponseWriter, r *http.
 func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.Request) {
 	if em.EnablePageCache {
 		if data, ok := em.ErrorPageCacheGzip[code]; ok {
-			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.Header().Set("Content-Encoding", "gzip")
+			w.Header().Set("Vary", "Accept-Encoding")
+			w.WriteHeader(http.StatusOK)
 			w.Write(data)
 			return
 		} else {
 			// 没有缓存时压缩后计入缓存
 			if data, ok = em.ErrorPageCache[code]; ok {
-				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Header().Set("Vary", "Accept-Encoding")
+				w.WriteHeader(http.StatusOK)
 				minify(w, data)
 				em.lo.Lock()
 				defer em.lo.Unlock()
 				if gzipData, err := compressData(data); err == nil {
 					em.ErrorPageCacheGzip[code] = gzipData
 				}
+				return
 			} else {
 				// 未映射的页面统一使用默认502对应的页面 如果不存在再降级到text
 				if data, ok = em.ErrorPageCache[http.StatusBadGateway]; ok {
-					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.Header().Set("Vary", "Accept-Encoding")
+					w.WriteHeader(http.StatusOK)
 					minify(w, data)
 					em.lo.Lock()
 					defer em.lo.Unlock()
@@ -166,18 +171,17 @@ func (em *ErrorPageManager) htmlWriter(code int, w http.ResponseWriter, r *http.
 				return
 			}
 		}
-		em.textWriter(code, w, r)
 	} else {
 		if data, ok := em.ErrorPageCache[code]; ok {
-			w.WriteHeader(code)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(code)
 			w.Write(data)
 			return
 		}
 		// 未映射的页面统一使用默认502对应的页面 如果不存在再降级到text
 		if data, ok := em.ErrorPageCache[http.StatusBadGateway]; ok {
-			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(code)
 			w.Write(data)
 			return
 		}
