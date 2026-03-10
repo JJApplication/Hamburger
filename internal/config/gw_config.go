@@ -65,9 +65,10 @@ type CertConfig struct {
 
 // TLSConfig TLS证书配置结构体
 type TLSConfig struct {
-	CertMap    map[string]CertConfig `yaml:"cert_map" json:"cert_map"`
+	CertMap    map[string]CertConfig `yaml:"cert_map" json:"cert_map"`       // 证书映射
 	AutoTLS    bool                  `yaml:"auto_tls" json:"auto_tls"`       // 是否启用自动TLS
 	MinVersion string                `yaml:"min_version" json:"min_version"` // 最小TLS版本
+	SelfTls    bool                  `yaml:"self_tls" json:"self_tls"`       // 是否启用内存自签名证书
 }
 
 // DomainConfig 域名配置结构体
