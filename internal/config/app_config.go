@@ -28,6 +28,7 @@ type AppConfig struct {
 	Latency       LatencyConfig     `yaml:"latency" json:"latency"`             // 延迟统计配置
 	CustomHeader  map[string]string `yaml:"custom_header" json:"custom_header"` // 自定义Header
 	PreAuthConfig PreAuthConfig     `yaml:"pre_auth_config" json:"pre_auth_config"`
+	NotifyConfig  NotifyConfig      `yaml:"notify_config" json:"notify_config"` // 通知系统配置
 	Syncer        Syncer            `yaml:"syncer" json:"syncer"` // 定时器时间
 	Debug         bool              `yaml:"debug" json:"debug"`   // 调试模式
 	PProf         PProf             `yaml:"pprof" json:"pprof"`
@@ -157,6 +158,33 @@ func GetDefaultConfig() *AppConfig {
 				TokenHeader:    "Authorization",
 				AllowedMethods: []string{"HS256"},
 			},
+		},
+		NotifyConfig: NotifyConfig{
+			Enabled: false,
+			Queue: NotifyQueueConfig{
+				Topic:  "gateway.notify",
+				Buffer: 128,
+			},
+			Mail: NotifyMailConfig{
+				Provider: "smtp",
+				From:     "",
+				SMTP: NotifySMTPConfig{
+					Host: "",
+					Port: 587,
+					TLS:  true,
+				},
+				POP3: NotifyPOP3Config{
+					Host: "",
+					Port: 995,
+					TLS:  true,
+				},
+				IMAP: NotifyIMAPConfig{
+					Host: "",
+					Port: 993,
+					TLS:  true,
+				},
+			},
+			DefaultRecipients: []string{},
 		},
 		Stat: StatConfig{
 			DBFile: "stat.db",

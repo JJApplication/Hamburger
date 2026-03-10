@@ -29,6 +29,7 @@ type Config struct {
 	StaticDirectServer StaticDirectSvrConfig  `yaml:"static_direct_server" json:"static_direct_server"` // 静态直通
 	ExpConfig          ExpConfig              `yaml:"exp_config" json:"exp_config"`
 	PreAuthConfig      PreAuthConfig          `yaml:"pre_auth_config" json:"pre_auth_config"`
+	NotifyConfig       NotifyConfig           `yaml:"notify_config" json:"notify_config"` // 通知系统配置
 }
 
 // GRPCConfig gRPC服务配置结构体

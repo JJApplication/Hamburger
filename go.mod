@@ -45,11 +45,17 @@ require (
 )
 
 require (
+	github.com/cskr/pubsub v1.0.2
+	github.com/emersion/go-imap v1.2.1
+)
+
+require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/emmansun/gmsm v0.15.5 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect

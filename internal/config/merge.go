@@ -29,6 +29,7 @@ func Merge(appConfig *AppConfig) *Config {
 		PxyFrontend:   appConfig.PxyFrontend,
 		ExpConfig:     appConfig.ExpConfig,
 		PreAuthConfig: appConfig.PreAuthConfig,
+		NotifyConfig:  appConfig.NotifyConfig,
 	}
 
 	if appConfig.PxyFrontendFile != "" {
