@@ -97,5 +97,8 @@
   "home.renj.io": {
     "frontend": "MyHome",
     "backend": "MyHome"
+  },
+  "hamburger.renj.io": {
+    "frontend": "Hamburger"
   }
 }

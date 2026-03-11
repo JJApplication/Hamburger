@@ -277,6 +277,15 @@
           "use_rewrite": false
         }
       ]
+    },
+    {
+      "type": "WebServer",
+      "name": "HamburgerDoc",
+      "root": "/renj.io/app/Hamburger/docs",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
     }
   ]
 }

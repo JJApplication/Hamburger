@@ -1,0 +1,82 @@
+:root {
+  --vp-c-brand-1: #2563eb;
+  --vp-c-brand-2: #1d4ed8;
+  --vp-c-brand-3: #1e40af;
+  --vp-c-sponsor: #f59e0b;
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #2563eb 30%, #10b981 100%);
+  --vp-home-hero-image-background-image: radial-gradient(circle at 40% 20%, rgba(37, 99, 235, 0.5), rgba(16, 185, 129, 0.25));
+  --vp-home-hero-image-filter: blur(36px);
+}
+
+.dark {
+  --vp-c-brand-1: #60a5fa;
+  --vp-c-brand-2: #3b82f6;
+  --vp-c-brand-3: #2563eb;
+}
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3 {
+  letter-spacing: 0.02em;
+}
+
+.vp-doc div[class*='language-'] {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+}
+
+.vp-doc div[class*='language-']::before {
+  content: '$ bash';
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.hero-shell {
+  margin-top: 28px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.98));
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.35);
+  color: #e2e8f0;
+  padding: 16px 18px;
+  font-size: 13px;
+  font-family: 'Consolas', monospace;
+  line-height: 1.65;
+  overflow: auto;
+}
+
+.hero-shell > div {
+  min-height: 1.6em;
+  white-space: pre-wrap;
+}
+
+.hero-shell .prompt {
+  color: #22c55e;
+}
+
+.hero-shell .cursor {
+  display: inline-block;
+  margin-left: 2px;
+  color: #22c55e;
+  animation: hero-caret-blink 1s steps(1) infinite;
+}
+
+.hero-shell .cursor.done {
+  animation-duration: 1.3s;
+}
+
+@keyframes hero-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.dark .hero-shell {
+  border-color: rgba(96, 165, 250, 0.3);
+}
