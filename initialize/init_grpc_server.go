@@ -2,9 +2,9 @@ package initialize
 
 import (
 	"Hamburger/frontend_proxy"
+	"Hamburger/gateway/api"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
-	"Hamburger/gateway/stat"
 	"Hamburger/grpc_server"
 )
 
@@ -16,7 +16,7 @@ func (i *Initializer) InitGRPCServer() Runner {
 				func() *manager.Manager { return i.Manager },
 				func() *frontend_proxy.HeliosServer { return i.FrontServer },
 				func() *modifier.ModifierManager { return i.ModifierManager },
-				func() *stat.StatServer { return i.StatServer })
+				func() *api.Server { return i.APIServer })
 			if err != nil {
 				return err
 			}

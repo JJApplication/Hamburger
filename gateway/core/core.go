@@ -117,6 +117,14 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 			}
 		}
 
+		// 安全拦截
+		block, skip := BlockBlackHost(request.Host)
+		if block {
+			request.Header.Set(serror.SandwichInternalFlag, serror.SandwichDomainNotAllow)
+			request.URL = &url.URL{Scheme: constant.SchemeSandwich}
+			return
+		}
+
 		if static_direct.IsEnabled() {
 			sd := static_direct.GetSvr()
 			if uri, ok := sd.IsStaticDirect(request); ok {
@@ -125,12 +133,14 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 			}
 		}
 
-		// 请求次数
-		stat.Add(stat.Total)
-		// 统计域名
-		stat.AddDomainStat(request.Host)
-		// 统计远程地址
-		stat.AddGeo(request.RemoteAddr)
+		if !skip {
+			// 请求次数
+			stat.Add(stat.Total)
+			// 统计域名
+			stat.AddDomainStat(request.Host)
+			// 统计远程地址
+			stat.AddGeo(request.RemoteAddr)
+		}
 
 		if err := wasm_plugin.Init(cfg, logger); err != nil {
 			logger.Error().Err(err).Msg("wasm plugin init failed")

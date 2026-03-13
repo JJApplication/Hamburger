@@ -2,6 +2,7 @@ package stat
 
 import (
 	"Hamburger/gateway/stat/db"
+	"Hamburger/gateway/stat/model"
 	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"Hamburger/internal/logger"
@@ -52,7 +53,7 @@ func geoFileLoader(cfg *config.Config) *structure.Map[*int64] {
 func geoDBLoader() *structure.Map[*int64] {
 	var geoStat = structure.NewMap[*int64]()
 
-	var geoData []GeoModel
+	var geoData []model.GeoModel
 	db.GetDB().Find(&geoData)
 	for _, geo := range geoData {
 		geoStat.Put(geo.ISOCode, &geo.Count)
@@ -90,13 +91,13 @@ func geoDBSaver() {
 	for k, v := range geoMap {
 		// 存在判断
 		var count int64
-		db.GetDB().Model(&GeoModel{}).Where("iso_code = ?", k).Count(&count)
+		db.GetDB().Model(&model.GeoModel{}).Where("iso_code = ?", k).Count(&count)
 		if count > 0 {
-			db.GetDB().Model(&GeoModel{}).Where("iso_code = ?", k).Updates(map[string]interface{}{
+			db.GetDB().Model(&model.GeoModel{}).Where("iso_code = ?", k).Updates(map[string]interface{}{
 				"count": v,
 			})
 		} else {
-			db.GetDB().Create(&GeoModel{
+			db.GetDB().Create(&model.GeoModel{
 				ISOCode: k,
 				Count:   v,
 			})
@@ -120,9 +121,9 @@ func compatibleGeo(cfg *config.Config) {
 	for k, v := range geoMap {
 		// 存在判断
 		var count int64
-		db.GetDB().Model(&GeoModel{}).Where("iso_code = ?", k).Count(&count)
+		db.GetDB().Model(&model.GeoModel{}).Where("iso_code = ?", k).Count(&count)
 		if count <= 0 {
-			db.GetDB().Create(&GeoModel{
+			db.GetDB().Create(&model.GeoModel{
 				ISOCode: k,
 				Count:   v,
 			})

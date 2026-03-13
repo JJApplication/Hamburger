@@ -1,11 +1,13 @@
-package stat
+package model
 
+// GeoModel geo数据
 type GeoModel struct {
 	ID      int64  `json:"id" gorm:"column:id;primary_key"`
 	ISOCode string `json:"iso_code" gorm:"column:iso_code"`
 	Count   int64  `json:"count" gorm:"column:count"`
 }
 
+// StatModel 请求数据
 type StatModel struct {
 	ID     int64 `json:"id" gorm:"column:id;primary_key"`
 	Total  int64 `json:"total" gorm:"column:total"`
@@ -14,8 +16,17 @@ type StatModel struct {
 	Fail   int64 `json:"fail" gorm:"column:fail"`
 }
 
+// DomainModel 域名请求数据
 type DomainModel struct {
 	ID     int64  `json:"id" gorm:"column:id;primary_key"`
 	Domain string `json:"domain" gorm:"column:domain"`
 	Count  int64  `json:"count" gorm:"column:count"`
+}
+
+// GatewayConnModel 网关代理连接数
+type GatewayConnModel struct {
+}
+
+// FrontConnModel 前端服务连接数
+type FrontConnModel struct {
 }

@@ -69,17 +69,15 @@ message ModifierInfo {
 
 message StatServerConfigResponse {
     bool enabled = 1;
-    string host = 2;
-    int32 port = 3;
-    bool enable_stat = 4;
-    int32 sync_duration = 5;
-    int32 save_duration = 6;
-    string save_file = 7;
-    string geo_file = 8;
-    string domain_file = 9;
-    string geo_db = 10;
-    bool sequence_enabled = 11;
-    int32 sequence_interval = 12;
+    bool enable_stat = 2;
+    int32 sync_duration = 3;
+    int32 save_duration = 4;
+    string save_file = 5;
+    string geo_file = 6;
+    string domain_file = 7;
+    string geo_db = 8;
+    bool sequence_enabled = 9;
+    int32 sequence_interval = 10;
 }
 
 message RuntimeResponse {

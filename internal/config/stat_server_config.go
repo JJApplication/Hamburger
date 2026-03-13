@@ -3,12 +3,10 @@ package config
 // inner stat server
 
 type StatConfig struct {
-	DBFile       string         `yaml:"db_file" json:"db_file"`       // SQLite数据库文件路径
-	UseDB        bool           `yaml:"use_db" json:"use_db"`         // 传统stat是否使用数据库记录
-	Compatible   bool           `yaml:"compatible" json:"compatible"` // 兼容加载file到DB中
-	Enabled      bool           `yaml:"enabled" json:"enabled"`       // 是否开启服务器 不开启服务器也会统计
-	Host         string         `yaml:"host" json:"host"`
-	Port         int            `yaml:"port" json:"port"`
+	DBFile       string         `yaml:"db_file" json:"db_file"`         // SQLite数据库文件路径
+	UseDB        bool           `yaml:"use_db" json:"use_db"`           // 传统stat是否使用数据库记录
+	Compatible   bool           `yaml:"compatible" json:"compatible"`   // 兼容加载file到DB中
+	Enabled      bool           `yaml:"enabled" json:"enabled"`         // 是否开启服务器 不开启服务器也会统计
 	EnableStat   bool           `yaml:"enable_stat" json:"enable_stat"` // 开启统计
 	SyncDuration int            `yaml:"sync_duration" json:"sync_duration"`
 	SaveDuration int            `yaml:"save_duration" json:"save_duration"`

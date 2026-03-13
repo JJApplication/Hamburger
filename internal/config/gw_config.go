@@ -148,6 +148,7 @@ type ProxyHeader struct {
 type LogConfig struct {
 	LogLevel string `yaml:"log_level" json:"log_level"`
 	LogFile  string `yaml:"log_file" json:"log_file"`
+	LogSplit bool   `yaml:"log_split" json:"log_split"` // 分级存储
 	Color    bool   `yaml:"color" json:"color"`
 }
 

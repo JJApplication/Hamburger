@@ -3,9 +3,9 @@ package grpc_server
 import (
 	appgrpc "Hamburger/app/grpc"
 	"Hamburger/frontend_proxy"
+	"Hamburger/gateway/api"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
-	"Hamburger/gateway/stat"
 	"Hamburger/internal/config"
 	"net"
 	"strings"
@@ -25,7 +25,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger,
 	getManager func() *manager.Manager,
 	getFrontServer func() *frontend_proxy.HeliosServer,
 	getModifierManager func() *modifier.ModifierManager,
-	getStatServer func() *stat.StatServer) (*AppServiceServer, error) {
+	getAPIServer func() *api.Server) (*AppServiceServer, error) {
 	svr := grpc.NewServer()
 
 	grpcAddr := ""
@@ -40,7 +40,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger,
 	if err != nil {
 		return nil, err
 	}
-	appgrpc.RegisterAppServiceServer(svr, NewAppService(getManager, getFrontServer, getModifierManager, getStatServer))
+	appgrpc.RegisterAppServiceServer(svr, NewAppService(getManager, getFrontServer, getModifierManager, getAPIServer))
 
 	return &AppServiceServer{
 		listener:   listener,

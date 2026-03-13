@@ -11,10 +11,10 @@ import (
 
 	appgrpc "Hamburger/app/grpc"
 	"Hamburger/frontend_proxy"
+	"Hamburger/gateway/api"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	gwRuntime "Hamburger/gateway/runtime"
-	"Hamburger/gateway/stat"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 
@@ -26,16 +26,16 @@ type AppService struct {
 	getManager         func() *manager.Manager
 	getFrontServer     func() *frontend_proxy.HeliosServer
 	getModifierManager func() *modifier.ModifierManager
-	getStatServer      func() *stat.StatServer
+	getAPIServer       func() *api.Server
 	appgrpc.UnimplementedAppServiceServer
 }
 
-func NewAppService(getManager func() *manager.Manager, getFrontServer func() *frontend_proxy.HeliosServer, getModifierManager func() *modifier.ModifierManager, getStatServer func() *stat.StatServer) *AppService {
+func NewAppService(getManager func() *manager.Manager, getFrontServer func() *frontend_proxy.HeliosServer, getModifierManager func() *modifier.ModifierManager, getAPIServer func() *api.Server) *AppService {
 	return &AppService{
 		getManager:         getManager,
 		getFrontServer:     getFrontServer,
 		getModifierManager: getModifierManager,
-		getStatServer:      getStatServer,
+		getAPIServer:       getAPIServer,
 	}
 }
 
@@ -193,8 +193,6 @@ func (s *AppService) GetStatServerConfig(ctx context.Context, _ *appgrpc.Empty) 
 	statCfg := cfg.Stat
 	return &appgrpc.StatServerConfigResponse{
 		Enabled:          statCfg.Enabled,
-		Host:             statCfg.Host,
-		Port:             int32(statCfg.Port),
 		EnableStat:       statCfg.EnableStat,
 		SyncDuration:     int32(statCfg.SyncDuration),
 		SaveDuration:     int32(statCfg.SaveDuration),
@@ -299,17 +297,17 @@ func (s *AppService) ReStartGateway(ctx context.Context, _ *appgrpc.Empty) (*app
 }
 
 func (s *AppService) ReStartStatServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
-	if s.getStatServer == nil {
+	if s.getAPIServer == nil {
 		return nil, status.Error(codes.Unavailable, "stat server unavailable")
 	}
-	statServer := s.getStatServer()
-	if statServer == nil {
+	apiServer := s.getAPIServer()
+	if apiServer == nil {
 		return nil, status.Error(codes.Unavailable, "stat server unavailable")
 	}
-	if err := statServer.Stop(); err != nil {
+	if err := apiServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
-	if err := statServer.Start(); err != nil {
+	if err := apiServer.Start(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	return &appgrpc.ActionResponse{Success: true}, nil

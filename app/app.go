@@ -6,11 +6,11 @@ import (
 	"Hamburger/exp/trojan"
 	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
+	"Hamburger/gateway/api"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
-	"Hamburger/gateway/stat"
 	"Hamburger/grpc_server"
 	"Hamburger/initialize"
 	"Hamburger/internal/config"
@@ -40,7 +40,7 @@ type HamburgerApp struct {
 	Manager         *manager.Manager
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
-	StatServer      *stat.StatServer
+	APIServer       *api.Server
 	LatencyServer   *latency.LatencyServer
 	StaticDirectSvr *static_direct.StaticDirectServer
 	VpnServer       *vpn_proxy.VpnServer
@@ -91,7 +91,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.registerServerCount(func() int { app.Manager = i.Manager; return 1 })
 	app.registerServerCount(func() int { app.GrpcProxy = i.GrpcProxy; return 0 })
 	app.registerServerCount(func() int { app.ModifierManager = i.ModifierManager; return 0 })
-	app.registerServerCount(func() int { app.StatServer = i.StatServer; return 1 })
+	app.registerServerCount(func() int { app.APIServer = i.APIServer; return 1 })
 	app.registerServerCount(func() int { app.LatencyServer = i.LatencyServer; return 1 })
 	app.registerServerCount(func() int { app.StaticDirectSvr = i.StaticDirectSvr; return 1 })
 	app.registerServerCount(func() int { app.VpnServer = i.VpnServer; return 1 })
@@ -143,8 +143,8 @@ func (app *HamburgerApp) Run() {
 
 	go func() {
 		defer wg.Done()
-		if err := app.StatServer.Start(); err != nil {
-			app.logger.Fatal().Err(err).Msg("stat server error")
+		if err := app.APIServer.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("api server error")
 		}
 	}()
 
@@ -218,8 +218,8 @@ func (app *HamburgerApp) LifeCycle() {
 		if err := app.Manager.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("gateway server shutdown failed")
 		}
-		if err := app.StatServer.Stop(); err != nil {
-			app.logger.Error().Err(err).Msg("stat server shutdown failed")
+		if err := app.APIServer.Stop(); err != nil {
+			app.logger.Error().Err(err).Msg("api server shutdown failed")
 		}
 		if err := app.LatencyServer.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("latency server shutdown failed")

@@ -2,6 +2,7 @@ package stat
 
 import (
 	"Hamburger/gateway/stat/db"
+	"Hamburger/gateway/stat/model"
 	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"Hamburger/internal/logger"
@@ -62,8 +63,8 @@ func domainFileSaver(cfg *config.Config) {
 
 func domainDBLoader() *structure.Map[*int64] {
 	m := structure.NewMap[*int64]()
-	var domains []DomainModel
-	db.GetDB().Model(&DomainModel{}).Find(&domains)
+	var domains []model.DomainModel
+	db.GetDB().Model(&model.DomainModel{}).Find(&domains)
 	for _, domain := range domains {
 		m.Put(domain.Domain, &domain.Count)
 	}
@@ -82,11 +83,11 @@ func domainDBSaver() {
 	}
 	for k, v := range data {
 		var count int64
-		db.GetDB().Model(&DomainModel{}).Where("domain = ?", k).Count(&count)
+		db.GetDB().Model(&model.DomainModel{}).Where("domain = ?", k).Count(&count)
 		if count > 0 {
-			db.GetDB().Model(&DomainModel{}).Where("domain = ?", k).Update("count", v)
+			db.GetDB().Model(&model.DomainModel{}).Where("domain = ?", k).Update("count", v)
 		} else {
-			db.GetDB().Model(&DomainModel{}).Create(&DomainModel{
+			db.GetDB().Model(&model.DomainModel{}).Create(&model.DomainModel{
 				Domain: k,
 				Count:  v,
 			})
@@ -105,9 +106,9 @@ func compatibleDomain(cfg *config.Config) {
 	}
 	for k, v := range res {
 		var count int64
-		db.GetDB().Model(&DomainModel{}).Where("domain = ?", k).Count(&count)
+		db.GetDB().Model(&model.DomainModel{}).Where("domain = ?", k).Count(&count)
 		if count <= 0 {
-			db.GetDB().Model(&DomainModel{}).Create(&DomainModel{
+			db.GetDB().Model(&model.DomainModel{}).Create(&model.DomainModel{
 				Domain: k,
 				Count:  v,
 			})

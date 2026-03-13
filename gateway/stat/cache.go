@@ -2,6 +2,7 @@ package stat
 
 import (
 	"Hamburger/gateway/stat/db"
+	"Hamburger/gateway/stat/model"
 	"Hamburger/internal/structure"
 	"context"
 	"sync/atomic"
@@ -23,6 +24,10 @@ var (
 
 	// 网站访问数据
 	domainStat *structure.Map[*int64]
+
+	// 连接数数据
+	connStatGw    *structure.Map[*int64]
+	connStatFront *structure.Map[*int64]
 )
 
 func C() *bigcache.BigCache {
@@ -43,9 +48,9 @@ func init() {
 
 func initCacheFromFile() {
 	// 初始化数据库
-	db.GetDB().AutoMigrate(&StatModel{})
-	db.GetDB().AutoMigrate(&GeoModel{})
-	db.GetDB().AutoMigrate(&DomainModel{})
+	db.GetDB().AutoMigrate(&model.StatModel{})
+	db.GetDB().AutoMigrate(&model.GeoModel{})
+	db.GetDB().AutoMigrate(&model.DomainModel{})
 	m := LoadStat()
 	if m != nil {
 		atomic.StoreInt64(&total, m.MustGet("total"))

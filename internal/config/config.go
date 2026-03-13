@@ -6,21 +6,22 @@ import "time"
 type Config struct {
 	CoreProxy          ProxyConfig            `yaml:"proxy" json:"proxy"` // 核心代理配置
 	ErrorConfig        ProxyErrorConfig       `yaml:"error_config" json:"error_config"`
-	Servers            []ServerConfig         `yaml:"servers" json:"servers"`             // 服务器配置列表
-	Middleware         MiddlewareConfig       `yaml:"middleware" json:"middleware"`       // 中间件配置列表
-	Features           FeatureConfig          `yaml:"features" json:"features"`           // 功能特性配置
-	GRPC               GRPCConfig             `yaml:"grpc" json:"grpc"`                   // gRPC服务配置
-	Database           DatabaseConfig         `yaml:"database" json:"database"`           // 数据库配置
-	Security           SecurityConfig         `yaml:"security" json:"security"`           // 安全配置
-	ProxyHeader        ProxyHeader            `yaml:"proxy_header" json:"proxy_header"`   // 内置的代理头配置
-	Log                LogConfig              `yaml:"log" json:"log"`                     // 日志配置
-	Module             []ModuleConfig         `yaml:"module" json:"module"`               // 模块
-	Stat               StatConfig             `yaml:"stat" json:"stat"`                   // 状态统计配置
-	Latency            LatencyConfig          `yaml:"latency" json:"latency"`             // 延迟统计配置
-	CustomHeader       map[string]string      `yaml:"custom_header" json:"custom_header"` // 自定义Header
-	Plugin             PluginConfig           `yaml:"plugin" json:"plugin"`               // 插件配置
-	Syncer             Syncer                 `yaml:"syncer" json:"syncer"`               // 定时器时间
-	Debug              bool                   `yaml:"debug" json:"debug"`                 // 调试模式
+	Servers            []ServerConfig         `yaml:"servers" json:"servers"`                     // 服务器配置列表
+	Middleware         MiddlewareConfig       `yaml:"middleware" json:"middleware"`               // 中间件配置列表
+	Features           FeatureConfig          `yaml:"features" json:"features"`                   // 功能特性配置
+	GRPC               GRPCConfig             `yaml:"grpc" json:"grpc"`                           // gRPC服务配置
+	ApiServerConfig    ApiServerConfig        `yaml:"api_server_config" json:"api_server_config"` // 内置API服务
+	Database           DatabaseConfig         `yaml:"database" json:"database"`                   // 数据库配置
+	Security           SecurityConfig         `yaml:"security" json:"security"`                   // 安全配置
+	ProxyHeader        ProxyHeader            `yaml:"proxy_header" json:"proxy_header"`           // 内置的代理头配置
+	Log                LogConfig              `yaml:"log" json:"log"`                             // 日志配置
+	Module             []ModuleConfig         `yaml:"module" json:"module"`                       // 模块
+	Stat               StatConfig             `yaml:"stat" json:"stat"`                           // 状态统计配置
+	Latency            LatencyConfig          `yaml:"latency" json:"latency"`                     // 延迟统计配置
+	CustomHeader       map[string]string      `yaml:"custom_header" json:"custom_header"`         // 自定义Header
+	Plugin             PluginConfig           `yaml:"plugin" json:"plugin"`                       // 插件配置
+	Syncer             Syncer                 `yaml:"syncer" json:"syncer"`                       // 定时器时间
+	Debug              bool                   `yaml:"debug" json:"debug"`                         // 调试模式
 	PProf              PProf                  `yaml:"pprof" json:"pprof"`
 	MaxCores           int                    `yaml:"max_cores" json:"max_cores"`
 	PxyBackend         PxyBackendConfig       `yaml:"pxy_backend" json:"pxy_backend"`

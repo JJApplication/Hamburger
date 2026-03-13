@@ -1,6 +1,7 @@
 package server
 
 import (
+	"Hamburger/gateway/stat"
 	"fmt"
 	"net"
 	"net/http"
@@ -167,6 +168,7 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 		// 设置最大请求体大小
 		MaxHeaderBytes: utils.DefaultInt(int(serverConfig.MaxHeaderBytes), 5<<20), // 1MB header limit
 		Protocols:      proto,
+		ConnState:      stat.HandleConn(stat.ConnGateway),
 	}
 	if serverConfig.UseHttp2 {
 		h2s := &http2.Server{}

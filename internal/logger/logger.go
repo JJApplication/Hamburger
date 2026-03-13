@@ -23,7 +23,7 @@ func InitLogger() {
 func ReloadLogger(conf *config.LogConfig) {
 	once.Do(func() {
 		globalLogger = zerolog.New(zerolog.ConsoleWriter{
-			Out:        os.Stdout,
+			Out:        NewWriter(conf),
 			NoColor:    !conf.Color,
 			TimeFormat: time.DateTime,
 		}).Level(getLevel(conf.LogLevel)).With().Timestamp().Caller().Logger()

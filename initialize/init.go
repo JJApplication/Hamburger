@@ -6,12 +6,12 @@ import (
 	"Hamburger/exp/trojan"
 	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
+	"Hamburger/gateway/api"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/notifier"
-	"Hamburger/gateway/stat"
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
@@ -34,7 +34,7 @@ type Initializer struct {
 	Manager         *manager.Manager
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
-	StatServer      *stat.StatServer
+	APIServer       *api.Server
 	LatencyServer   *latency.LatencyServer
 	Notifier        *notifier.Service
 	StaticDirectSvr *static_direct.StaticDirectServer
@@ -75,7 +75,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitPreHandlerManager())
 	i.Register(i.InitNotifier())
 	i.Register(i.InitStatManager())
-	i.Register(i.InitStatServer())
+	i.Register(i.InitAPIServer())
 	i.Register(i.InitLatencyServer())
 	i.Register(i.InitStaticDirect())
 	i.Register(i.InitVpnServer())

@@ -2,6 +2,7 @@ package stat
 
 import (
 	"Hamburger/gateway/stat/db"
+	"Hamburger/gateway/stat/model"
 	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"Hamburger/internal/structure"
@@ -71,7 +72,7 @@ func fileLoader(cfg *config.Config) *structure.Map[int64] {
 }
 
 func dbLoader() *structure.Map[int64] {
-	var stat StatModel
+	var stat model.StatModel
 	if err := db.GetDB().First(&stat).Error; err != nil {
 		return nil
 	}
@@ -85,10 +86,10 @@ func dbLoader() *structure.Map[int64] {
 }
 
 func dbSaver() {
-	var stat StatModel
+	var stat model.StatModel
 	if err := db.GetDB().First(&stat).Error; err != nil {
 		// 新建
-		db.GetDB().Create(&StatModel{
+		db.GetDB().Create(&model.StatModel{
 			Total:  Get(Total),
 			API:    Get(API),
 			Static: Get(Static),
@@ -96,7 +97,7 @@ func dbSaver() {
 		})
 		return
 	}
-	db.GetDB().Model(&StatModel{}).Where("id=?", stat.ID).Updates(map[string]interface{}{
+	db.GetDB().Model(&model.StatModel{}).Where("id=?", stat.ID).Updates(map[string]interface{}{
 		"total":  Get(Total),
 		"api":    Get(API),
 		"static": Get(Static),
@@ -113,10 +114,10 @@ func compatibleStat(cfg *config.Config) {
 	if err = json.Unmarshal(data, &tmp); err != nil {
 		return
 	}
-	var stat StatModel
+	var stat model.StatModel
 	if err = db.GetDB().First(&stat).Error; err != nil {
 		// 新建
-		db.GetDB().Create(&StatModel{
+		db.GetDB().Create(&model.StatModel{
 			Total:  tmp["total"],
 			API:    tmp["api"],
 			Static: tmp["static"],

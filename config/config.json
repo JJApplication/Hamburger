@@ -187,13 +187,24 @@
     "color": true
   },
   "module": null,
+  "api_server_config": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8888,
+    "http2": {
+      "enabled": true,
+      "insecure": true
+    },
+    "bblot": {
+      "enabled": true,
+      "file": "data/hamburger-api.db"
+    }
+  },
   "stat": {
     "db_file": "data/stat.db",
     "use_db": true,
     "compatible": true,
     "enabled": true,
-    "host": "127.0.0.1",
-    "port": 8888,
     "enable_stat": true,
     "sync_duration": 720,
     "save_duration": 3600,

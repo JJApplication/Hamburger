@@ -24,7 +24,7 @@ require (
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.10.1
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tetratelabs/wazero v1.7.0
 	github.com/txthinking/runnergroup v0.0.0-20230211072751-d11f16258c86 // indirect
 	github.com/txthinking/socks5 v0.0.0-20230307062227-0e1677eca4ba
@@ -47,6 +47,8 @@ require (
 require (
 	github.com/cskr/pubsub v1.0.2
 	github.com/emersion/go-imap v1.2.1
+	go.etcd.io/bbolt v1.4.3
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
@@ -68,9 +70,11 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gookit/filter v1.1.2 // indirect
 	github.com/gookit/validate v1.4.2 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -88,6 +92,8 @@ require (
 	github.com/pires/go-proxyproto v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
+	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
+	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect

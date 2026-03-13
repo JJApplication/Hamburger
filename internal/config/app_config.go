@@ -13,26 +13,27 @@ type AppConfig struct {
 	DomainMap       string       `yaml:"domain_map" json:"domain_map"` // 域名映射文件
 	Plugin          PluginConfig `yaml:"plugin" json:"plugin"`         // 插件配置
 
-	CoreProxy     ProxyConfig       `yaml:"proxy" json:"proxy"` // 核心代理配置
-	ErrorConfig   ProxyErrorConfig  `yaml:"error_config" json:"error_config"`
-	Servers       []ServerConfig    `yaml:"servers" json:"servers"`             // 服务器配置列表
-	Middleware    MiddlewareConfig  `yaml:"middleware" json:"middleware"`       // 中间件配置列表
-	Features      FeatureConfig     `yaml:"features" json:"features"`           // 功能特性配置
-	GRPC          GRPCConfig        `yaml:"grpc" json:"grpc"`                   // gRPC服务配置
-	Database      DatabaseConfig    `yaml:"database" json:"database"`           // 数据库配置
-	Security      SecurityConfig    `yaml:"security" json:"security"`           // 安全配置
-	ProxyHeader   ProxyHeader       `yaml:"proxy_header" json:"proxy_header"`   // 内置的代理头配置
-	Log           LogConfig         `yaml:"log" json:"log"`                     // 日志配置
-	Module        []ModuleConfig    `yaml:"module" json:"module"`               // 模块
-	Stat          StatConfig        `yaml:"stat" json:"stat"`                   // 状态统计配置
-	Latency       LatencyConfig     `yaml:"latency" json:"latency"`             // 延迟统计配置
-	CustomHeader  map[string]string `yaml:"custom_header" json:"custom_header"` // 自定义Header
-	PreAuthConfig PreAuthConfig     `yaml:"pre_auth_config" json:"pre_auth_config"`
-	NotifyConfig  NotifyConfig      `yaml:"notify_config" json:"notify_config"` // 通知系统配置
-	Syncer        Syncer            `yaml:"syncer" json:"syncer"` // 定时器时间
-	Debug         bool              `yaml:"debug" json:"debug"`   // 调试模式
-	PProf         PProf             `yaml:"pprof" json:"pprof"`
-	MaxCores      int               `yaml:"max_cores" json:"max_cores"`
+	CoreProxy       ProxyConfig       `yaml:"proxy" json:"proxy"` // 核心代理配置
+	ErrorConfig     ProxyErrorConfig  `yaml:"error_config" json:"error_config"`
+	Servers         []ServerConfig    `yaml:"servers" json:"servers"`       // 服务器配置列表
+	Middleware      MiddlewareConfig  `yaml:"middleware" json:"middleware"` // 中间件配置列表
+	Features        FeatureConfig     `yaml:"features" json:"features"`     // 功能特性配置
+	GRPC            GRPCConfig        `yaml:"grpc" json:"grpc"`             // gRPC服务配置
+	ApiServerConfig ApiServerConfig   `yaml:"api_server_config" json:"api_server_config"`
+	Database        DatabaseConfig    `yaml:"database" json:"database"`           // 数据库配置
+	Security        SecurityConfig    `yaml:"security" json:"security"`           // 安全配置
+	ProxyHeader     ProxyHeader       `yaml:"proxy_header" json:"proxy_header"`   // 内置的代理头配置
+	Log             LogConfig         `yaml:"log" json:"log"`                     // 日志配置
+	Module          []ModuleConfig    `yaml:"module" json:"module"`               // 模块
+	Stat            StatConfig        `yaml:"stat" json:"stat"`                   // 状态统计配置
+	Latency         LatencyConfig     `yaml:"latency" json:"latency"`             // 延迟统计配置
+	CustomHeader    map[string]string `yaml:"custom_header" json:"custom_header"` // 自定义Header
+	PreAuthConfig   PreAuthConfig     `yaml:"pre_auth_config" json:"pre_auth_config"`
+	NotifyConfig    NotifyConfig      `yaml:"notify_config" json:"notify_config"` // 通知系统配置
+	Syncer          Syncer            `yaml:"syncer" json:"syncer"`               // 定时器时间
+	Debug           bool              `yaml:"debug" json:"debug"`                 // 调试模式
+	PProf           PProf             `yaml:"pprof" json:"pprof"`
+	MaxCores        int               `yaml:"max_cores" json:"max_cores"`
 
 	// 第二优先级
 	PxyBackend  PxyBackendConfig `yaml:"pxy_backend" json:"pxy_backend"`
@@ -108,6 +109,28 @@ func GetDefaultConfig() *AppConfig {
 		GRPC: GRPCConfig{
 			Enabled: false,
 			Address: "",
+		},
+		ApiServerConfig: ApiServerConfig{
+			Enabled: false,
+			Host:    "0.0.0.0",
+			Port:    8282,
+			HTTP2: APIHTTP2Config{
+				Enabled:  false,
+				Insecure: true,
+			},
+			JWT: JWTConfig{
+				Enabled:        false,
+				TokenHeader:    "Authorization",
+				AllowedMethods: []string{"HS256"},
+			},
+			BBolt: APIBBoltConfig{
+				Enabled:         true,
+				File:            "bblot.db",
+				TimeoutSeconds:  1,
+				UserBucket:      "api_users",
+				DefaultUsername: "admin",
+				DefaultPassword: "admin",
+			},
 		},
 		Database: DatabaseConfig{
 			Mongo: MongoConfig{
