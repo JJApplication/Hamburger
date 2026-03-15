@@ -1,17 +1,17 @@
 package stat
 
 import (
-	"Hamburger/internal/config"
-	"Hamburger/internal/logger"
 	"time"
+
+	"Hamburger/internal/logger"
 )
 
-func InitStatSyncer() {
-	cfg := config.Get()
+func (m *StatManager) InitStatSyncer() {
+	cfg := m.getCfg()
 	if !cfg.Stat.EnableStat {
 		return
 	}
-	initCacheFromFile()
+	m.initCacheFromFile()
 	du := cfg.Stat.SyncDuration
 	if du == 0 {
 		du = 60
@@ -27,9 +27,9 @@ func InitStatSyncer() {
 		defer ticker.Stop()
 		for range ticker.C {
 			logger.GetLogger().Info().Msg("running stat syncer")
-			go syncStat()
-			go syncGEOStat()
-			go syncDomainStat()
+			go m.syncStat()
+			go m.syncGEOStat()
+			go m.syncDomainStat()
 		}
 	}()
 
@@ -38,9 +38,9 @@ func InitStatSyncer() {
 		defer ticker.Stop()
 		for range ticker.C {
 			logger.GetLogger().Info().Msg("save stat to file")
-			go SaveStat(cfg)
-			go SaveGeoStat()
-			go SaveDomainStat()
+			go m.SaveStat()
+			go m.SaveGeoStat()
+			go m.SaveDomainStat()
 		}
 	}()
 }

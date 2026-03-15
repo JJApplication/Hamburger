@@ -20,11 +20,12 @@ func NewTraceModifier() *TraceModifier {
 	return mod
 }
 
-func (t TraceModifier) Use(response *http.Response) {
+func (t TraceModifier) Use(response *http.Response) bool {
 	if !t.enable {
-		return
+		return true
 	}
 	utils.AddTrace(response, t.header)
+	return true
 }
 
 func (t TraceModifier) ModifyResponse(response *http.Response) error {

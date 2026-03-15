@@ -57,8 +57,9 @@ func NewGzipModifier() *GzipModifier {
 	return gm
 }
 
-func (g *GzipModifier) Use(response *http.Response) {
+func (g *GzipModifier) Use(response *http.Response) bool {
 	_ = g.ModifyResponse(response)
+	return true
 }
 
 // ModifyResponse 处理响应的gzip压缩

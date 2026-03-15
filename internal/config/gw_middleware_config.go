@@ -33,3 +33,8 @@ type ImageProtect struct {
 	ImageType    []string `yaml:"image_type" json:"image_type"`       // 过滤的图片类型
 	AllowReferer []string `yaml:"allow_referer" json:"allow_referer"` // 允许的请求头
 }
+
+type FailResponse struct {
+	Enabled bool  `yaml:"enabled" json:"enabled"` // 是否启用失败响应拦截
+	Code    []int `yaml:"code" json:"code"`       // 失败响应状态码
+}

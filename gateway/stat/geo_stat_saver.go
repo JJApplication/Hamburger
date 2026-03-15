@@ -1,37 +1,38 @@
 package stat
 
 import (
+	"os"
+
 	"Hamburger/gateway/stat/db"
 	"Hamburger/gateway/stat/model"
-	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/structure"
-	"os"
 )
 
-func LoadGeoStat() *structure.Map[*int64] {
-	cfg := config.Get()
+func (m *StatManager) LoadGeoStat() *structure.Map[*int64] {
+	cfg := m.getCfg()
 	if cfg.Stat.Compatible {
-		compatibleGeo(cfg)
+		m.compatibleGeo()
 	}
 	if cfg.Stat.UseDB {
-		return geoDBLoader()
+		return m.geoDBLoader()
 	}
 
-	return geoFileLoader(cfg)
+	return m.geoFileLoader()
 }
 
-func SaveGeoStat() {
-	cfg := config.Get()
+func (m *StatManager) SaveGeoStat() {
+	cfg := m.getCfg()
 	if cfg.Stat.UseDB {
-		geoDBSaver()
+		m.geoDBSaver()
 	} else {
-		geoFileSaver(cfg)
+		m.geoFileSaver()
 	}
 }
 
-func geoFileLoader(cfg *config.Config) *structure.Map[*int64] {
+func (m *StatManager) geoFileLoader() *structure.Map[*int64] {
+	cfg := m.getCfg()
 	var geoStat = structure.NewMap[*int64]()
 
 	data, err := os.ReadFile(cfg.Stat.GeoFile)
@@ -50,7 +51,7 @@ func geoFileLoader(cfg *config.Config) *structure.Map[*int64] {
 	return geoStat
 }
 
-func geoDBLoader() *structure.Map[*int64] {
+func (m *StatManager) geoDBLoader() *structure.Map[*int64] {
 	var geoStat = structure.NewMap[*int64]()
 
 	var geoData []model.GeoModel
@@ -62,13 +63,14 @@ func geoDBLoader() *structure.Map[*int64] {
 	return geoStat
 }
 
-func geoFileSaver(cfg *config.Config) {
+func (m *StatManager) geoFileSaver() {
+	cfg := m.getCfg()
 	if _, err := os.Stat(cfg.Stat.GeoFile); os.IsNotExist(err) {
 		// 创建文件
 		data, _ := json.Marshal(map[string]int64{})
 		_ = os.WriteFile(cfg.Stat.GeoFile, data, os.ModePerm)
 	}
-	geoStatByte, err := C().Get(GeoSet)
+	geoStatByte, err := m.C().Get(GeoSet)
 	if err != nil {
 		logger.GetLogger().Error().Err(err).Msg("Get GeoSet failed")
 		return
@@ -76,9 +78,9 @@ func geoFileSaver(cfg *config.Config) {
 	_ = os.WriteFile(cfg.Stat.GeoFile, geoStatByte, os.ModePerm)
 }
 
-func geoDBSaver() {
+func (m *StatManager) geoDBSaver() {
 	var geoMap = make(map[string]int64)
-	geoStatByte, err := C().Get(GeoSet)
+	geoStatByte, err := m.C().Get(GeoSet)
 	if err != nil {
 		logger.GetLogger().Error().Err(err).Msg("Get GeoSet failed")
 		return
@@ -105,7 +107,8 @@ func geoDBSaver() {
 	}
 }
 
-func compatibleGeo(cfg *config.Config) {
+func (m *StatManager) compatibleGeo() {
+	cfg := m.getCfg()
 	// 加载文件内容到DB
 	data, err := os.ReadFile(cfg.Stat.GeoFile)
 	if err != nil {

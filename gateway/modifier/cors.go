@@ -31,8 +31,9 @@ func NewCorsHeaderModifier() *CorsHeaderModifier {
 	return cm
 }
 
-func (c *CorsHeaderModifier) Use(response *http.Response) {
+func (c *CorsHeaderModifier) Use(response *http.Response) bool {
 	c.ModifyResponse(response)
+	return true
 }
 
 func (c *CorsHeaderModifier) ModifyResponse(response *http.Response) error {

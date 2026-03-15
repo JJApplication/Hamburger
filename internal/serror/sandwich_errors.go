@@ -24,4 +24,6 @@ const (
 	SandwichPluginError = "SandwichPluginError"
 	// SandwichPreAuthFailed 前置认证失败
 	SandwichPreAuthFailed = "SandwichPreAuthFailed"
+	// SandwichFailedResponseError 响应失败错误
+	SandwichFailedResponseError = "SandwichFailedResponseError"
 )

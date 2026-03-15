@@ -14,7 +14,7 @@ import (
 // Modifier 响应修改器接口
 // 所有响应修改器都需要实现此接口
 type Modifier interface {
-	Use(response *http.Response)
+	Use(response *http.Response) (continueProcess bool) // 判断是否阻止响应
 	// ModifyResponse 修改HTTP响应
 	// 在响应返回给客户端之前对响应进行处理
 	ModifyResponse(response *http.Response) error

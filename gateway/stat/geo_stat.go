@@ -1,12 +1,12 @@
 package stat
 
 import (
-	geo2 "Hamburger/gateway/geo"
-	"Hamburger/internal/config"
-	"Hamburger/internal/json"
-	"Hamburger/internal/logger"
 	"net"
 	"sync/atomic"
+
+	geo2 "Hamburger/gateway/geo"
+	"Hamburger/internal/json"
+	"Hamburger/internal/logger"
 )
 
 // geo数据
@@ -15,12 +15,11 @@ const (
 	GeoSet = "ip2country"
 )
 
-// 同步数据到缓存中
-func syncGEOStat() {
+func (m *StatManager) syncGEOStat() {
 	// 将临时的geo指针转换为数据
 	geoDataMap := make(map[string]int64)
 
-	geoIp.Range(func(key string, value *int64) bool {
+	m.geoIp.Range(func(key string, value *int64) bool {
 		geoDataMap[key] = *value
 		return true
 	})
@@ -29,16 +28,20 @@ func syncGEOStat() {
 	if err != nil {
 		logger.GetLogger().Error().Err(err).Msg("sync geoIp failed")
 	}
-	C().Set(GeoSet, data)
+	m.C().Set(GeoSet, data)
 }
 
 // AddGeo 使用协程处理 减少耗时
 func AddGeo(addr string) {
+	GetManager().AddGeo(addr)
+}
+
+func (m *StatManager) AddGeo(addr string) {
 	go func() {
 		if addr == "" || addr == "127.0.0.1" {
 			return
 		}
-		cfg := config.Get()
+		cfg := m.getCfg()
 		if !cfg.Stat.EnableStat {
 			return
 		}
@@ -52,9 +55,9 @@ func AddGeo(addr string) {
 		}
 
 		// 原子操作geo指针时 只需要读锁
-		geo, ok := geoIp.Get(isoCode)
+		geo, ok := m.geoIp.Get(isoCode)
 		if !ok {
-			geoIp.Put(isoCode, new(int64))
+			m.geoIp.Put(isoCode, new(int64))
 		} else {
 			atomic.AddInt64(geo, 1)
 		}
@@ -62,7 +65,11 @@ func AddGeo(addr string) {
 }
 
 func GetGeoData() []byte {
-	data, err := C().Get(GeoSet)
+	return GetManager().GetGeoData()
+}
+
+func (m *StatManager) GetGeoData() []byte {
+	data, err := m.C().Get(GeoSet)
 	if err != nil {
 		return nil
 	}

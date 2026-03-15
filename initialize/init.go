@@ -12,6 +12,7 @@ import (
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/notifier"
+	"Hamburger/gateway/stat"
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
 	grpc_proxy "Hamburger/internal/grpc"
@@ -34,6 +35,7 @@ type Initializer struct {
 	Manager         *manager.Manager
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
+	StatManager     *stat.StatManager
 	APIServer       *api.Server
 	LatencyServer   *latency.LatencyServer
 	Notifier        *notifier.Service

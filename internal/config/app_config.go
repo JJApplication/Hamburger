@@ -84,6 +84,10 @@ func GetDefaultConfig() *AppConfig {
 				Level:   6,
 				Types:   []string{"text/html", "text/css", "text/javascript", "application/json"},
 			},
+			FailResponse: FailResponse{
+				Enabled: false,
+				Code:    []int{500},
+			},
 		},
 		Features: FeatureConfig{
 			HTTP3: HTTP3Config{

@@ -40,8 +40,9 @@ func NewCustomHeaderModifier() *CustomHeaderModifier {
 	return cm
 }
 
-func (cm *CustomHeaderModifier) Use(response *http.Response) {
+func (cm *CustomHeaderModifier) Use(response *http.Response) bool {
 	_ = cm.ModifyResponse(response)
+	return true
 }
 
 // ModifyResponse 处理响应的自定义头添加

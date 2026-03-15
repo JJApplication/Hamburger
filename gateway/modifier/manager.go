@@ -62,6 +62,7 @@ func InitModifiers() {
 	mm.RegisterModifier(NewGzipModifier())
 	// 应用cors
 	mm.RegisterModifier(NewCorsHeaderModifier())
+	mm.RegisterModifier(NewFailResponseModifier())
 }
 
 func (mm *ModifierManager) RegisterModifier(modifier Modifier) {

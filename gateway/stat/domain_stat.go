@@ -1,10 +1,10 @@
 package stat
 
 import (
-	"Hamburger/internal/config"
+	"sync/atomic"
+
 	"Hamburger/internal/json"
 	"Hamburger/internal/logger"
-	"sync/atomic"
 )
 
 const (
@@ -12,8 +12,12 @@ const (
 )
 
 func AddDomainStat(domain string) {
+	GetManager().AddDomainStat(domain)
+}
+
+func (m *StatManager) AddDomainStat(domain string) {
 	go func() {
-		cfg := config.Get()
+		cfg := m.getCfg()
 		if !cfg.Stat.EnableStat {
 			return
 		}
@@ -22,9 +26,9 @@ func AddDomainStat(domain string) {
 		}
 
 		// 原子操作geo指针时 只需要读锁
-		ds, ok := domainStat.Get(domain)
+		ds, ok := m.domainStat.Get(domain)
 		if !ok {
-			domainStat.Put(domain, new(int64))
+			m.domainStat.Put(domain, new(int64))
 		} else {
 			atomic.AddInt64(ds, 1)
 		}
@@ -32,17 +36,21 @@ func AddDomainStat(domain string) {
 }
 
 func GetDomainStat() []byte {
-	data, err := C().Get(DomainStat)
+	return GetManager().GetDomainStat()
+}
+
+func (m *StatManager) GetDomainStat() []byte {
+	data, err := m.C().Get(DomainStat)
 	if err != nil {
 		return nil
 	}
 	return data
 }
 
-func syncDomainStat() {
+func (m *StatManager) syncDomainStat() {
 	domainDataMap := make(map[string]int64)
 
-	domainStat.Range(func(key string, value *int64) bool {
+	m.domainStat.Range(func(key string, value *int64) bool {
 		domainDataMap[key] = *value
 		return true
 	})
@@ -51,5 +59,5 @@ func syncDomainStat() {
 	if err != nil {
 		logger.GetLogger().Error().Err(err).Msg("sync domainStat failed")
 	}
-	C().Set(DomainStat, data)
+	m.C().Set(DomainStat, data)
 }

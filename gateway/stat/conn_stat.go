@@ -13,11 +13,15 @@ var (
 )
 
 func handleConnGw(conn net.Conn, state http.ConnState) {
+	GetManager().handleConnGw(conn, state)
+}
+
+func (m *StatManager) handleConnGw(conn net.Conn, state http.ConnState) {
 	switch state {
 	case http.StateNew:
-		ds, ok := domainStat.Get("new")
+		ds, ok := m.connStatGw.Get("new")
 		if !ok {
-			connStatGw.Put("new", new(int64))
+			m.connStatGw.Put("new", new(int64))
 		} else {
 			atomic.AddInt64(ds, 1)
 		}
@@ -31,6 +35,10 @@ func handleConnGw(conn net.Conn, state http.ConnState) {
 }
 
 func handleConnFront(conn net.Conn, state http.ConnState) {
+	GetManager().handleConnFront(conn, state)
+}
+
+func (m *StatManager) handleConnFront(conn net.Conn, state http.ConnState) {
 
 }
 

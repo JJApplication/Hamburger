@@ -17,8 +17,9 @@ func NewSecureHeaderModifier() *SecureHeaderModifier {
 	return mod
 }
 
-func (s SecureHeaderModifier) Use(response *http.Response) {
+func (s SecureHeaderModifier) Use(response *http.Response) bool {
 	_ = s.ModifyResponse(response)
+	return true
 }
 
 func (s SecureHeaderModifier) ModifyResponse(response *http.Response) error {

@@ -1,37 +1,39 @@
 package stat
 
 import (
+	"os"
+
 	"Hamburger/gateway/stat/db"
 	"Hamburger/gateway/stat/model"
-	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"Hamburger/internal/structure"
-	"os"
 )
 
 // 持久化存储数据到文件
 
-func LoadStat() *structure.Map[int64] {
-	cfg := config.Get()
+func (m *StatManager) LoadStat() *structure.Map[int64] {
+	cfg := m.getCfg()
 	if cfg.Stat.Compatible {
-		compatibleStat(cfg)
+		m.compatibleStat()
 	}
 	if cfg.Stat.UseDB {
-		return dbLoader()
+		return m.dbLoader()
 	}
-	return fileLoader(cfg)
+	return m.fileLoader()
 }
 
-func SaveStat(cfg *config.Config) {
+func (m *StatManager) SaveStat() {
+	cfg := m.getCfg()
 	if cfg.Stat.UseDB {
-		dbSaver()
+		m.dbSaver()
 	} else {
-		fileSaver(cfg.Stat.SaveFile)
+		m.fileSaver()
 	}
 }
 
-func fileSaver(f string) {
-	if _, err := os.Stat(f); os.IsNotExist(err) {
+func (m *StatManager) fileSaver() {
+	cfg := m.getCfg()
+	if _, err := os.Stat(cfg.Stat.SaveFile); os.IsNotExist(err) {
 		// 创建文件
 		data, _ := json.Marshal(map[string]int64{
 			"total":  0,
@@ -40,20 +42,21 @@ func fileSaver(f string) {
 			"fail":   0,
 			"today":  0,
 		})
-		_ = os.WriteFile(f, data, os.ModePerm)
+		_ = os.WriteFile(cfg.Stat.SaveFile, data, os.ModePerm)
 	}
-	m := make(map[string]int64)
-	m["total"] = Get(Total)
-	m["api"] = Get(API)
-	m["static"] = Get(Static)
-	m["fail"] = Get(Fail)
-	m["today"] = Get(Today)
+	statData := make(map[string]int64)
+	statData["total"] = m.Get(Total)
+	statData["api"] = m.Get(API)
+	statData["static"] = m.Get(Static)
+	statData["fail"] = m.Get(Fail)
+	statData["today"] = m.Get(Today)
 
-	data, _ := json.Marshal(m)
-	_ = os.WriteFile(f, data, os.ModePerm)
+	data, _ := json.Marshal(statData)
+	_ = os.WriteFile(cfg.Stat.SaveFile, data, os.ModePerm)
 }
 
-func fileLoader(cfg *config.Config) *structure.Map[int64] {
+func (m *StatManager) fileLoader() *structure.Map[int64] {
+	cfg := m.getCfg()
 	data, err := os.ReadFile(cfg.Stat.SaveFile)
 	if err != nil {
 		return structure.NewMap[int64]()
@@ -71,7 +74,7 @@ func fileLoader(cfg *config.Config) *structure.Map[int64] {
 	return stat
 }
 
-func dbLoader() *structure.Map[int64] {
+func (m *StatManager) dbLoader() *structure.Map[int64] {
 	var stat model.StatModel
 	if err := db.GetDB().First(&stat).Error; err != nil {
 		return nil
@@ -85,27 +88,28 @@ func dbLoader() *structure.Map[int64] {
 	return statMap
 }
 
-func dbSaver() {
+func (m *StatManager) dbSaver() {
 	var stat model.StatModel
 	if err := db.GetDB().First(&stat).Error; err != nil {
 		// 新建
 		db.GetDB().Create(&model.StatModel{
-			Total:  Get(Total),
-			API:    Get(API),
-			Static: Get(Static),
-			Fail:   Get(Fail),
+			Total:  m.Get(Total),
+			API:    m.Get(API),
+			Static: m.Get(Static),
+			Fail:   m.Get(Fail),
 		})
 		return
 	}
 	db.GetDB().Model(&model.StatModel{}).Where("id=?", stat.ID).Updates(map[string]interface{}{
-		"total":  Get(Total),
-		"api":    Get(API),
-		"static": Get(Static),
-		"fail":   Get(Fail),
+		"total":  m.Get(Total),
+		"api":    m.Get(API),
+		"static": m.Get(Static),
+		"fail":   m.Get(Fail),
 	})
 }
 
-func compatibleStat(cfg *config.Config) {
+func (m *StatManager) compatibleStat() {
+	cfg := m.getCfg()
 	data, err := os.ReadFile(cfg.Stat.SaveFile)
 	if err != nil {
 		return

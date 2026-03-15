@@ -1,59 +1,61 @@
 package stat
 
 import (
+	"os"
+
 	"Hamburger/gateway/stat/db"
 	"Hamburger/gateway/stat/model"
-	"Hamburger/internal/config"
 	"Hamburger/internal/json"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/structure"
-	"os"
 )
 
-func LoadDomainStat() *structure.Map[*int64] {
-	cfg := config.Get()
+func (m *StatManager) LoadDomainStat() *structure.Map[*int64] {
+	cfg := m.getCfg()
 	if cfg.Stat.Compatible {
-		compatibleDomain(cfg)
+		m.compatibleDomain()
 	}
 	if cfg.Stat.UseDB {
-		return domainDBLoader()
+		return m.domainDBLoader()
 	}
-	return domainFileLoader(cfg)
+	return m.domainFileLoader()
 }
 
-func SaveDomainStat() {
-	cfg := config.Get()
+func (m *StatManager) SaveDomainStat() {
+	cfg := m.getCfg()
 	if cfg.Stat.UseDB {
-		domainDBSaver()
+		m.domainDBSaver()
 	} else {
-		domainFileSaver(cfg)
+		m.domainFileSaver()
 	}
 }
 
-func domainFileLoader(cfg *config.Config) *structure.Map[*int64] {
-	m := structure.NewMap[*int64]()
+func (m *StatManager) domainFileLoader() *structure.Map[*int64] {
+	cfg := m.getCfg()
+	statMap := structure.NewMap[*int64]()
 	data, err := os.ReadFile(cfg.Stat.DomainFile)
 	if err != nil {
-		return m
+		return statMap
 	}
 	var res map[string]int64
 	if err = json.Unmarshal(data, &res); err != nil {
-		return m
+		return statMap
 	}
 	for k, v := range res {
-		m.Put(k, &v)
+		statMap.Put(k, &v)
 	}
 
-	return m
+	return statMap
 }
 
-func domainFileSaver(cfg *config.Config) {
+func (m *StatManager) domainFileSaver() {
+	cfg := m.getCfg()
 	if _, err := os.Stat(cfg.Stat.DomainFile); os.IsNotExist(err) {
 		// 创建文件
 		data, _ := json.Marshal(map[string]int64{})
-		_ = os.WriteFile(cfg.Stat.GeoFile, data, os.ModePerm)
+		_ = os.WriteFile(cfg.Stat.DomainFile, data, os.ModePerm)
 	}
-	domainStatByte, err := C().Get(DomainStat)
+	domainStatByte, err := m.C().Get(DomainStat)
 	if err != nil {
 		logger.GetLogger().Error().Err(err).Msg("Get DomainStat failed")
 		return
@@ -61,20 +63,20 @@ func domainFileSaver(cfg *config.Config) {
 	_ = os.WriteFile(cfg.Stat.DomainFile, domainStatByte, os.ModePerm)
 }
 
-func domainDBLoader() *structure.Map[*int64] {
-	m := structure.NewMap[*int64]()
+func (m *StatManager) domainDBLoader() *structure.Map[*int64] {
+	statMap := structure.NewMap[*int64]()
 	var domains []model.DomainModel
 	db.GetDB().Model(&model.DomainModel{}).Find(&domains)
 	for _, domain := range domains {
-		m.Put(domain.Domain, &domain.Count)
+		statMap.Put(domain.Domain, &domain.Count)
 	}
 
-	return m
+	return statMap
 }
 
-func domainDBSaver() {
+func (m *StatManager) domainDBSaver() {
 	var data map[string]int64
-	domainStatByte, err := C().Get(DomainStat)
+	domainStatByte, err := m.C().Get(DomainStat)
 	if err != nil {
 		return
 	}
@@ -95,7 +97,8 @@ func domainDBSaver() {
 	}
 }
 
-func compatibleDomain(cfg *config.Config) {
+func (m *StatManager) compatibleDomain() {
+	cfg := m.getCfg()
 	data, err := os.ReadFile(cfg.Stat.DomainFile)
 	if err != nil {
 		return

@@ -15,10 +15,12 @@ func (i *Initializer) InitStatManager() Runner {
 			if err := db.Init(i.cfg); err != nil {
 				return err
 			}
+			sm := stat.InitManager(i.cfg)
+			i.StatManager = sm
 			// load GEO
 			geo.LoadGEO()
 			// init syncer
-			stat.InitStatSyncer()
+			sm.InitStatSyncer()
 			return nil
 		}}
 }

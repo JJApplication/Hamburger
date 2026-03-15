@@ -93,6 +93,7 @@ type MiddlewareConfig struct {
 	Sanitizer    Sanitizer    `yaml:"sanitizer" json:"sanitizer"`         // 请求头标准化
 	DomainCheck  DomainCheck  `yaml:"domain_check" json:"domain_check"`   // 域名强制校验
 	ImageProtect ImageProtect `yaml:"image_protect" json:"image_protect"` // 图片防盗链
+	FailResponse FailResponse `yaml:"fail_response" json:"fail_response"` // 失败响应拦截
 }
 
 // FeatureConfig 功能特性配置结构体

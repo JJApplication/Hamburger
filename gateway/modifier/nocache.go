@@ -17,9 +17,9 @@ func NewNoCache() *NoCache {
 	return mod
 }
 
-func (n NoCache) Use(response *http.Response) {
+func (n NoCache) Use(response *http.Response) bool {
 	if !n.enabled {
-		return
+		return true
 	}
 	// 首先判断请求头中的cache
 	cacheHeader := response.Header.Get("Cache-Control")
@@ -30,10 +30,13 @@ func (n NoCache) Use(response *http.Response) {
 			response.Header.Add("Cache-Control", "no-cache")
 		}
 	}
+	return true
 }
 
 func (n NoCache) ModifyResponse(response *http.Response) error {
-	n.Use(response)
+	if !n.Use(response) {
+		return nil
+	}
 	return nil
 }
 

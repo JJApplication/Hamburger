@@ -197,7 +197,10 @@ func ProxyModifyResponse(cfg *config.Config, logger *zerolog.Logger) func(respon
 		}
 
 		for _, mod := range mods {
-			mod.Use(response)
+			if continueProcess := mod.Use(response); !continueProcess {
+				response.Header.Set(serror.SandwichInternalFlag, serror.SandwichFailedResponseError)
+				return nil
+			}
 		}
 		if err := wasm_plugin.Init(cfg, logger); err != nil {
 			logger.Error().Err(err).Msg("wasm plugin init failed")
