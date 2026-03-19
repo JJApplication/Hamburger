@@ -19,3 +19,13 @@ func (s *APIService) GetGeoData() []byte {
 func (s *APIService) GetDomainData() []byte {
 	return stat.GetDomainStat()
 }
+
+func (s *APIService) GetConnData() interface{} {
+	var connData = map[string]interface{}{}
+	connGw := stat.GetGatewayConn()
+	connFront := stat.GetFrontConn()
+	connData["gateway"] = connGw
+	connData["front"] = connFront
+
+	return connData
+}

@@ -280,8 +280,33 @@
     },
     {
       "type": "WebServer",
+      "name": "BabyBus",
+      "root": "/renj.io/app/BabyBus",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false,
+      "backends": [
+        {
+          "api": "/api",
+          "service": "BabyBus",
+          "use_rewrite": false
+        }
+      ]
+    },
+    {
+      "type": "WebServer",
       "name": "HamburgerDoc",
       "root": "/renj.io/app/Hamburger/docs",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "Calculator",
+      "root": "/renj.io/app/Calculator",
       "index": "index.html",
       "try_file": "index.html",
       "access": false,

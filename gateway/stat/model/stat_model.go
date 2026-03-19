@@ -24,9 +24,21 @@ type DomainModel struct {
 }
 
 // GatewayConnModel 网关代理连接数
+//
+// 当前没有存储必要 是每次启动后的临时数据
 type GatewayConnModel struct {
+	New      int64 `json:"new" gorm:"column:new"`
+	Active   int64 `json:"active" gorm:"column:active"`
+	Idle     int64 `json:"idle" gorm:"column:idle"`
+	Hijacked int64 `json:"hijacked" gorm:"column:hijacked"`
+	Closed   int64 `json:"closed" gorm:"column:closed"`
 }
 
 // FrontConnModel 前端服务连接数
 type FrontConnModel struct {
+	New      int64 `json:"new" gorm:"column:new"`
+	Active   int64 `json:"active" gorm:"column:active"`
+	Idle     int64 `json:"idle" gorm:"column:idle"`
+	Hijacked int64 `json:"hijacked" gorm:"column:hijacked"`
+	Closed   int64 `json:"closed" gorm:"column:closed"`
 }

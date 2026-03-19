@@ -15,6 +15,7 @@ func Register(engine *gin.Engine, svc *service.APIService, jwt gin.HandlerFunc) 
 	engine.GET("/api/stat", h.handleStat)
 	engine.GET("/api/geo", h.handleGeo)
 	engine.GET("/api/domain", h.handleDomain)
+	engine.GET("/api/conn", h.handleConn)
 	engine.GET("/api/health", h.handleHealth)
 	engine.POST("/api/login", h.handleLogin)
 

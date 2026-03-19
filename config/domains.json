@@ -98,7 +98,14 @@
     "frontend": "MyHome",
     "backend": "MyHome"
   },
+  "baby.renj.io": {
+    "frontend": "BabyBus",
+    "backend": "BabyBus"
+  },
   "hamburger.renj.io": {
     "frontend": "Hamburger"
+  },
+  "calc.ai.renj.io": {
+    "frontend": "Calculator"
   }
 }

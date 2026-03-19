@@ -16,3 +16,7 @@ func (h *Handler) handleDomain(c *gin.Context) {
 func (h *Handler) handleGeo(c *gin.Context) {
 	writeJSONBytes(c, h.service.GetGeoData())
 }
+
+func (h *Handler) handleConn(c *gin.Context) {
+	c.JSON(http.StatusOK, h.service.GetConnData())
+}
