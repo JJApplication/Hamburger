@@ -107,5 +107,8 @@
   },
   "calc.ai.renj.io": {
     "frontend": "Calculator"
+  },
+  "marry-me.renj.io": {
+    "frontend": "MarryMe"
   }
 }

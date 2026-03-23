@@ -311,6 +311,15 @@
       "try_file": "index.html",
       "access": false,
       "compress": false
+    },
+    {
+      "type": "WebServer",
+      "name": "MarryMe",
+      "root": "/renj.io/app/MarryMe",
+      "index": "index.html",
+      "try_file": "index.html",
+      "access": false,
+      "compress": false
     }
   ]
 }
