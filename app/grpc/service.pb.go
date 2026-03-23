@@ -392,17 +392,15 @@ func (x *ModifierInfo) GetEnabled() bool {
 type StatServerConfigResponse struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Enabled          bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Host             string                 `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
-	Port             int32                  `protobuf:"varint,3,opt,name=port,proto3" json:"port,omitempty"`
-	EnableStat       bool                   `protobuf:"varint,4,opt,name=enable_stat,json=enableStat,proto3" json:"enable_stat,omitempty"`
-	SyncDuration     int32                  `protobuf:"varint,5,opt,name=sync_duration,json=syncDuration,proto3" json:"sync_duration,omitempty"`
-	SaveDuration     int32                  `protobuf:"varint,6,opt,name=save_duration,json=saveDuration,proto3" json:"save_duration,omitempty"`
-	SaveFile         string                 `protobuf:"bytes,7,opt,name=save_file,json=saveFile,proto3" json:"save_file,omitempty"`
-	GeoFile          string                 `protobuf:"bytes,8,opt,name=geo_file,json=geoFile,proto3" json:"geo_file,omitempty"`
-	DomainFile       string                 `protobuf:"bytes,9,opt,name=domain_file,json=domainFile,proto3" json:"domain_file,omitempty"`
-	GeoDb            string                 `protobuf:"bytes,10,opt,name=geo_db,json=geoDb,proto3" json:"geo_db,omitempty"`
-	SequenceEnabled  bool                   `protobuf:"varint,11,opt,name=sequence_enabled,json=sequenceEnabled,proto3" json:"sequence_enabled,omitempty"`
-	SequenceInterval int32                  `protobuf:"varint,12,opt,name=sequence_interval,json=sequenceInterval,proto3" json:"sequence_interval,omitempty"`
+	EnableStat       bool                   `protobuf:"varint,2,opt,name=enable_stat,json=enableStat,proto3" json:"enable_stat,omitempty"`
+	SyncDuration     int32                  `protobuf:"varint,3,opt,name=sync_duration,json=syncDuration,proto3" json:"sync_duration,omitempty"`
+	SaveDuration     int32                  `protobuf:"varint,4,opt,name=save_duration,json=saveDuration,proto3" json:"save_duration,omitempty"`
+	SaveFile         string                 `protobuf:"bytes,5,opt,name=save_file,json=saveFile,proto3" json:"save_file,omitempty"`
+	GeoFile          string                 `protobuf:"bytes,6,opt,name=geo_file,json=geoFile,proto3" json:"geo_file,omitempty"`
+	DomainFile       string                 `protobuf:"bytes,7,opt,name=domain_file,json=domainFile,proto3" json:"domain_file,omitempty"`
+	GeoDb            string                 `protobuf:"bytes,8,opt,name=geo_db,json=geoDb,proto3" json:"geo_db,omitempty"`
+	SequenceEnabled  bool                   `protobuf:"varint,9,opt,name=sequence_enabled,json=sequenceEnabled,proto3" json:"sequence_enabled,omitempty"`
+	SequenceInterval int32                  `protobuf:"varint,10,opt,name=sequence_interval,json=sequenceInterval,proto3" json:"sequence_interval,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -442,20 +440,6 @@ func (x *StatServerConfigResponse) GetEnabled() bool {
 		return x.Enabled
 	}
 	return false
-}
-
-func (x *StatServerConfigResponse) GetHost() string {
-	if x != nil {
-		return x.Host
-	}
-	return ""
-}
-
-func (x *StatServerConfigResponse) GetPort() int32 {
-	if x != nil {
-		return x.Port
-	}
-	return 0
 }
 
 func (x *StatServerConfigResponse) GetEnableStat() bool {
@@ -1316,23 +1300,21 @@ const file_app_grpc_service_proto_rawDesc = "" +
 	"\tmodifiers\x18\x02 \x03(\v2\x19.grpc_server.ModifierInfoR\tmodifiers\"<\n" +
 	"\fModifierInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aenabled\x18\x02 \x01(\bR\aenabled\"\x8f\x03\n" +
+	"\aenabled\x18\x02 \x01(\bR\aenabled\"\xe7\x02\n" +
 	"\x18StatServerConfigResponse\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x12\n" +
-	"\x04host\x18\x02 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x03 \x01(\x05R\x04port\x12\x1f\n" +
-	"\venable_stat\x18\x04 \x01(\bR\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1f\n" +
+	"\venable_stat\x18\x02 \x01(\bR\n" +
 	"enableStat\x12#\n" +
-	"\rsync_duration\x18\x05 \x01(\x05R\fsyncDuration\x12#\n" +
-	"\rsave_duration\x18\x06 \x01(\x05R\fsaveDuration\x12\x1b\n" +
-	"\tsave_file\x18\a \x01(\tR\bsaveFile\x12\x19\n" +
-	"\bgeo_file\x18\b \x01(\tR\ageoFile\x12\x1f\n" +
-	"\vdomain_file\x18\t \x01(\tR\n" +
+	"\rsync_duration\x18\x03 \x01(\x05R\fsyncDuration\x12#\n" +
+	"\rsave_duration\x18\x04 \x01(\x05R\fsaveDuration\x12\x1b\n" +
+	"\tsave_file\x18\x05 \x01(\tR\bsaveFile\x12\x19\n" +
+	"\bgeo_file\x18\x06 \x01(\tR\ageoFile\x12\x1f\n" +
+	"\vdomain_file\x18\a \x01(\tR\n" +
 	"domainFile\x12\x15\n" +
-	"\x06geo_db\x18\n" +
-	" \x01(\tR\x05geoDb\x12)\n" +
-	"\x10sequence_enabled\x18\v \x01(\bR\x0fsequenceEnabled\x12+\n" +
-	"\x11sequence_interval\x18\f \x01(\x05R\x10sequenceInterval\"\xa5\x01\n" +
+	"\x06geo_db\x18\b \x01(\tR\x05geoDb\x12)\n" +
+	"\x10sequence_enabled\x18\t \x01(\bR\x0fsequenceEnabled\x12+\n" +
+	"\x11sequence_interval\x18\n" +
+	" \x01(\x05R\x10sequenceInterval\"\xa5\x01\n" +
 	"\x0fRuntimeResponse\x12\x10\n" +
 	"\x03cpu\x18\x01 \x01(\x01R\x03cpu\x12!\n" +
 	"\fmemory_bytes\x18\x02 \x01(\x03R\vmemoryBytes\x12\x1b\n" +
@@ -1409,7 +1391,7 @@ const file_app_grpc_service_proto_rawDesc = "" +
 	"\x15image_protect_enabled\x18\x0e \x01(\bR\x13imageProtectEnabled\x12\x1d\n" +
 	"\n" +
 	"image_type\x18\x0f \x03(\tR\timageType\x12#\n" +
-	"\rallow_referer\x18\x10 \x03(\tR\fallowReferer2\x92\a\n" +
+	"\rallow_referer\x18\x10 \x03(\tR\fallowReferer2\xf8\t\n" +
 	"\n" +
 	"AppService\x12J\n" +
 	"\x10GetGatewayStatus\x12\x12.grpc_server.Empty\x1a\".grpc_server.GatewayStatusResponse\x12P\n" +
@@ -1422,8 +1404,13 @@ const file_app_grpc_service_proto_rawDesc = "" +
 	"\x0eGetDomainPorts\x12\x12.grpc_server.Empty\x1a .grpc_server.DomainPortsResponse\x12S\n" +
 	"\fReloadConfig\x12 .grpc_server.ReloadConfigRequest\x1a!.grpc_server.ReloadConfigResponse\x12E\n" +
 	"\x12ReStartFrontServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12A\n" +
-	"\x0eReStartGateway\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12D\n" +
-	"\x11ReStartStatServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12K\n" +
+	"\x0eReStartGateway\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12C\n" +
+	"\x10ReStartAPIServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12G\n" +
+	"\x14ReStartBackendServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12G\n" +
+	"\x14ReStartLatencyServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12C\n" +
+	"\x10ReStartVPNServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12F\n" +
+	"\x13ReStartTrojanServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12F\n" +
+	"\x13ReStartAnyTLSServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12K\n" +
 	"\vDumpRuntime\x12\x1f.grpc_server.DumpRuntimeRequest\x1a\x1b.grpc_server.ActionResponseB\x14Z\x12Hamburger/app/grpcb\x06proto3"
 
 var (
@@ -1481,22 +1468,32 @@ var file_app_grpc_service_proto_depIdxs = []int32{
 	12, // 16: grpc_server.AppService.ReloadConfig:input_type -> grpc_server.ReloadConfigRequest
 	0,  // 17: grpc_server.AppService.ReStartFrontServer:input_type -> grpc_server.Empty
 	0,  // 18: grpc_server.AppService.ReStartGateway:input_type -> grpc_server.Empty
-	0,  // 19: grpc_server.AppService.ReStartStatServer:input_type -> grpc_server.Empty
-	14, // 20: grpc_server.AppService.DumpRuntime:input_type -> grpc_server.DumpRuntimeRequest
-	1,  // 21: grpc_server.AppService.GetGatewayStatus:output_type -> grpc_server.GatewayStatusResponse
-	3,  // 22: grpc_server.AppService.GetFrontProxyStatus:output_type -> grpc_server.FrontProxyStatusResponse
-	4,  // 23: grpc_server.AppService.GetModifierManagerInfo:output_type -> grpc_server.ModifierManagerInfoResponse
-	6,  // 24: grpc_server.AppService.GetStatServerConfig:output_type -> grpc_server.StatServerConfigResponse
-	7,  // 25: grpc_server.AppService.GetRuntime:output_type -> grpc_server.RuntimeResponse
-	8,  // 26: grpc_server.AppService.GetDomainMap:output_type -> grpc_server.DomainMapResponse
-	10, // 27: grpc_server.AppService.GetDomainPorts:output_type -> grpc_server.DomainPortsResponse
-	13, // 28: grpc_server.AppService.ReloadConfig:output_type -> grpc_server.ReloadConfigResponse
-	15, // 29: grpc_server.AppService.ReStartFrontServer:output_type -> grpc_server.ActionResponse
-	15, // 30: grpc_server.AppService.ReStartGateway:output_type -> grpc_server.ActionResponse
-	15, // 31: grpc_server.AppService.ReStartStatServer:output_type -> grpc_server.ActionResponse
-	15, // 32: grpc_server.AppService.DumpRuntime:output_type -> grpc_server.ActionResponse
-	21, // [21:33] is the sub-list for method output_type
-	9,  // [9:21] is the sub-list for method input_type
+	0,  // 19: grpc_server.AppService.ReStartAPIServer:input_type -> grpc_server.Empty
+	0,  // 20: grpc_server.AppService.ReStartBackendServer:input_type -> grpc_server.Empty
+	0,  // 21: grpc_server.AppService.ReStartLatencyServer:input_type -> grpc_server.Empty
+	0,  // 22: grpc_server.AppService.ReStartVPNServer:input_type -> grpc_server.Empty
+	0,  // 23: grpc_server.AppService.ReStartTrojanServer:input_type -> grpc_server.Empty
+	0,  // 24: grpc_server.AppService.ReStartAnyTLSServer:input_type -> grpc_server.Empty
+	14, // 25: grpc_server.AppService.DumpRuntime:input_type -> grpc_server.DumpRuntimeRequest
+	1,  // 26: grpc_server.AppService.GetGatewayStatus:output_type -> grpc_server.GatewayStatusResponse
+	3,  // 27: grpc_server.AppService.GetFrontProxyStatus:output_type -> grpc_server.FrontProxyStatusResponse
+	4,  // 28: grpc_server.AppService.GetModifierManagerInfo:output_type -> grpc_server.ModifierManagerInfoResponse
+	6,  // 29: grpc_server.AppService.GetStatServerConfig:output_type -> grpc_server.StatServerConfigResponse
+	7,  // 30: grpc_server.AppService.GetRuntime:output_type -> grpc_server.RuntimeResponse
+	8,  // 31: grpc_server.AppService.GetDomainMap:output_type -> grpc_server.DomainMapResponse
+	10, // 32: grpc_server.AppService.GetDomainPorts:output_type -> grpc_server.DomainPortsResponse
+	13, // 33: grpc_server.AppService.ReloadConfig:output_type -> grpc_server.ReloadConfigResponse
+	15, // 34: grpc_server.AppService.ReStartFrontServer:output_type -> grpc_server.ActionResponse
+	15, // 35: grpc_server.AppService.ReStartGateway:output_type -> grpc_server.ActionResponse
+	15, // 36: grpc_server.AppService.ReStartAPIServer:output_type -> grpc_server.ActionResponse
+	15, // 37: grpc_server.AppService.ReStartBackendServer:output_type -> grpc_server.ActionResponse
+	15, // 38: grpc_server.AppService.ReStartLatencyServer:output_type -> grpc_server.ActionResponse
+	15, // 39: grpc_server.AppService.ReStartVPNServer:output_type -> grpc_server.ActionResponse
+	15, // 40: grpc_server.AppService.ReStartTrojanServer:output_type -> grpc_server.ActionResponse
+	15, // 41: grpc_server.AppService.ReStartAnyTLSServer:output_type -> grpc_server.ActionResponse
+	15, // 42: grpc_server.AppService.DumpRuntime:output_type -> grpc_server.ActionResponse
+	26, // [26:43] is the sub-list for method output_type
+	9,  // [9:26] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name

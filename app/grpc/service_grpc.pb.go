@@ -29,7 +29,12 @@ const (
 	AppService_ReloadConfig_FullMethodName           = "/grpc_server.AppService/ReloadConfig"
 	AppService_ReStartFrontServer_FullMethodName     = "/grpc_server.AppService/ReStartFrontServer"
 	AppService_ReStartGateway_FullMethodName         = "/grpc_server.AppService/ReStartGateway"
-	AppService_ReStartStatServer_FullMethodName      = "/grpc_server.AppService/ReStartStatServer"
+	AppService_ReStartAPIServer_FullMethodName       = "/grpc_server.AppService/ReStartAPIServer"
+	AppService_ReStartBackendServer_FullMethodName   = "/grpc_server.AppService/ReStartBackendServer"
+	AppService_ReStartLatencyServer_FullMethodName   = "/grpc_server.AppService/ReStartLatencyServer"
+	AppService_ReStartVPNServer_FullMethodName       = "/grpc_server.AppService/ReStartVPNServer"
+	AppService_ReStartTrojanServer_FullMethodName    = "/grpc_server.AppService/ReStartTrojanServer"
+	AppService_ReStartAnyTLSServer_FullMethodName    = "/grpc_server.AppService/ReStartAnyTLSServer"
 	AppService_DumpRuntime_FullMethodName            = "/grpc_server.AppService/DumpRuntime"
 )
 
@@ -57,8 +62,18 @@ type AppServiceClient interface {
 	ReStartFrontServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
 	// 重启网关服务器
 	ReStartGateway(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
-	// 重启Stat服务器
-	ReStartStatServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 重启API服务器
+	ReStartAPIServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 重启Backend服务器
+	ReStartBackendServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 重启Latency服务器
+	ReStartLatencyServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 重启VPN服务器
+	ReStartVPNServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 重启Trojan服务器
+	ReStartTrojanServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 重启AnyTLS服务器
+	ReStartAnyTLSServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
 	// Dump运行时到文件
 	DumpRuntime(ctx context.Context, in *DumpRuntimeRequest, opts ...grpc.CallOption) (*ActionResponse, error)
 }
@@ -171,10 +186,60 @@ func (c *appServiceClient) ReStartGateway(ctx context.Context, in *Empty, opts .
 	return out, nil
 }
 
-func (c *appServiceClient) ReStartStatServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
+func (c *appServiceClient) ReStartAPIServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ActionResponse)
-	err := c.cc.Invoke(ctx, AppService_ReStartStatServer_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AppService_ReStartAPIServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ReStartBackendServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_ReStartBackendServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ReStartLatencyServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_ReStartLatencyServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ReStartVPNServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_ReStartVPNServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ReStartTrojanServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_ReStartTrojanServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ReStartAnyTLSServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_ReStartAnyTLSServer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +280,18 @@ type AppServiceServer interface {
 	ReStartFrontServer(context.Context, *Empty) (*ActionResponse, error)
 	// 重启网关服务器
 	ReStartGateway(context.Context, *Empty) (*ActionResponse, error)
-	// 重启Stat服务器
-	ReStartStatServer(context.Context, *Empty) (*ActionResponse, error)
+	// 重启API服务器
+	ReStartAPIServer(context.Context, *Empty) (*ActionResponse, error)
+	// 重启Backend服务器
+	ReStartBackendServer(context.Context, *Empty) (*ActionResponse, error)
+	// 重启Latency服务器
+	ReStartLatencyServer(context.Context, *Empty) (*ActionResponse, error)
+	// 重启VPN服务器
+	ReStartVPNServer(context.Context, *Empty) (*ActionResponse, error)
+	// 重启Trojan服务器
+	ReStartTrojanServer(context.Context, *Empty) (*ActionResponse, error)
+	// 重启AnyTLS服务器
+	ReStartAnyTLSServer(context.Context, *Empty) (*ActionResponse, error)
 	// Dump运行时到文件
 	DumpRuntime(context.Context, *DumpRuntimeRequest) (*ActionResponse, error)
 	mustEmbedUnimplementedAppServiceServer()
@@ -259,8 +334,23 @@ func (UnimplementedAppServiceServer) ReStartFrontServer(context.Context, *Empty)
 func (UnimplementedAppServiceServer) ReStartGateway(context.Context, *Empty) (*ActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReStartGateway not implemented")
 }
-func (UnimplementedAppServiceServer) ReStartStatServer(context.Context, *Empty) (*ActionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReStartStatServer not implemented")
+func (UnimplementedAppServiceServer) ReStartAPIServer(context.Context, *Empty) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReStartAPIServer not implemented")
+}
+func (UnimplementedAppServiceServer) ReStartBackendServer(context.Context, *Empty) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReStartBackendServer not implemented")
+}
+func (UnimplementedAppServiceServer) ReStartLatencyServer(context.Context, *Empty) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReStartLatencyServer not implemented")
+}
+func (UnimplementedAppServiceServer) ReStartVPNServer(context.Context, *Empty) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReStartVPNServer not implemented")
+}
+func (UnimplementedAppServiceServer) ReStartTrojanServer(context.Context, *Empty) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReStartTrojanServer not implemented")
+}
+func (UnimplementedAppServiceServer) ReStartAnyTLSServer(context.Context, *Empty) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReStartAnyTLSServer not implemented")
 }
 func (UnimplementedAppServiceServer) DumpRuntime(context.Context, *DumpRuntimeRequest) (*ActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DumpRuntime not implemented")
@@ -466,20 +556,110 @@ func _AppService_ReStartGateway_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AppService_ReStartStatServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AppService_ReStartAPIServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AppServiceServer).ReStartStatServer(ctx, in)
+		return srv.(AppServiceServer).ReStartAPIServer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AppService_ReStartStatServer_FullMethodName,
+		FullMethod: AppService_ReStartAPIServer_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppServiceServer).ReStartStatServer(ctx, req.(*Empty))
+		return srv.(AppServiceServer).ReStartAPIServer(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ReStartBackendServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ReStartBackendServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ReStartBackendServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ReStartBackendServer(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ReStartLatencyServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ReStartLatencyServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ReStartLatencyServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ReStartLatencyServer(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ReStartVPNServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ReStartVPNServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ReStartVPNServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ReStartVPNServer(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ReStartTrojanServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ReStartTrojanServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ReStartTrojanServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ReStartTrojanServer(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ReStartAnyTLSServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ReStartAnyTLSServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ReStartAnyTLSServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ReStartAnyTLSServer(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -550,8 +730,28 @@ var AppService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AppService_ReStartGateway_Handler,
 		},
 		{
-			MethodName: "ReStartStatServer",
-			Handler:    _AppService_ReStartStatServer_Handler,
+			MethodName: "ReStartAPIServer",
+			Handler:    _AppService_ReStartAPIServer_Handler,
+		},
+		{
+			MethodName: "ReStartBackendServer",
+			Handler:    _AppService_ReStartBackendServer_Handler,
+		},
+		{
+			MethodName: "ReStartLatencyServer",
+			Handler:    _AppService_ReStartLatencyServer_Handler,
+		},
+		{
+			MethodName: "ReStartVPNServer",
+			Handler:    _AppService_ReStartVPNServer_Handler,
+		},
+		{
+			MethodName: "ReStartTrojanServer",
+			Handler:    _AppService_ReStartTrojanServer_Handler,
+		},
+		{
+			MethodName: "ReStartAnyTLSServer",
+			Handler:    _AppService_ReStartAnyTLSServer_Handler,
 		},
 		{
 			MethodName: "DumpRuntime",

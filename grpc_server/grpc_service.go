@@ -10,8 +10,13 @@ import (
 	"time"
 
 	appgrpc "Hamburger/app/grpc"
+	"Hamburger/backend_proxy"
+	"Hamburger/exp/any_tls"
+	"Hamburger/exp/trojan"
+	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/api"
+	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	gwRuntime "Hamburger/gateway/runtime"
@@ -27,15 +32,25 @@ type AppService struct {
 	getFrontServer     func() *frontend_proxy.HeliosServer
 	getModifierManager func() *modifier.ModifierManager
 	getAPIServer       func() *api.Server
+	getBackendServer   func() *backend_proxy.BackendProxy
+	getLatencyServer   func() *latency.LatencyServer
+	getVPNServer       func() *vpn_proxy.VpnServer
+	getTrojanServer    func() *trojan.TrojanServer
+	getAnyTLSServer    func() *any_tls.AnyTLSServer
 	appgrpc.UnimplementedAppServiceServer
 }
 
-func NewAppService(getManager func() *manager.Manager, getFrontServer func() *frontend_proxy.HeliosServer, getModifierManager func() *modifier.ModifierManager, getAPIServer func() *api.Server) *AppService {
+func NewAppService(getManager func() *manager.Manager, getFrontServer func() *frontend_proxy.HeliosServer, getModifierManager func() *modifier.ModifierManager, getAPIServer func() *api.Server, getBackendServer func() *backend_proxy.BackendProxy, getLatencyServer func() *latency.LatencyServer, getVPNServer func() *vpn_proxy.VpnServer, getTrojanServer func() *trojan.TrojanServer, getAnyTLSServer func() *any_tls.AnyTLSServer) *AppService {
 	return &AppService{
 		getManager:         getManager,
 		getFrontServer:     getFrontServer,
 		getModifierManager: getModifierManager,
 		getAPIServer:       getAPIServer,
+		getBackendServer:   getBackendServer,
+		getLatencyServer:   getLatencyServer,
+		getVPNServer:       getVPNServer,
+		getTrojanServer:    getTrojanServer,
+		getAnyTLSServer:    getAnyTLSServer,
 	}
 }
 
@@ -296,18 +311,99 @@ func (s *AppService) ReStartGateway(ctx context.Context, _ *appgrpc.Empty) (*app
 	return &appgrpc.ActionResponse{Success: true}, nil
 }
 
-func (s *AppService) ReStartStatServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
+func (s *AppService) ReStartAPIServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
 	if s.getAPIServer == nil {
-		return nil, status.Error(codes.Unavailable, "stat server unavailable")
+		return nil, status.Error(codes.Unavailable, "api server unavailable")
 	}
 	apiServer := s.getAPIServer()
 	if apiServer == nil {
-		return nil, status.Error(codes.Unavailable, "stat server unavailable")
+		return nil, status.Error(codes.Unavailable, "api server unavailable")
 	}
 	if err := apiServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := apiServer.Start(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) ReStartBackendServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
+	if s.getBackendServer == nil {
+		return nil, status.Error(codes.Unavailable, "backend server unavailable")
+	}
+	backendServer := s.getBackendServer()
+	if backendServer == nil {
+		return nil, status.Error(codes.Unavailable, "backend server unavailable")
+	}
+	backendServer.Stop()
+	backendServer.Start()
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) ReStartLatencyServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
+	if s.getLatencyServer == nil {
+		return nil, status.Error(codes.Unavailable, "latency server unavailable")
+	}
+	latencyServer := s.getLatencyServer()
+	if latencyServer == nil {
+		return nil, status.Error(codes.Unavailable, "latency server unavailable")
+	}
+	if err := latencyServer.Stop(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	if err := latencyServer.Start(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) ReStartVPNServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
+	if s.getVPNServer == nil {
+		return nil, status.Error(codes.Unavailable, "vpn server unavailable")
+	}
+	vpnServer := s.getVPNServer()
+	if vpnServer == nil {
+		return nil, status.Error(codes.Unavailable, "vpn server unavailable")
+	}
+	if err := vpnServer.Stop(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	if err := vpnServer.Start(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) ReStartTrojanServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
+	if s.getTrojanServer == nil {
+		return nil, status.Error(codes.Unavailable, "trojan server unavailable")
+	}
+	trojanServer := s.getTrojanServer()
+	if trojanServer == nil {
+		return nil, status.Error(codes.Unavailable, "trojan server unavailable")
+	}
+	if err := trojanServer.Stop(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	if err := trojanServer.Start(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) ReStartAnyTLSServer(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.ActionResponse, error) {
+	if s.getAnyTLSServer == nil {
+		return nil, status.Error(codes.Unavailable, "anytls server unavailable")
+	}
+	anyTLSServer := s.getAnyTLSServer()
+	if anyTLSServer == nil {
+		return nil, status.Error(codes.Unavailable, "anytls server unavailable")
+	}
+	if err := anyTLSServer.Stop(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	if err := anyTLSServer.Start(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	return &appgrpc.ActionResponse{Success: true}, nil

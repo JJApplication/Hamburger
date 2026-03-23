@@ -2,8 +2,13 @@ package grpc_server
 
 import (
 	appgrpc "Hamburger/app/grpc"
+	"Hamburger/backend_proxy"
+	"Hamburger/exp/any_tls"
+	"Hamburger/exp/trojan"
+	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/api"
+	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	"Hamburger/internal/config"
@@ -25,7 +30,12 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger,
 	getManager func() *manager.Manager,
 	getFrontServer func() *frontend_proxy.HeliosServer,
 	getModifierManager func() *modifier.ModifierManager,
-	getAPIServer func() *api.Server) (*AppServiceServer, error) {
+	getAPIServer func() *api.Server,
+	getBackendServer func() *backend_proxy.BackendProxy,
+	getLatencyServer func() *latency.LatencyServer,
+	getVpnServer func() *vpn_proxy.VpnServer,
+	getTrojanServer func() *trojan.TrojanServer,
+	getAnyTLSServer func() *any_tls.AnyTLSServer) (*AppServiceServer, error) {
 	svr := grpc.NewServer()
 
 	grpcAddr := ""
@@ -40,7 +50,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger,
 	if err != nil {
 		return nil, err
 	}
-	appgrpc.RegisterAppServiceServer(svr, NewAppService(getManager, getFrontServer, getModifierManager, getAPIServer))
+	appgrpc.RegisterAppServiceServer(svr, NewAppService(getManager, getFrontServer, getModifierManager, getAPIServer, getBackendServer, getLatencyServer, getVpnServer, getTrojanServer, getAnyTLSServer))
 
 	return &AppServiceServer{
 		listener:   listener,

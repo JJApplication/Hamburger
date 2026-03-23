@@ -25,8 +25,18 @@ service AppService {
     rpc ReStartFrontServer (Empty) returns (ActionResponse);
     // 重启网关服务器
     rpc ReStartGateway (Empty) returns (ActionResponse);
-    // 重启Stat服务器
-    rpc ReStartStatServer (Empty) returns (ActionResponse);
+    // 重启API服务器
+    rpc ReStartAPIServer (Empty) returns (ActionResponse);
+    // 重启Backend服务器
+    rpc ReStartBackendServer (Empty) returns (ActionResponse);
+    // 重启Latency服务器
+    rpc ReStartLatencyServer (Empty) returns (ActionResponse);
+    // 重启VPN服务器
+    rpc ReStartVPNServer (Empty) returns (ActionResponse);
+    // 重启Trojan服务器
+    rpc ReStartTrojanServer (Empty) returns (ActionResponse);
+    // 重启AnyTLS服务器
+    rpc ReStartAnyTLSServer (Empty) returns (ActionResponse);
     // Dump运行时到文件
     rpc DumpRuntime (DumpRuntimeRequest) returns (ActionResponse);
 }
