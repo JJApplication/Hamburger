@@ -12,6 +12,7 @@ import (
 	"Hamburger/gateway/breaker"
 	"Hamburger/gateway/error_page"
 	"Hamburger/gateway/grpc_proxy"
+	"Hamburger/gateway/grpc_web"
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/resolver"
 	"Hamburger/gateway/stat"
@@ -106,6 +107,14 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 			Str("Host", request.Host).
 			Str("Trace-ID", request.Header.Get(cfg.ProxyHeader.TraceId)).
 			Msg("parse request")
+		if grpc_web.IsEnabled() {
+			webProxy := grpc_web.GetGrpcWebProxy()
+			if webProxy != nil && webProxy.IsGrpcWebRequest(request) {
+				logger.Debug().Msg("detected grpc-web proxy request")
+				request.URL = &url.URL{Scheme: constant.SchemeGrpcWeb}
+				return
+			}
+		}
 		// 检查是否为gRPC代理请求
 		if grpc_proxy.IsEnabled() {
 			proxy := grpc_proxy.GetGrpcProxy()

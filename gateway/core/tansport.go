@@ -2,6 +2,7 @@ package core
 
 import (
 	"Hamburger/gateway/grpc_proxy"
+	"Hamburger/gateway/grpc_web"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 	"Hamburger/internal/utils"
@@ -31,6 +32,9 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// 检查是否为gRPC代理请求
 	if req.URL.Scheme == constant.SchemeGrpc {
 		return t.handleGrpcProxy(req)
+	}
+	if req.URL.Scheme == constant.SchemeGrpcWeb {
+		return t.handleGrpcWebProxy(req)
 	}
 
 	transport := t.Transport
@@ -179,6 +183,40 @@ func (t *myTransport) handleGrpcProxy(req *http.Request) (*http.Response, error)
 	proxy.HandleGrpcRequest(recorder, req)
 
 	// 构造HTTP响应
+	resp := &http.Response{
+		StatusCode:    recorder.statusCode,
+		Status:        http.StatusText(recorder.statusCode),
+		Header:        recorder.header,
+		Body:          &bodyReader{bytes.NewReader(recorder.body.Bytes())},
+		ContentLength: int64(recorder.body.Len()),
+		Request:       req,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+	}
+
+	return resp, nil
+}
+
+func (t *myTransport) handleGrpcWebProxy(req *http.Request) (*http.Response, error) {
+	proxy := grpc_web.GetGrpcWebProxy()
+	if proxy == nil {
+		return &http.Response{
+			StatusCode: http.StatusServiceUnavailable,
+			Status:     "503 Service Unavailable",
+			Header:     make(http.Header),
+			Body:       http.NoBody,
+			Request:    req,
+		}, nil
+	}
+
+	recorder := &responseRecorder{
+		header: make(http.Header),
+		body:   &bytes.Buffer{},
+	}
+
+	proxy.HandleGrpcWebRequest(recorder, req)
+
 	resp := &http.Response{
 		StatusCode:    recorder.statusCode,
 		Status:        http.StatusText(recorder.statusCode),
