@@ -256,6 +256,10 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			logger.Error().Str("host", request.Host).Msg("backend: service is down")
 			error_page.EPM.Response(http.StatusInternalServerError, writer, request)
 			return
+		case serror.SandwichServiceStopped:
+			logger.Error().Str("host", request.Host).Msg("service is stopped")
+			error_page.EPM.Response(http.StatusServiceUnavailable, writer, request)
+			return
 		}
 		logger.Error().Err(err).Str("host", request.Host).Msg("proxy connect error")
 		error_page.EPM.Response(http.StatusBadGateway, writer, request)

@@ -25,4 +25,6 @@ func Register(engine *gin.Engine, svc *service.APIService, jwt gin.HandlerFunc) 
 	auth.PUT("/user", h.handleUserUpdate)
 	auth.POST("/user", h.handleUserCreate)
 	auth.DELETE("/user", h.handleUserDelete)
+	auth.POST("/service/start", h.handleServiceStart)
+	auth.POST("/service/stop", h.handleServiceStop)
 }

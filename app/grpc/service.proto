@@ -37,6 +37,10 @@ service AppService {
     rpc ReStartTrojanServer (Empty) returns (ActionResponse);
     // 重启AnyTLS服务器
     rpc ReStartAnyTLSServer (Empty) returns (ActionResponse);
+    // 启动域名服务
+    rpc StartDomainService (DomainServiceRequest) returns (ActionResponse);
+    // 停止域名服务
+    rpc StopDomainService (DomainServiceRequest) returns (ActionResponse);
     // Dump运行时到文件
     rpc DumpRuntime (DumpRuntimeRequest) returns (ActionResponse);
 }
@@ -129,6 +133,10 @@ message ReloadConfigResponse {
 
 message DumpRuntimeRequest {
     string path = 1;
+}
+
+message DomainServiceRequest {
+    string domain = 1;
 }
 
 message ActionResponse {

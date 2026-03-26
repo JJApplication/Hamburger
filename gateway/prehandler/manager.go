@@ -35,6 +35,7 @@ func InitPreHandlerManager() {
 	pm := GetManager()
 	pm.Add(NewPreAuth())
 	pm.Add(NewHeaderSanitizer())
+	pm.Add(NewDomainsControl())
 	pm.Add(NewPreCheckDomains())
 	pm.Add(NewRateLimiter())
 	pm.Add(NewImageProtectModifier())

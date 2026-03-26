@@ -22,7 +22,10 @@ func NewPreCheckDomains() *PreCheckDomains {
 }
 
 func (cf *PreCheckDomains) Handle(r *http.Request) error {
-	domain := r.Host
+	domain, err := normalizeDomain(r.Host)
+	if err != nil {
+		return nil
+	}
 	if domain == "" {
 		return nil
 	}

@@ -26,4 +26,6 @@ const (
 	SandwichPreAuthFailed = "SandwichPreAuthFailed"
 	// SandwichFailedResponseError 响应失败错误
 	SandwichFailedResponseError = "SandwichFailedResponseError"
+	// SandwichServiceStopped 服务被停止
+	SandwichServiceStopped = "SandwichServiceStopped"
 )

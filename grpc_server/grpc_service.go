@@ -19,6 +19,7 @@ import (
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
+	"Hamburger/gateway/prehandler"
 	gwRuntime "Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
@@ -404,6 +405,22 @@ func (s *AppService) ReStartAnyTLSServer(ctx context.Context, _ *appgrpc.Empty) 
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := anyTLSServer.Start(); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) StartDomainService(ctx context.Context, req *appgrpc.DomainServiceRequest) (*appgrpc.ActionResponse, error) {
+	domain := strings.TrimSpace(req.GetDomain())
+	if err := prehandler.GetServiceManager().StartDomain(domain); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &appgrpc.ActionResponse{Success: true}, nil
+}
+
+func (s *AppService) StopDomainService(ctx context.Context, req *appgrpc.DomainServiceRequest) (*appgrpc.ActionResponse, error) {
+	domain := strings.TrimSpace(req.GetDomain())
+	if err := prehandler.GetServiceManager().StopDomain(domain); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	return &appgrpc.ActionResponse{Success: true}, nil

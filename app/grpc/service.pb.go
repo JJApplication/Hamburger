@@ -929,6 +929,50 @@ func (x *DumpRuntimeRequest) GetPath() string {
 	return ""
 }
 
+type DomainServiceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Domain        string                 `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DomainServiceRequest) Reset() {
+	*x = DomainServiceRequest{}
+	mi := &file_app_grpc_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DomainServiceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DomainServiceRequest) ProtoMessage() {}
+
+func (x *DomainServiceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_app_grpc_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DomainServiceRequest.ProtoReflect.Descriptor instead.
+func (*DomainServiceRequest) Descriptor() ([]byte, []int) {
+	return file_app_grpc_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DomainServiceRequest) GetDomain() string {
+	if x != nil {
+		return x.Domain
+	}
+	return ""
+}
+
 type ActionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -939,7 +983,7 @@ type ActionResponse struct {
 
 func (x *ActionResponse) Reset() {
 	*x = ActionResponse{}
-	mi := &file_app_grpc_service_proto_msgTypes[15]
+	mi := &file_app_grpc_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -951,7 +995,7 @@ func (x *ActionResponse) String() string {
 func (*ActionResponse) ProtoMessage() {}
 
 func (x *ActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_app_grpc_service_proto_msgTypes[15]
+	mi := &file_app_grpc_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +1008,7 @@ func (x *ActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionResponse.ProtoReflect.Descriptor instead.
 func (*ActionResponse) Descriptor() ([]byte, []int) {
-	return file_app_grpc_service_proto_rawDescGZIP(), []int{15}
+	return file_app_grpc_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ActionResponse) GetSuccess() bool {
@@ -1000,7 +1044,7 @@ type GatewayServerConfig struct {
 
 func (x *GatewayServerConfig) Reset() {
 	*x = GatewayServerConfig{}
-	mi := &file_app_grpc_service_proto_msgTypes[16]
+	mi := &file_app_grpc_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1012,7 +1056,7 @@ func (x *GatewayServerConfig) String() string {
 func (*GatewayServerConfig) ProtoMessage() {}
 
 func (x *GatewayServerConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_app_grpc_service_proto_msgTypes[16]
+	mi := &file_app_grpc_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1025,7 +1069,7 @@ func (x *GatewayServerConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GatewayServerConfig.ProtoReflect.Descriptor instead.
 func (*GatewayServerConfig) Descriptor() ([]byte, []int) {
-	return file_app_grpc_service_proto_rawDescGZIP(), []int{16}
+	return file_app_grpc_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GatewayServerConfig) GetName() string {
@@ -1129,7 +1173,7 @@ type MiddlewareStatus struct {
 
 func (x *MiddlewareStatus) Reset() {
 	*x = MiddlewareStatus{}
-	mi := &file_app_grpc_service_proto_msgTypes[17]
+	mi := &file_app_grpc_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1141,7 +1185,7 @@ func (x *MiddlewareStatus) String() string {
 func (*MiddlewareStatus) ProtoMessage() {}
 
 func (x *MiddlewareStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_app_grpc_service_proto_msgTypes[17]
+	mi := &file_app_grpc_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1154,7 +1198,7 @@ func (x *MiddlewareStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MiddlewareStatus.ProtoReflect.Descriptor instead.
 func (*MiddlewareStatus) Descriptor() ([]byte, []int) {
-	return file_app_grpc_service_proto_rawDescGZIP(), []int{17}
+	return file_app_grpc_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *MiddlewareStatus) GetGzipEnabled() bool {
@@ -1350,7 +1394,9 @@ const file_app_grpc_service_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error\"(\n" +
 	"\x12DumpRuntimeRequest\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"D\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\".\n" +
+	"\x14DomainServiceRequest\x12\x16\n" +
+	"\x06domain\x18\x01 \x01(\tR\x06domain\"D\n" +
 	"\x0eActionResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xd1\x02\n" +
@@ -1391,7 +1437,7 @@ const file_app_grpc_service_proto_rawDesc = "" +
 	"\x15image_protect_enabled\x18\x0e \x01(\bR\x13imageProtectEnabled\x12\x1d\n" +
 	"\n" +
 	"image_type\x18\x0f \x03(\tR\timageType\x12#\n" +
-	"\rallow_referer\x18\x10 \x03(\tR\fallowReferer2\xf8\t\n" +
+	"\rallow_referer\x18\x10 \x03(\tR\fallowReferer2\xa3\v\n" +
 	"\n" +
 	"AppService\x12J\n" +
 	"\x10GetGatewayStatus\x12\x12.grpc_server.Empty\x1a\".grpc_server.GatewayStatusResponse\x12P\n" +
@@ -1410,7 +1456,9 @@ const file_app_grpc_service_proto_rawDesc = "" +
 	"\x14ReStartLatencyServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12C\n" +
 	"\x10ReStartVPNServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12F\n" +
 	"\x13ReStartTrojanServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12F\n" +
-	"\x13ReStartAnyTLSServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12K\n" +
+	"\x13ReStartAnyTLSServer\x12\x12.grpc_server.Empty\x1a\x1b.grpc_server.ActionResponse\x12T\n" +
+	"\x12StartDomainService\x12!.grpc_server.DomainServiceRequest\x1a\x1b.grpc_server.ActionResponse\x12S\n" +
+	"\x11StopDomainService\x12!.grpc_server.DomainServiceRequest\x1a\x1b.grpc_server.ActionResponse\x12K\n" +
 	"\vDumpRuntime\x12\x1f.grpc_server.DumpRuntimeRequest\x1a\x1b.grpc_server.ActionResponseB\x14Z\x12Hamburger/app/grpcb\x06proto3"
 
 var (
@@ -1425,7 +1473,7 @@ func file_app_grpc_service_proto_rawDescGZIP() []byte {
 	return file_app_grpc_service_proto_rawDescData
 }
 
-var file_app_grpc_service_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_app_grpc_service_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_app_grpc_service_proto_goTypes = []any{
 	(*Empty)(nil),                       // 0: grpc_server.Empty
 	(*GatewayStatusResponse)(nil),       // 1: grpc_server.GatewayStatusResponse
@@ -1442,20 +1490,21 @@ var file_app_grpc_service_proto_goTypes = []any{
 	(*ReloadConfigRequest)(nil),         // 12: grpc_server.ReloadConfigRequest
 	(*ReloadConfigResponse)(nil),        // 13: grpc_server.ReloadConfigResponse
 	(*DumpRuntimeRequest)(nil),          // 14: grpc_server.DumpRuntimeRequest
-	(*ActionResponse)(nil),              // 15: grpc_server.ActionResponse
-	(*GatewayServerConfig)(nil),         // 16: grpc_server.GatewayServerConfig
-	(*MiddlewareStatus)(nil),            // 17: grpc_server.MiddlewareStatus
-	nil,                                 // 18: grpc_server.DomainMapResponse.DomainsMapEntry
-	nil,                                 // 19: grpc_server.DomainMapResponse.DomainFrontMapEntry
+	(*DomainServiceRequest)(nil),        // 15: grpc_server.DomainServiceRequest
+	(*ActionResponse)(nil),              // 16: grpc_server.ActionResponse
+	(*GatewayServerConfig)(nil),         // 17: grpc_server.GatewayServerConfig
+	(*MiddlewareStatus)(nil),            // 18: grpc_server.MiddlewareStatus
+	nil,                                 // 19: grpc_server.DomainMapResponse.DomainsMapEntry
+	nil,                                 // 20: grpc_server.DomainMapResponse.DomainFrontMapEntry
 }
 var file_app_grpc_service_proto_depIdxs = []int32{
 	2,  // 0: grpc_server.GatewayStatusResponse.servers:type_name -> grpc_server.ServerStatus
 	2,  // 1: grpc_server.GatewayStatusResponse.http3_servers:type_name -> grpc_server.ServerStatus
-	16, // 2: grpc_server.GatewayStatusResponse.server_configs:type_name -> grpc_server.GatewayServerConfig
-	17, // 3: grpc_server.GatewayStatusResponse.middleware:type_name -> grpc_server.MiddlewareStatus
+	17, // 2: grpc_server.GatewayStatusResponse.server_configs:type_name -> grpc_server.GatewayServerConfig
+	18, // 3: grpc_server.GatewayStatusResponse.middleware:type_name -> grpc_server.MiddlewareStatus
 	5,  // 4: grpc_server.ModifierManagerInfoResponse.modifiers:type_name -> grpc_server.ModifierInfo
-	18, // 5: grpc_server.DomainMapResponse.domains_map:type_name -> grpc_server.DomainMapResponse.DomainsMapEntry
-	19, // 6: grpc_server.DomainMapResponse.domain_front_map:type_name -> grpc_server.DomainMapResponse.DomainFrontMapEntry
+	19, // 5: grpc_server.DomainMapResponse.domains_map:type_name -> grpc_server.DomainMapResponse.DomainsMapEntry
+	20, // 6: grpc_server.DomainMapResponse.domain_front_map:type_name -> grpc_server.DomainMapResponse.DomainFrontMapEntry
 	11, // 7: grpc_server.DomainPortsResponse.ports:type_name -> grpc_server.DomainPorts
 	9,  // 8: grpc_server.DomainMapResponse.DomainsMapEntry.value:type_name -> grpc_server.ServiceMap
 	0,  // 9: grpc_server.AppService.GetGatewayStatus:input_type -> grpc_server.Empty
@@ -1474,26 +1523,30 @@ var file_app_grpc_service_proto_depIdxs = []int32{
 	0,  // 22: grpc_server.AppService.ReStartVPNServer:input_type -> grpc_server.Empty
 	0,  // 23: grpc_server.AppService.ReStartTrojanServer:input_type -> grpc_server.Empty
 	0,  // 24: grpc_server.AppService.ReStartAnyTLSServer:input_type -> grpc_server.Empty
-	14, // 25: grpc_server.AppService.DumpRuntime:input_type -> grpc_server.DumpRuntimeRequest
-	1,  // 26: grpc_server.AppService.GetGatewayStatus:output_type -> grpc_server.GatewayStatusResponse
-	3,  // 27: grpc_server.AppService.GetFrontProxyStatus:output_type -> grpc_server.FrontProxyStatusResponse
-	4,  // 28: grpc_server.AppService.GetModifierManagerInfo:output_type -> grpc_server.ModifierManagerInfoResponse
-	6,  // 29: grpc_server.AppService.GetStatServerConfig:output_type -> grpc_server.StatServerConfigResponse
-	7,  // 30: grpc_server.AppService.GetRuntime:output_type -> grpc_server.RuntimeResponse
-	8,  // 31: grpc_server.AppService.GetDomainMap:output_type -> grpc_server.DomainMapResponse
-	10, // 32: grpc_server.AppService.GetDomainPorts:output_type -> grpc_server.DomainPortsResponse
-	13, // 33: grpc_server.AppService.ReloadConfig:output_type -> grpc_server.ReloadConfigResponse
-	15, // 34: grpc_server.AppService.ReStartFrontServer:output_type -> grpc_server.ActionResponse
-	15, // 35: grpc_server.AppService.ReStartGateway:output_type -> grpc_server.ActionResponse
-	15, // 36: grpc_server.AppService.ReStartAPIServer:output_type -> grpc_server.ActionResponse
-	15, // 37: grpc_server.AppService.ReStartBackendServer:output_type -> grpc_server.ActionResponse
-	15, // 38: grpc_server.AppService.ReStartLatencyServer:output_type -> grpc_server.ActionResponse
-	15, // 39: grpc_server.AppService.ReStartVPNServer:output_type -> grpc_server.ActionResponse
-	15, // 40: grpc_server.AppService.ReStartTrojanServer:output_type -> grpc_server.ActionResponse
-	15, // 41: grpc_server.AppService.ReStartAnyTLSServer:output_type -> grpc_server.ActionResponse
-	15, // 42: grpc_server.AppService.DumpRuntime:output_type -> grpc_server.ActionResponse
-	26, // [26:43] is the sub-list for method output_type
-	9,  // [9:26] is the sub-list for method input_type
+	15, // 25: grpc_server.AppService.StartDomainService:input_type -> grpc_server.DomainServiceRequest
+	15, // 26: grpc_server.AppService.StopDomainService:input_type -> grpc_server.DomainServiceRequest
+	14, // 27: grpc_server.AppService.DumpRuntime:input_type -> grpc_server.DumpRuntimeRequest
+	1,  // 28: grpc_server.AppService.GetGatewayStatus:output_type -> grpc_server.GatewayStatusResponse
+	3,  // 29: grpc_server.AppService.GetFrontProxyStatus:output_type -> grpc_server.FrontProxyStatusResponse
+	4,  // 30: grpc_server.AppService.GetModifierManagerInfo:output_type -> grpc_server.ModifierManagerInfoResponse
+	6,  // 31: grpc_server.AppService.GetStatServerConfig:output_type -> grpc_server.StatServerConfigResponse
+	7,  // 32: grpc_server.AppService.GetRuntime:output_type -> grpc_server.RuntimeResponse
+	8,  // 33: grpc_server.AppService.GetDomainMap:output_type -> grpc_server.DomainMapResponse
+	10, // 34: grpc_server.AppService.GetDomainPorts:output_type -> grpc_server.DomainPortsResponse
+	13, // 35: grpc_server.AppService.ReloadConfig:output_type -> grpc_server.ReloadConfigResponse
+	16, // 36: grpc_server.AppService.ReStartFrontServer:output_type -> grpc_server.ActionResponse
+	16, // 37: grpc_server.AppService.ReStartGateway:output_type -> grpc_server.ActionResponse
+	16, // 38: grpc_server.AppService.ReStartAPIServer:output_type -> grpc_server.ActionResponse
+	16, // 39: grpc_server.AppService.ReStartBackendServer:output_type -> grpc_server.ActionResponse
+	16, // 40: grpc_server.AppService.ReStartLatencyServer:output_type -> grpc_server.ActionResponse
+	16, // 41: grpc_server.AppService.ReStartVPNServer:output_type -> grpc_server.ActionResponse
+	16, // 42: grpc_server.AppService.ReStartTrojanServer:output_type -> grpc_server.ActionResponse
+	16, // 43: grpc_server.AppService.ReStartAnyTLSServer:output_type -> grpc_server.ActionResponse
+	16, // 44: grpc_server.AppService.StartDomainService:output_type -> grpc_server.ActionResponse
+	16, // 45: grpc_server.AppService.StopDomainService:output_type -> grpc_server.ActionResponse
+	16, // 46: grpc_server.AppService.DumpRuntime:output_type -> grpc_server.ActionResponse
+	28, // [28:47] is the sub-list for method output_type
+	9,  // [9:28] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -1510,7 +1563,7 @@ func file_app_grpc_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_app_grpc_service_proto_rawDesc), len(file_app_grpc_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -35,6 +35,8 @@ const (
 	AppService_ReStartVPNServer_FullMethodName       = "/grpc_server.AppService/ReStartVPNServer"
 	AppService_ReStartTrojanServer_FullMethodName    = "/grpc_server.AppService/ReStartTrojanServer"
 	AppService_ReStartAnyTLSServer_FullMethodName    = "/grpc_server.AppService/ReStartAnyTLSServer"
+	AppService_StartDomainService_FullMethodName     = "/grpc_server.AppService/StartDomainService"
+	AppService_StopDomainService_FullMethodName      = "/grpc_server.AppService/StopDomainService"
 	AppService_DumpRuntime_FullMethodName            = "/grpc_server.AppService/DumpRuntime"
 )
 
@@ -74,6 +76,10 @@ type AppServiceClient interface {
 	ReStartTrojanServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
 	// 重启AnyTLS服务器
 	ReStartAnyTLSServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 启动域名服务
+	StartDomainService(ctx context.Context, in *DomainServiceRequest, opts ...grpc.CallOption) (*ActionResponse, error)
+	// 停止域名服务
+	StopDomainService(ctx context.Context, in *DomainServiceRequest, opts ...grpc.CallOption) (*ActionResponse, error)
 	// Dump运行时到文件
 	DumpRuntime(ctx context.Context, in *DumpRuntimeRequest, opts ...grpc.CallOption) (*ActionResponse, error)
 }
@@ -246,6 +252,26 @@ func (c *appServiceClient) ReStartAnyTLSServer(ctx context.Context, in *Empty, o
 	return out, nil
 }
 
+func (c *appServiceClient) StartDomainService(ctx context.Context, in *DomainServiceRequest, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_StartDomainService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) StopDomainService(ctx context.Context, in *DomainServiceRequest, opts ...grpc.CallOption) (*ActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionResponse)
+	err := c.cc.Invoke(ctx, AppService_StopDomainService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appServiceClient) DumpRuntime(ctx context.Context, in *DumpRuntimeRequest, opts ...grpc.CallOption) (*ActionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ActionResponse)
@@ -292,6 +318,10 @@ type AppServiceServer interface {
 	ReStartTrojanServer(context.Context, *Empty) (*ActionResponse, error)
 	// 重启AnyTLS服务器
 	ReStartAnyTLSServer(context.Context, *Empty) (*ActionResponse, error)
+	// 启动域名服务
+	StartDomainService(context.Context, *DomainServiceRequest) (*ActionResponse, error)
+	// 停止域名服务
+	StopDomainService(context.Context, *DomainServiceRequest) (*ActionResponse, error)
 	// Dump运行时到文件
 	DumpRuntime(context.Context, *DumpRuntimeRequest) (*ActionResponse, error)
 	mustEmbedUnimplementedAppServiceServer()
@@ -351,6 +381,12 @@ func (UnimplementedAppServiceServer) ReStartTrojanServer(context.Context, *Empty
 }
 func (UnimplementedAppServiceServer) ReStartAnyTLSServer(context.Context, *Empty) (*ActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReStartAnyTLSServer not implemented")
+}
+func (UnimplementedAppServiceServer) StartDomainService(context.Context, *DomainServiceRequest) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartDomainService not implemented")
+}
+func (UnimplementedAppServiceServer) StopDomainService(context.Context, *DomainServiceRequest) (*ActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopDomainService not implemented")
 }
 func (UnimplementedAppServiceServer) DumpRuntime(context.Context, *DumpRuntimeRequest) (*ActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DumpRuntime not implemented")
@@ -664,6 +700,42 @@ func _AppService_ReStartAnyTLSServer_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AppService_StartDomainService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DomainServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).StartDomainService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_StartDomainService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).StartDomainService(ctx, req.(*DomainServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_StopDomainService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DomainServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).StopDomainService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_StopDomainService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).StopDomainService(ctx, req.(*DomainServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AppService_DumpRuntime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DumpRuntimeRequest)
 	if err := dec(in); err != nil {
@@ -752,6 +824,14 @@ var AppService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReStartAnyTLSServer",
 			Handler:    _AppService_ReStartAnyTLSServer_Handler,
+		},
+		{
+			MethodName: "StartDomainService",
+			Handler:    _AppService_StartDomainService_Handler,
+		},
+		{
+			MethodName: "StopDomainService",
+			Handler:    _AppService_StopDomainService_Handler,
 		},
 		{
 			MethodName: "DumpRuntime",
