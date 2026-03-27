@@ -110,5 +110,8 @@
   },
   "marry-me.renj.io": {
     "frontend": "MarryMe"
+  },
+  "ring.renj.io": {
+    "frontend": "Ring"
   }
 }

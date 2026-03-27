@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -18,6 +19,12 @@ import (
 func JWT(cfg config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !cfg.Enabled {
+			c.Next()
+			return
+		}
+		// 本地认证
+		localClientToken := c.GetHeader("X-Hamburger-Token")
+		if localClientToken == constant.AppName && c.Request.Host == "127.0.0.1" {
 			c.Next()
 			return
 		}

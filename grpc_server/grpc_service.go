@@ -271,15 +271,9 @@ func (s *AppService) GetDomainPorts(ctx context.Context, _ *appgrpc.Empty) (*app
 
 func (s *AppService) ReloadConfig(ctx context.Context, req *appgrpc.ReloadConfigRequest) (*appgrpc.ReloadConfigResponse, error) {
 	file := strings.TrimSpace(req.GetFile())
-	if file == "" {
-		file = "config/config.json"
-	}
-	appCfg, err := config.LoadConfig(file)
-	if err != nil {
+	if err := reloadConfigInPlace(file); err != nil {
 		return &appgrpc.ReloadConfigResponse{Success: false, Error: err.Error()}, nil
 	}
-	cfg := config.Merge(appCfg)
-	config.Set(cfg)
 	return &appgrpc.ReloadConfigResponse{Success: true}, nil
 }
 
@@ -290,6 +284,9 @@ func (s *AppService) ReStartFrontServer(ctx context.Context, _ *appgrpc.Empty) (
 	frontServer := s.getFrontServer()
 	if frontServer == nil {
 		return nil, status.Error(codes.Unavailable, "front server unavailable")
+	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	frontServer.Shutdown()
 	go func() {
@@ -306,6 +303,9 @@ func (s *AppService) ReStartGateway(ctx context.Context, _ *appgrpc.Empty) (*app
 	if managerInstance == nil {
 		return nil, status.Error(codes.Unavailable, "gateway manager unavailable")
 	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
 	if err := managerInstance.Restart(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
@@ -319,6 +319,9 @@ func (s *AppService) ReStartAPIServer(ctx context.Context, _ *appgrpc.Empty) (*a
 	apiServer := s.getAPIServer()
 	if apiServer == nil {
 		return nil, status.Error(codes.Unavailable, "api server unavailable")
+	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := apiServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
@@ -337,6 +340,9 @@ func (s *AppService) ReStartBackendServer(ctx context.Context, _ *appgrpc.Empty)
 	if backendServer == nil {
 		return nil, status.Error(codes.Unavailable, "backend server unavailable")
 	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
 	backendServer.Stop()
 	backendServer.Start()
 	return &appgrpc.ActionResponse{Success: true}, nil
@@ -349,6 +355,9 @@ func (s *AppService) ReStartLatencyServer(ctx context.Context, _ *appgrpc.Empty)
 	latencyServer := s.getLatencyServer()
 	if latencyServer == nil {
 		return nil, status.Error(codes.Unavailable, "latency server unavailable")
+	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := latencyServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
@@ -367,6 +376,9 @@ func (s *AppService) ReStartVPNServer(ctx context.Context, _ *appgrpc.Empty) (*a
 	if vpnServer == nil {
 		return nil, status.Error(codes.Unavailable, "vpn server unavailable")
 	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
 	if err := vpnServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
@@ -384,6 +396,9 @@ func (s *AppService) ReStartTrojanServer(ctx context.Context, _ *appgrpc.Empty) 
 	if trojanServer == nil {
 		return nil, status.Error(codes.Unavailable, "trojan server unavailable")
 	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
+	}
 	if err := trojanServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
@@ -400,6 +415,9 @@ func (s *AppService) ReStartAnyTLSServer(ctx context.Context, _ *appgrpc.Empty) 
 	anyTLSServer := s.getAnyTLSServer()
 	if anyTLSServer == nil {
 		return nil, status.Error(codes.Unavailable, "anytls server unavailable")
+	}
+	if err := reloadConfigInPlace(""); err != nil {
+		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := anyTLSServer.Stop(); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
@@ -473,4 +491,24 @@ func toInt32Slice(values []int) []int32 {
 		result = append(result, int32(v))
 	}
 	return result
+}
+
+func reloadConfigInPlace(file string) error {
+	path := strings.TrimSpace(file)
+	if path == "" {
+		path = "config/config.json"
+	}
+	appCfg, err := config.LoadConfig(path)
+	if err != nil {
+		return err
+	}
+	mergedCfg := config.Merge(appCfg)
+	currentCfg := config.Get()
+	if currentCfg == nil {
+		config.Set(mergedCfg)
+		return nil
+	}
+	*currentCfg = *mergedCfg
+	config.Set(currentCfg)
+	return nil
 }

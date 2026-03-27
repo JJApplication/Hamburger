@@ -83,6 +83,13 @@ func (s *Server) Stop() error {
 	return s.server.Shutdown(context.Background())
 }
 
+func (s *Server) SetServerControl(stopFn map[string]func() error, restartFn map[string]func() error) {
+	if s == nil || s.service == nil {
+		return
+	}
+	s.service.SetServerControl(stopFn, restartFn)
+}
+
 func (s *Server) startInsecureHTTP2() error {
 	proto := &http.Protocols{}
 	proto.SetHTTP1(true)

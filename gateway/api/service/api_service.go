@@ -4,6 +4,7 @@ import (
 	"Hamburger/gateway/api/model"
 	"Hamburger/internal/config"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,6 +24,8 @@ type APIService struct {
 	db         *bbolt.DB
 	userBucket []byte
 	initErr    error
+	stopFn     map[string]func() error
+	restartFn  map[string]func() error
 }
 
 func NewAPIService(apiCfg config.ApiServerConfig) *APIService {
@@ -60,4 +63,39 @@ func (s *APIService) CloseDB() error {
 		return nil
 	}
 	return s.db.Close()
+}
+
+func (s *APIService) SetServerControl(stopFn map[string]func() error, restartFn map[string]func() error) {
+	s.stopFn = stopFn
+	s.restartFn = restartFn
+}
+
+func (s *APIService) StopServer(name string) error {
+	key := strings.TrimSpace(strings.ToLower(name))
+	if key == "" {
+		return fmt.Errorf("server is empty")
+	}
+	if s.stopFn == nil {
+		return fmt.Errorf("server control unavailable")
+	}
+	fn, ok := s.stopFn[key]
+	if !ok || fn == nil {
+		return fmt.Errorf("unsupported server: %s", key)
+	}
+	return fn()
+}
+
+func (s *APIService) RestartServer(name string) error {
+	key := strings.TrimSpace(strings.ToLower(name))
+	if key == "" {
+		return fmt.Errorf("server is empty")
+	}
+	if s.restartFn == nil {
+		return fmt.Errorf("server control unavailable")
+	}
+	fn, ok := s.restartFn[key]
+	if !ok || fn == nil {
+		return fmt.Errorf("unsupported server: %s", key)
+	}
+	return fn()
 }
