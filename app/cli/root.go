@@ -10,11 +10,12 @@ import (
 
 	"Hamburger/app"
 	"Hamburger/internal/config"
+
 	"github.com/spf13/cobra"
 )
 
 const (
-	defaultConfigPath = "config/config.json"
+	defaultConfigPath = "config/config.hamburger"
 	pidFileName       = "hamburger.pid"
 )
 
