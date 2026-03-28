@@ -16,6 +16,9 @@ var (
 
 func main() {
 	fmt.Printf("%s - %s\n", AppName, Description)
+	fmt.Println("")
+	cli.OutputHamburgerLogo()
+	fmt.Println("")
 	fmt.Printf("Version: %s\nBuildHash: %s\n\n", Version, BuildHash)
 	if err := cli.Execute(); err != nil {
 		fmt.Println(err.Error())

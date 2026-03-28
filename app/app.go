@@ -3,6 +3,7 @@ package app
 import (
 	"Hamburger/backend_proxy"
 	"Hamburger/exp/any_tls"
+	exp_dns "Hamburger/exp/dns"
 	"Hamburger/exp/trojan"
 	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
@@ -45,6 +46,7 @@ type HamburgerApp struct {
 	StaticDirectSvr *static_direct.StaticDirectServer
 	VpnServer       *vpn_proxy.VpnServer
 	AnyTLSServer    *any_tls.AnyTLSServer
+	DNSServer       *exp_dns.DNSServer
 	TrojanServer    *trojan.TrojanServer
 
 	GrpcServer *grpc_server.AppServiceServer
@@ -96,6 +98,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.registerServerCount(func() int { app.StaticDirectSvr = i.StaticDirectSvr; return 1 })
 	app.registerServerCount(func() int { app.VpnServer = i.VpnServer; return 1 })
 	app.registerServerCount(func() int { app.AnyTLSServer = i.AnyTLSServer; return 1 })
+	app.registerServerCount(func() int { app.DNSServer = i.DNSServer; return 1 })
 	app.registerServerCount(func() int { app.TrojanServer = i.TrojanServer; return 1 })
 	app.registerServerCount(func() int { app.GrpcServer = i.GrpcServer; return 1 })
 	app.logger = i.GetLogger()
@@ -178,6 +181,13 @@ func (app *HamburgerApp) Run() {
 
 	go func() {
 		defer wg.Done()
+		if err := app.DNSServer.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("dns server error")
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
 		if err := app.TrojanServer.Start(); err != nil {
 			app.logger.Fatal().Err(err).Msg("trojan server error")
 		}
@@ -229,6 +239,9 @@ func (app *HamburgerApp) LifeCycle() {
 		}
 		if app.AnyTLSServer != nil {
 			_ = app.AnyTLSServer.Stop()
+		}
+		if app.DNSServer != nil {
+			_ = app.DNSServer.Stop()
 		}
 		if app.TrojanServer != nil {
 			_ = app.TrojanServer.Stop()

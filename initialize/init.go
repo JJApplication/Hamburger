@@ -3,6 +3,7 @@ package initialize
 import (
 	"Hamburger/backend_proxy"
 	"Hamburger/exp/any_tls"
+	exp_dns "Hamburger/exp/dns"
 	"Hamburger/exp/trojan"
 	"Hamburger/exp/vpn_proxy"
 	"Hamburger/frontend_proxy"
@@ -42,6 +43,7 @@ type Initializer struct {
 	StaticDirectSvr *static_direct.StaticDirectServer
 	VpnServer       *vpn_proxy.VpnServer
 	AnyTLSServer    *any_tls.AnyTLSServer
+	DNSServer       *exp_dns.DNSServer
 	TrojanServer    *trojan.TrojanServer
 	GrpcServer      *grpc_server.AppServiceServer
 }
@@ -82,6 +84,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitStaticDirect())
 	i.Register(i.InitVpnServer())
 	i.Register(i.InitAnyTLSServer())
+	i.Register(i.InitDNSServer())
 	i.Register(i.InitTrojanServer())
 	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPxyErrorPage())
