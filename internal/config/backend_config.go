@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Hamburger/internal/dsl_conf"
 	"Hamburger/internal/json"
 	"os"
 	"path/filepath"
@@ -80,6 +81,9 @@ func LoadBackendConfig(file string) (PxyBackendConfig, error) {
 		return cf, err
 	case ".toml":
 		err = toml.Unmarshal(data, &cf)
+		return cf, err
+	case ".hamburger":
+		err = dsl_conf.Unmarshal(data, &cf)
 		return cf, err
 	default:
 		err = json.Unmarshal(data, &cf)

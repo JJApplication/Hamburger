@@ -1,11 +1,13 @@
 package config
 
 import (
+	"Hamburger/internal/dsl_conf"
 	"Hamburger/internal/json"
-	"github.com/BurntSushi/toml"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/BurntSushi/toml"
 )
 
 // 配置加载器 加载不同配置后合并
@@ -30,6 +32,9 @@ func LoadConfig(file string) (*AppConfig, error) {
 		return &config, err
 	case ".toml":
 		err = toml.Unmarshal(data, &config)
+		return &config, err
+	case ".hamburger":
+		err = dsl_conf.Unmarshal(data, &config)
 		return &config, err
 	default:
 		err = json.Unmarshal(data, &config)
