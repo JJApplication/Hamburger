@@ -6,6 +6,7 @@ type ExpConfig struct {
 	VpnServer    VpnServerConfig `yaml:"vpn_server" json:"vpn_server"`
 	AnyTLSServer AnyTLSServer    `yaml:"any_tls_server" json:"any_tls_server"`
 	DNSServer    DNSServerConfig `yaml:"dns_server" json:"dns_server"`
+	WebDAV       WebDAVConfig    `yaml:"webdav" json:"webdav"`
 	TrojanServer string          `yaml:"trojan_server" json:"trojan_server"`
 }
 

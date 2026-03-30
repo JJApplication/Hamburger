@@ -6,6 +6,7 @@ import (
 	exp_dns "Hamburger/exp/dns"
 	"Hamburger/exp/trojan"
 	"Hamburger/exp/vpn_proxy"
+	exp_webdav "Hamburger/exp/webdav"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/api"
 	"Hamburger/gateway/core"
@@ -47,6 +48,7 @@ type HamburgerApp struct {
 	VpnServer       *vpn_proxy.VpnServer
 	AnyTLSServer    *any_tls.AnyTLSServer
 	DNSServer       *exp_dns.DNSServer
+	WebDAVServer    *exp_webdav.WebDAVServer
 	TrojanServer    *trojan.TrojanServer
 
 	GrpcServer *grpc_server.AppServiceServer
@@ -99,6 +101,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.registerServerCount(func() int { app.VpnServer = i.VpnServer; return 1 })
 	app.registerServerCount(func() int { app.AnyTLSServer = i.AnyTLSServer; return 1 })
 	app.registerServerCount(func() int { app.DNSServer = i.DNSServer; return 1 })
+	app.registerServerCount(func() int { app.WebDAVServer = i.WebDAVServer; return 1 })
 	app.registerServerCount(func() int { app.TrojanServer = i.TrojanServer; return 1 })
 	app.registerServerCount(func() int { app.GrpcServer = i.GrpcServer; return 1 })
 	app.logger = i.GetLogger()
@@ -188,6 +191,13 @@ func (app *HamburgerApp) Run() {
 
 	go func() {
 		defer wg.Done()
+		if err := app.WebDAVServer.Start(); err != nil {
+			app.logger.Fatal().Err(err).Msg("webdav server error")
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
 		if err := app.TrojanServer.Start(); err != nil {
 			app.logger.Fatal().Err(err).Msg("trojan server error")
 		}
@@ -242,6 +252,9 @@ func (app *HamburgerApp) LifeCycle() {
 		}
 		if app.DNSServer != nil {
 			_ = app.DNSServer.Stop()
+		}
+		if app.WebDAVServer != nil {
+			_ = app.WebDAVServer.Stop()
 		}
 		if app.TrojanServer != nil {
 			_ = app.TrojanServer.Stop()

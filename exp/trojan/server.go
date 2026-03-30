@@ -51,14 +51,14 @@ func NewTrojanServerFromConfig(configPath string) (*TrojanServer, error) {
 }
 
 func (t *TrojanServer) Start() error {
-	if t.app == nil {
+	if t == nil || t.app == nil {
 		return nil
 	}
 	return t.app.Run()
 }
 
 func (t *TrojanServer) Stop() error {
-	if t.app == nil {
+	if t == nil || t.app == nil {
 		return nil
 	}
 	return t.app.Close()

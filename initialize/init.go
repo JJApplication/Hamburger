@@ -6,6 +6,7 @@ import (
 	exp_dns "Hamburger/exp/dns"
 	"Hamburger/exp/trojan"
 	"Hamburger/exp/vpn_proxy"
+	exp_webdav "Hamburger/exp/webdav"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/api"
 	"Hamburger/gateway/core"
@@ -44,6 +45,7 @@ type Initializer struct {
 	VpnServer       *vpn_proxy.VpnServer
 	AnyTLSServer    *any_tls.AnyTLSServer
 	DNSServer       *exp_dns.DNSServer
+	WebDAVServer    *exp_webdav.WebDAVServer
 	TrojanServer    *trojan.TrojanServer
 	GrpcServer      *grpc_server.AppServiceServer
 }
@@ -85,6 +87,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitVpnServer())
 	i.Register(i.InitAnyTLSServer())
 	i.Register(i.InitDNSServer())
+	i.Register(i.InitWebDAVServer())
 	i.Register(i.InitTrojanServer())
 	i.Register(i.InitProbeSyncer())
 	i.Register(i.InitPxyErrorPage())
