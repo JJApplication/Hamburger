@@ -159,3 +159,26 @@ func TestMissingEnv(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestNullCollections(t *testing.T) {
+	type nullCfg struct {
+		Module []sampleConfig    `json:"module"`
+		Dict   map[string]string `json:"dict"`
+	}
+	data := `
+{
+  module: null,
+  dict: null
+}
+`
+	var cfg nullCfg
+	if err := Unmarshal([]byte(data), &cfg); err != nil {
+		t.Fatalf("unmarshal null collections failed: %v", err)
+	}
+	if cfg.Module != nil {
+		t.Fatalf("expected nil module, got: %#v", cfg.Module)
+	}
+	if cfg.Dict != nil {
+		t.Fatalf("expected nil dict, got: %#v", cfg.Dict)
+	}
+}

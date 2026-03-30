@@ -65,6 +65,10 @@ func Unmarshal(data []byte, v any, opts ...Option) error {
 		symbols: map[string]any{
 			"AppName":   constant.AppName,
 			"Copyright": constant.Copyright,
+			"Localhost": constant.Localhost,
+			"ZeroHost":  constant.ZeroHost,
+			"HTTPPort":  constant.HTTPPort,
+			"HTTPSPort": constant.HTTPSPort,
 		},
 	}
 	for _, opt := range opts {
@@ -79,10 +83,10 @@ func Unmarshal(data []byte, v any, opts ...Option) error {
 }
 
 func decodeWithType(node any, t reflect.Type, o *options) (reflect.Value, error) {
+	if node == nil {
+		return reflect.Zero(t), nil
+	}
 	if t.Kind() == reflect.Ptr {
-		if node == nil {
-			return reflect.Zero(t), nil
-		}
 		elem, err := decodeWithType(node, t.Elem(), o)
 		if err != nil {
 			return reflect.Value{}, err

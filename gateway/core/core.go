@@ -129,6 +129,7 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 		// 安全拦截
 		block, skip := BlockBlackHost(request.Host)
 		if block {
+			logger.Debug().Str("host", request.Host).Msg("blocking request")
 			request.Header.Set(serror.SandwichInternalFlag, serror.SandwichDomainNotAllow)
 			request.URL = &url.URL{Scheme: constant.SchemeSandwich}
 			return

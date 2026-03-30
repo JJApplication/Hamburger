@@ -1,7 +1,7 @@
 # 前端代理配置
 {
   # 基础监听
-  host: "127.0.0.1",
+  host: @Localhost,
   port: 7777,
   balancer: "http://127.0.0.1:80",
 
@@ -13,12 +13,12 @@
       write_timeout: 30,
       idle_timeout: 60,
       read_header_timeout: 10,
-      max_header_bytes: 5242880,
+      max_header_bytes: 50 * 1<<20,
       keep_alive: 30,
       max_handlers: 256,
       max_concurrent_streams: 512,
-      max_upload_buffer_per_connection: 16777216,
-      max_upload_buffer_per_stream: 16777216
+      max_upload_buffer_per_connection: 16 * 1<<20,
+      max_upload_buffer_per_stream: 16 * 1<<20
     },
     http3: {
       enabled: false,

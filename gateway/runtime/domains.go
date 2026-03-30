@@ -2,9 +2,8 @@ package runtime
 
 import (
 	"Hamburger/internal/config"
-	"Hamburger/internal/json"
 	"Hamburger/internal/structure"
-	"os"
+	"Hamburger/internal/utils"
 	"sync"
 )
 
@@ -29,13 +28,8 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 		return
 	}
 
-	data, err := os.ReadFile(domainFile)
-	if err != nil {
-		loadDefaultDomainsMap()
-		return
-	}
 	dmap := map[string]serviceMap{}
-	if err = json.Unmarshal(data, &dmap); err != nil {
+	if err := utils.FileUnmarshal(domainFile, &dmap); err != nil {
 		loadDefaultDomainsMap()
 		return
 	}
