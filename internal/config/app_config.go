@@ -1,9 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"Hamburger/internal/constant"
 	"Hamburger/internal/json"
-	"os"
 )
 
 // AppConfig 配置文件格式模型
@@ -32,6 +33,7 @@ type AppConfig struct {
 	NotifyConfig    NotifyConfig      `yaml:"notify_config" json:"notify_config"` // 通知系统配置
 	Syncer          Syncer            `yaml:"syncer" json:"syncer"`               // 定时器时间
 	Debug           bool              `yaml:"debug" json:"debug"`                 // 调试模式
+	DevMode         bool              `yaml:"dev_mode" json:"dev_mode"`           // 开发模式
 	PProf           PProf             `yaml:"pprof" json:"pprof"`
 	MaxCores        int               `yaml:"max_cores" json:"max_cores"`
 

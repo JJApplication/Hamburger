@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"Hamburger/internal/config"
-	"Hamburger/internal/constant"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -13,12 +11,20 @@ import (
 	"strings"
 	"time"
 
+	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
+
 	"github.com/gin-gonic/gin"
 )
 
 func JWT(cfg config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !cfg.Enabled {
+			c.Next()
+			return
+		}
+		// 开发模式
+		if config.Get().DevMode {
 			c.Next()
 			return
 		}

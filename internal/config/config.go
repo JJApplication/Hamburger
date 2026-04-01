@@ -22,6 +22,7 @@ type Config struct {
 	Plugin             PluginConfig           `yaml:"plugin" json:"plugin"`                       // 插件配置
 	Syncer             Syncer                 `yaml:"syncer" json:"syncer"`                       // 定时器时间
 	Debug              bool                   `yaml:"debug" json:"debug"`                         // 调试模式
+	DevMode            bool                   `yaml:"dev_mode" json:"dev_mode"`                   // 开发模式
 	PProf              PProf                  `yaml:"pprof" json:"pprof"`
 	MaxCores           int                    `yaml:"max_cores" json:"max_cores"`
 	PxyBackend         PxyBackendConfig       `yaml:"pxy_backend" json:"pxy_backend"`
