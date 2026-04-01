@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@layer utilities {
+  .animate-spin-3d {
+    animation: spin-3d 6s linear infinite;
+  }
+}
+
+@keyframes spin-3d {
+  from {
+    transform: rotateX(65deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(65deg) rotateZ(360deg);
+  }
+}
+
 :root {
   --background: #070b14;
   --foreground: #e2e8f0;

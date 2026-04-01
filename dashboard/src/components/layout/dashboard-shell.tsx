@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Activity, FlaskConical, Home, Languages, Moon, Network, Settings, Sun } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Activity, FlaskConical, Home, Languages, Moon, Network, Settings, Sun, Sandwich } from "lucide-react";
 
 import type { MessageKey } from "@/lib/preferences/preferences-context";
 import { usePreferences } from "@/lib/preferences/preferences-context";
@@ -22,6 +22,7 @@ const navItems: ReadonlyArray<{ href: string; key: MessageKey; icon: React.Compo
 
 export function DashboardShell({ title, subtitle, children }: DashboardShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { locale, setLocale, theme, setTheme, t } = usePreferences();
 
   return (
@@ -76,6 +77,15 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
               className="panel-soft text-primary flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] transition hover:opacity-85"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button
+              type="button"
+              title="Logo"
+              aria-label="Logo"
+              onClick={() => router.push("/logo")}
+              className="panel-soft text-primary flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] transition hover:opacity-85"
+            >
+              <Sandwich size={16} />
             </button>
           </div>
         </aside>
