@@ -2,8 +2,10 @@ package stat
 
 import (
 	"Hamburger/gateway/stat/model"
+	"Hamburger/internal/structure"
 	"net"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -20,44 +22,23 @@ func handleConnGw(conn net.Conn, state http.ConnState) {
 func (m *StatManager) handleConnGw(conn net.Conn, state http.ConnState) {
 	switch state {
 	case http.StateNew:
-		ds, ok := m.connStatGw.Get("new")
-		if !ok {
-			m.connStatGw.Put("new", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatGw, "new")
+		m.connHostMap.Put(connKey(conn), "")
 		return
 	case http.StateActive:
-		ds, ok := m.connStatGw.Get("active")
-		if !ok {
-			m.connStatGw.Put("active", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatGw, "active")
 		return
 	case http.StateIdle:
-		ds, ok := m.connStatGw.Get("idle")
-		if !ok {
-			m.connStatGw.Put("idle", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatGw, "idle")
+		m.incrDomainConnStateByConn(conn, "idle", false)
 		return
 	case http.StateHijacked:
-		ds, ok := m.connStatGw.Get("hijacked")
-		if !ok {
-			m.connStatGw.Put("hijacked", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatGw, "hijacked")
+		m.incrDomainConnStateByConn(conn, "hijacked", true)
 		return
 	case http.StateClosed:
-		ds, ok := m.connStatGw.Get("closed")
-		if !ok {
-			m.connStatGw.Put("closed", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatGw, "closed")
+		m.incrDomainConnStateByConn(conn, "closed", true)
 		return
 	}
 }
@@ -69,46 +50,107 @@ func handleConnFront(conn net.Conn, state http.ConnState) {
 func (m *StatManager) handleConnFront(conn net.Conn, state http.ConnState) {
 	switch state {
 	case http.StateNew:
-		ds, ok := m.connStatFront.Get("new")
-		if !ok {
-			m.connStatFront.Put("new", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatFront, "new")
 		return
 	case http.StateActive:
-		ds, ok := m.connStatFront.Get("active")
-		if !ok {
-			m.connStatFront.Put("active", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatFront, "active")
 		return
 	case http.StateIdle:
-		ds, ok := m.connStatFront.Get("idle")
-		if !ok {
-			m.connStatFront.Put("idle", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatFront, "idle")
 		return
 	case http.StateHijacked:
-		ds, ok := m.connStatFront.Get("hijacked")
-		if !ok {
-			m.connStatFront.Put("hijacked", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatFront, "hijacked")
 		return
 	case http.StateClosed:
-		ds, ok := m.connStatFront.Get("closed")
-		if !ok {
-			m.connStatFront.Put("closed", new(int64))
-		} else {
-			atomic.AddInt64(ds, 1)
-		}
+		m.incrConnState(m.connStatFront, "closed")
 		return
 	}
+}
+
+func BindConnHost(remoteAddr, host string) {
+	GetManager().bindConnHost(remoteAddr, host)
+}
+
+func (m *StatManager) bindConnHost(remoteAddr, host string) {
+	remoteAddr = strings.TrimSpace(remoteAddr)
+	host = normalizeConnHost(host)
+	if remoteAddr == "" || host == "" {
+		return
+	}
+	prevHost, ok := m.connHostMap.Get(remoteAddr)
+	m.connHostMap.Put(remoteAddr, host)
+	if !ok || prevHost == "" {
+		m.incrDomainConnState(host, "active")
+	}
+}
+
+func (m *StatManager) incrConnState(connStat *structure.Map[*int64], state string) {
+	ds, ok := connStat.Get(state)
+	if !ok {
+		connStat.Put(state, new(int64))
+		return
+	}
+	atomic.AddInt64(ds, 1)
+}
+
+func (m *StatManager) incrDomainConnStateByConn(conn net.Conn, state string, clear bool) {
+	key := connKey(conn)
+	if key == "" {
+		return
+	}
+	host, ok := m.connHostMap.Get(key)
+	if ok && host != "" {
+		m.incrDomainConnState(host, state)
+	}
+	if clear {
+		m.connHostMap.Delete(key)
+	}
+}
+
+func (m *StatManager) incrDomainConnState(host, state string) {
+	host = normalizeConnHost(host)
+	if host == "" {
+		return
+	}
+	hostConnStat := m.getOrInitDomainConnStat(host)
+	ds, ok := hostConnStat.Get(state)
+	if !ok {
+		hostConnStat.Put(state, new(int64))
+		return
+	}
+	atomic.AddInt64(ds, 1)
+}
+
+func (m *StatManager) getOrInitDomainConnStat(host string) *structure.Map[*int64] {
+	domainConnStat, ok := m.domainConnStat.Get(host)
+	if ok {
+		return domainConnStat
+	}
+	newStat := structure.NewMap[*int64]()
+	newStat.Put("active", new(int64))
+	newStat.Put("idle", new(int64))
+	newStat.Put("hijacked", new(int64))
+	newStat.Put("closed", new(int64))
+	m.domainConnStat.Put(host, newStat)
+	return newStat
+}
+
+func connKey(conn net.Conn) string {
+	if conn == nil || conn.RemoteAddr() == nil {
+		return ""
+	}
+	return conn.RemoteAddr().String()
+}
+
+func normalizeConnHost(host string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return ""
+	}
+	if idx := strings.LastIndex(host, ":"); idx != -1 {
+		return host[:idx]
+	}
+	return host
 }
 
 // HandleConn 记录服务器内部连接数

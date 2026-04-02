@@ -27,8 +27,10 @@ type StatManager struct {
 
 	domainStat *structure.Map[*int64]
 
-	connStatGw    *structure.Map[*int64]
-	connStatFront *structure.Map[*int64]
+	connStatGw     *structure.Map[*int64]
+	connStatFront  *structure.Map[*int64]
+	domainConnStat *structure.Map[*structure.Map[*int64]]
+	connHostMap    *structure.Map[string]
 }
 
 var (
@@ -45,12 +47,14 @@ func NewStatManager(cfg *config.Config) *StatManager {
 		MaxEntrySize:       1024,
 	})
 	return &StatManager{
-		cfg:           cfg,
-		bc:            cache,
-		geoIp:         structure.NewMap[*int64](),
-		domainStat:    structure.NewMap[*int64](),
-		connStatGw:    structure.NewMap[*int64](),
-		connStatFront: structure.NewMap[*int64](),
+		cfg:            cfg,
+		bc:             cache,
+		geoIp:          structure.NewMap[*int64](),
+		domainStat:     structure.NewMap[*int64](),
+		connStatGw:     structure.NewMap[*int64](),
+		connStatFront:  structure.NewMap[*int64](),
+		domainConnStat: structure.NewMap[*structure.Map[*int64]](),
+		connHostMap:    structure.NewMap[string](),
 	}
 }
 

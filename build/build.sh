@@ -2,6 +2,9 @@
 go clean
 export GOEXPERIMENT=greenteagc
 export GONOSUMDB=*
+export GOGC=50
+export GODEBUG=madvdontneed=1
+
 Version=0.1.0
 BuildHash=$(git rev-parse HEAD)
 GC_FLAGS="-d=loopvar=2"

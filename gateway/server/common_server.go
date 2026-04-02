@@ -36,6 +36,13 @@ func wrapHandlerWithTag(h http.Handler, tagName string) http.Handler {
 	})
 }
 
+func wrapHandlerWithConnHost(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		stat.BindConnHost(r.RemoteAddr, r.Host)
+		h.ServeHTTP(w, r)
+	})
+}
+
 func wrapHandlerWithMaxBody(h http.Handler, logger *zerolog.Logger, serverConfig config.ServerConfig) http.Handler {
 	logger.Debug().Msgf("server %s max request body size set: %d bytes (%.2f MB)",
 		serverConfig.Name, serverConfig.MaxRequestBody, float64(serverConfig.MaxRequestBody)/(1024*1024))
@@ -170,6 +177,7 @@ func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, 
 		Protocols:      proto,
 		ConnState:      stat.HandleConn(stat.ConnGateway),
 	}
+	httpServer.Handler = wrapHandlerWithConnHost(httpServer.Handler)
 	if serverConfig.UseHttp2 {
 		h2s := &http2.Server{}
 		if serverConfig.Http2 != nil {
