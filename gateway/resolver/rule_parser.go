@@ -217,6 +217,7 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 
 func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProxy) (RuleResult, bool) {
 	requestPath := req.URL.Path
+	host := req.Host
 	for _, rule := range rules {
 		// 检查API路径和服务名是否配置
 		if rule.API == "" || rule.Service == "" {
@@ -250,20 +251,38 @@ func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProx
 		// TODO 静态文件代理
 
 		// 转发到后端服务
+		// 转发到后端自定义服务
 		service, ok := runtime.DomainsRuntimeMap.ServiceMap.Get(rule.Service)
 		if !ok {
 			return RuleResult{
 				ProxyError: errDomainsMapEmpty,
 			}, true
 		}
-		return RuleResult{
-			ProxyToType: Custom,
-			ProxyTo:     service.ServiceName,
-			ProxyPath:   targetPath,
-			ProxyHost:   service.Host,
-			ProxyPort:   service.Port,
-			ProxyScheme: StaticSchema,
-		}, true
+		if service.ServiceType == constant.CustomType {
+			return RuleResult{
+				ProxyToType: Custom,
+				ProxyTo:     service.ServiceName,
+				ProxyPath:   targetPath,
+				ProxyHost:   service.Host,
+				ProxyPort:   service.Port,
+				ProxyScheme: StaticSchema,
+			}, true
+		} else {
+			ports, ok := runtime.DomainPortsMap.Get(host)
+			if !ok {
+				return RuleResult{
+					ProxyError: errDomainsPortEmpty,
+				}, true
+			}
+			return RuleResult{
+				ProxyToType: Custom,
+				ProxyTo:     service.ServiceName,
+				ProxyHost:   StaticHost,
+				ProxyPath:   targetPath,
+				ProxyPort:   balancer.PickOneRoundRobin(ports),
+				ProxyScheme: StaticSchema,
+			}, true
+		}
 	}
 
 	return RuleResult{}, false
