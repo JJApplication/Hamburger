@@ -1,7 +1,7 @@
 package grpc_proxy
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"sync"
 )
@@ -14,7 +14,7 @@ var (
 // GetGrpcProxy 获取全局gRPC代理实例
 func GetGrpcProxy() *GrpcProxy {
 	proxyOnce.Do(func() {
-		cfg := config.Get()
+		cfg := loader.Get()
 		if cfg.Features.GrpcProxy.Enabled {
 			globalProxy = NewGrpcProxy(&cfg.Features.GrpcProxy)
 			logger.GetLogger().Info().Int("hosts", len(cfg.Features.GrpcProxy.Hosts)).Msg("gRPC proxy initialized with allowed hosts")

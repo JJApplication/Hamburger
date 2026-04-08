@@ -1,6 +1,7 @@
-package config
+package loader
 
 import (
+	"Hamburger/internal/config"
 	"Hamburger/internal/dsl_conf"
 	"Hamburger/internal/json"
 	"os"
@@ -16,15 +17,15 @@ import (
 // config模型为最终的全局配置模型
 // app_config为配置文件的格式
 
-var globalConfig *Config
+var globalConfig *config.Config
 var globalConfigLock sync.RWMutex
 
-func LoadConfig(file string) (*AppConfig, error) {
+func LoadConfig(file string) (*config.AppConfig, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
-	var config AppConfig
+	var config config.AppConfig
 	ext := filepath.Ext(file)
 	switch ext {
 	case ".json":
@@ -42,13 +43,13 @@ func LoadConfig(file string) (*AppConfig, error) {
 	}
 }
 
-func Set(cfg *Config) {
+func Set(cfg *config.Config) {
 	globalConfigLock.Lock()
 	defer globalConfigLock.Unlock()
 	globalConfig = cfg
 }
 
 // Get 获取全局唯一的配置
-func Get() *Config {
+func Get() *config.Config {
 	return globalConfig
 }

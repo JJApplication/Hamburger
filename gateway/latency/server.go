@@ -2,6 +2,7 @@ package latency
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"context"
 	"fmt"
 	"net/http"
@@ -98,7 +99,7 @@ func registerMux(mux *http.ServeMux) {
 			return
 		}
 
-		cfg := config.Get()
+		cfg := loader.Get()
 		if cfg != nil {
 			if isDomainInList(host, normalizedURL, cfg.Latency.DomainBlackList) {
 				w.WriteHeader(http.StatusForbidden)

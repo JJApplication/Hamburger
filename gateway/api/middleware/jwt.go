@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"Hamburger/internal/config/loader"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -24,7 +25,7 @@ func JWT(cfg config.JWTConfig) gin.HandlerFunc {
 			return
 		}
 		// 开发模式
-		if config.Get().DevMode {
+		if loader.Get().DevMode {
 			c.Next()
 			return
 		}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"flag"
 	"fmt"
 	"os"
@@ -22,7 +23,7 @@ func main() {
 		writeErrorAndExit(fmt.Sprintf("解析配置文件路径失败: %v", err))
 	}
 
-	appCfg, err := config.LoadConfig(resolvedConfigPath)
+	appCfg, err := loader.LoadConfig(resolvedConfigPath)
 	if err != nil {
 		writeErrorAndExit(fmt.Sprintf("加载主配置失败: %v", err))
 	}
@@ -32,7 +33,7 @@ func main() {
 	appCfg.PxyBackendFile = normalizeSubConfigPath(configBaseDir, appCfg.PxyBackendFile)
 
 	validationErrors := validateSubConfigs(appCfg)
-	merged := config.Merge(appCfg)
+	merged := loader.Merge(appCfg)
 	if merged == nil {
 		writeErrorAndExit("合并配置失败")
 	}

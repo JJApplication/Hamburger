@@ -104,7 +104,7 @@ message RuntimeResponse {
 
 message DomainMapResponse {
     repeated string domains = 1;
-    map<string, ServiceMap> domains_map = 2;
+    map<string, string > domains_map = 2;
     map<string, string> domain_front_map = 3;
 }
 

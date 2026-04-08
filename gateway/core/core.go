@@ -3,6 +3,7 @@ package core
 import (
 	"Hamburger/gateway/prehandler"
 	"Hamburger/gateway/proxy_cache"
+	"Hamburger/internal/config/loader"
 	"Hamburger/static_direct"
 	"net/http"
 	"net/http/httputil"
@@ -43,7 +44,7 @@ var (
 //go:inline
 func getOptimizedTransport(transport string) *myTransport {
 	transportOnce.Do(func() {
-		cfg := config.Get()
+		cfg := loader.Get()
 		switch transport {
 		case constant.ProxyMode_HTTP:
 			sharedTransport = &myTransport{

@@ -1,7 +1,7 @@
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"net/http"
 	"strings"
 )
@@ -20,7 +20,7 @@ var (
 )
 
 func NewCorsHeaderModifier() *CorsHeaderModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 	cm := &CorsHeaderModifier{
 		enabled: cfg.Middleware.CORS.Enabled,
 		headers: cfg.Middleware.CORS.Header,

@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
 	"Hamburger/internal/structure"
 	"Hamburger/internal/utils"
 	"sync"
@@ -12,8 +13,9 @@ var (
 	Domains           []string
 	DomainsRuntimeMap struct {
 		Domains        []string
-		DomainsMap     *structure.Map[serviceMap]
-		DomainFrontMap *structure.Map[string] // front -> domain
+		DomainsMap     *structure.Map[config.DomainService] // 域名对应的服务
+		DomainFrontMap *structure.Map[string]               // front -> domain
+		ServiceMap     *structure.Map[config.Service]       // 所有服务列表
 	}
 )
 
@@ -28,20 +30,33 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 		return
 	}
 
-	dmap := map[string]serviceMap{}
+	var dmap config.DomainServiceMap
 	if err := utils.FileUnmarshal(domainFile, &dmap); err != nil {
 		loadDefaultDomainsMap()
 		return
 	}
-	m := structure.NewMap[serviceMap]()
-	for key, val := range dmap {
-		m.Put(key, val)
+
+	// validate
+	if err := ValidateServiceMap(dmap); err != nil {
+		loadDefaultDomainsMap()
+		return
+	}
+
+	m := structure.NewMap[config.DomainService]()
+	for _, val := range dmap.DomainService {
+		m.Put(val.Domain, val)
+	}
+
+	sm := structure.NewMap[config.Service]()
+	for _, service := range dmap.Sevices {
+		sm.Put(service.ServiceName, service)
 	}
 
 	fm := structure.NewMap[string]()
-	for key, val := range dmap {
-		if val.Frontend != "" {
-			fm.Put(val.Frontend, key)
+	for _, domain := range dmap.DomainService {
+		service, ok := sm.Get(domain.Service)
+		if ok && service.ServiceType == constant.FrontendType {
+			fm.Put(service.ServiceName, domain.Domain)
 		}
 	}
 
@@ -50,36 +65,40 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 	defer DomainLock.Unlock()
 	DomainsRuntimeMap = struct {
 		Domains        []string
-		DomainsMap     *structure.Map[serviceMap]
+		DomainsMap     *structure.Map[config.DomainService]
 		DomainFrontMap *structure.Map[string]
-	}{Domains: m.Keys(), DomainsMap: m, DomainFrontMap: fm}
+		ServiceMap     *structure.Map[config.Service]
+	}{Domains: m.Keys(), DomainsMap: m, DomainFrontMap: fm, ServiceMap: sm}
 }
 
 func loadDefaultDomainsMap() {
 	DomainsRuntimeMap = struct {
 		Domains        []string
-		DomainsMap     *structure.Map[serviceMap]
+		DomainsMap     *structure.Map[config.DomainService]
 		DomainFrontMap *structure.Map[string]
-	}{Domains: nil, DomainsMap: structure.NewMap[serviceMap](), DomainFrontMap: structure.NewMap[string]()}
+		ServiceMap     *structure.Map[config.Service]
+	}{
+		Domains:        nil,
+		DomainsMap:     structure.NewMap[config.DomainService](),
+		DomainFrontMap: structure.NewMap[string](),
+		ServiceMap:     structure.NewMap[config.Service](),
+	}
 }
 
-func GetDomainsSnapshot() ([]string, map[string]map[string]string, map[string]string) {
+func GetDomainsSnapshot() ([]string, map[string]string, map[string]string) {
 	DomainLock.RLock()
 	defer DomainLock.RUnlock()
 
 	domains := make([]string, len(DomainsRuntimeMap.Domains))
 	copy(domains, DomainsRuntimeMap.Domains)
 
-	domainMap := map[string]map[string]string{}
+	domainMap := map[string]string{}
 	for _, domain := range DomainsRuntimeMap.DomainsMap.Keys() {
 		item, ok := DomainsRuntimeMap.DomainsMap.Get(domain)
 		if !ok {
 			continue
 		}
-		domainMap[domain] = map[string]string{
-			"frontend": item.Frontend,
-			"backend":  item.Backend,
-		}
+		domainMap[domain] = item.Service
 	}
 
 	frontMap := map[string]string{}

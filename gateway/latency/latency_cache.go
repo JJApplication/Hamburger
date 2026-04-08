@@ -1,7 +1,7 @@
 package latency
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"context"
 	"strings"
@@ -21,7 +21,7 @@ var (
 
 func GetLatencyCache() *bigcache.BigCache {
 	once.Do(func() {
-		cfg := config.Get()
+		cfg := loader.Get()
 		if cfg.Latency.Enabled {
 			lc, err := bigcache.New(context.Background(), bigcache.Config{
 				Shards:       64,

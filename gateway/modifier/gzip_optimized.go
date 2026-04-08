@@ -1,7 +1,7 @@
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"bytes"
 	"compress/gzip"
@@ -51,7 +51,7 @@ type CacheEntry struct {
 
 // NewOptimizedGzipModifier 创建优化版本的Gzip修改器
 func NewOptimizedGzipModifier() *OptimizedGzipModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 
 	modifier := &OptimizedGzipModifier{
 		enabled:        cfg.Middleware.Gzip.Enabled,
@@ -422,7 +422,7 @@ func (g *OptimizedGzipModifier) shouldCompress(response *http.Response) bool {
 
 // 配置更新方法
 func (g *OptimizedGzipModifier) UpdateConfig() {
-	cfg := config.Get()
+	cfg := loader.Get()
 	oldLevel := g.level
 	g.enabled = cfg.Middleware.Gzip.Enabled
 	g.level = cfg.Middleware.Gzip.Level

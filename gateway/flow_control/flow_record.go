@@ -10,6 +10,7 @@ package flow
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/data"
 	"Hamburger/internal/json"
 	"Hamburger/internal/logger"
@@ -61,7 +62,7 @@ type FlowRecord struct {
 
 // NewFlowRecorder 创建流量记录器
 func NewFlowRecorder() *FlowRecorder {
-	cfg := config.Get().Features.FlowControl.Recording
+	cfg := loader.Get().Features.FlowControl.Recording
 	recorder := &FlowRecorder{
 		config:       &cfg,
 		recordBuffer: make([]FlowRecord, 0, 100),
@@ -208,7 +209,7 @@ func (fr *FlowRecorder) doFlush() {
 
 // storeToInflux 存储到InfluxDB
 func (fr *FlowRecorder) storeToInflux(records []FlowRecord) {
-	if !config.Get().Database.Influx.Enabled {
+	if !loader.Get().Database.Influx.Enabled {
 		logger.Info("InfluxDB is not enabled, switching to file storage")
 		fr.storeToFile(records)
 		return

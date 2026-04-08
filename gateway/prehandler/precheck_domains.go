@@ -2,7 +2,7 @@ package prehandler
 
 import (
 	"Hamburger/gateway/runtime"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"fmt"
 	"net/http"
 )
@@ -13,7 +13,7 @@ type PreCheckDomains struct {
 }
 
 func NewPreCheckDomains() *PreCheckDomains {
-	cf := config.Get()
+	cf := loader.Get()
 	domains := runtime.Domains
 	return &PreCheckDomains{
 		enabled:        cf.Middleware.DomainCheck.Enabled,

@@ -1,7 +1,7 @@
 package core
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"bytes"
 	"io"
@@ -67,7 +67,7 @@ func (f *FastRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 			uri.SetHost(req.URL.Host)       // URI的Host
 			fr.SetHost(req.URL.Host)        // fr的Host
 			fr.Header.SetHost(req.URL.Host) // 请求头的Host
-			forwardHost := config.Get().ProxyHeader.ForwardHostHeader
+			forwardHost := loader.Get().ProxyHeader.ForwardHostHeader
 			if forwardHost != "" {
 				if fr.Header.Peek(forwardHost) == nil {
 					fr.Header.Set(forwardHost, req.Host) // 为方便后端服务获取原始Host 使用X-Forward-Host

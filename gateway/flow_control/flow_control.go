@@ -7,6 +7,7 @@ package flow
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"fmt"
 	"github.com/rs/zerolog"
@@ -70,7 +71,7 @@ type FlowCheckResult struct {
 
 // NewFlowController 创建流量控制器
 func NewFlowController() *FlowController {
-	cfg := config.Get().Features.FlowControl
+	cfg := loader.Get().Features.FlowControl
 	fc := &FlowController{
 		logger:       logger.L(),
 		ruleLimiters: make(map[string]*RateLimiter),

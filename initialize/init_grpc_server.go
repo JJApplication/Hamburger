@@ -12,6 +12,7 @@ import (
 	"Hamburger/gateway/modifier"
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"errors"
 )
 
@@ -196,16 +197,16 @@ func (i *Initializer) bindAPIServerControl() {
 }
 
 func reloadConfigInPlace(currentCfg *config.Config) error {
-	appCfg, err := config.LoadConfig("config/config.json")
+	appCfg, err := loader.LoadConfig("config/config.json")
 	if err != nil {
 		return err
 	}
-	mergedCfg := config.Merge(appCfg)
+	mergedCfg := loader.Merge(appCfg)
 	if currentCfg == nil {
-		config.Set(mergedCfg)
+		loader.Set(mergedCfg)
 		return nil
 	}
 	*currentCfg = *mergedCfg
-	config.Set(currentCfg)
+	loader.Set(currentCfg)
 	return nil
 }

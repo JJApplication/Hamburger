@@ -2,6 +2,7 @@ package server
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"net/http"
 	"strings"
 
@@ -32,7 +33,7 @@ func wrapHandlerWithWebSocket(h http.Handler, logger *zerolog.Logger, serverConf
 }
 
 func isWebSocketEnabled() bool {
-	cfg := config.Get()
+	cfg := loader.Get()
 	if cfg == nil {
 		return false
 	}

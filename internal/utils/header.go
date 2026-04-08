@@ -6,7 +6,7 @@ Created: 2021/12/12 by Landers
 package utils
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"net/http"
 )
 
@@ -22,7 +22,7 @@ func AddHeader(response *http.Response, headers map[string]string) {
 
 func AddTrace(response *http.Response, traceHeader string) {
 	// 设置请求的Trace-Id
-	traceIdHeader := config.Get().ProxyHeader.TraceId
+	traceIdHeader := loader.Get().ProxyHeader.TraceId
 	if traceIdHeader == "" {
 		traceIdHeader = traceHeader
 	}
@@ -41,7 +41,7 @@ func AddTrace(response *http.Response, traceHeader string) {
 
 // AddSecureHeader 为响应添加安全头部，防止XSS和CSRF攻击
 func AddSecureHeader(response *http.Response) {
-	cfg := config.Get()
+	cfg := loader.Get()
 	response.Header.Set("X-Content-Type-Options", "nosniff")
 	// 防止XSS攻击
 	if cfg.Security.XssProtection {

@@ -6,3 +6,9 @@ const (
 	FrontendFromConf
 	BackendFromConf
 )
+
+const (
+	FrontendType = "frontend"
+	BackendType  = "backend"
+	CustomType   = "custom"
+)

@@ -16,6 +16,7 @@ import (
 	"Hamburger/grpc_server"
 	"Hamburger/initialize"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
 	"Hamburger/static_direct"
@@ -63,13 +64,13 @@ func NewHamburgerApp(configFile string) (*HamburgerApp, error) {
 		configFile = DefaultConfigFile
 	}
 	logger.InitLogger()
-	appCfg, err := config.LoadConfig(configFile)
+	appCfg, err := loader.LoadConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := config.Merge(appCfg)
-	config.Set(cfg)
+	cfg := loader.Merge(appCfg)
+	loader.Set(cfg)
 
 	return &HamburgerApp{
 		appConf: appCfg,

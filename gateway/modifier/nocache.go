@@ -2,7 +2,7 @@ package modifier
 
 import (
 	"Hamburger/gateway/resolver"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ type NoCache struct {
 }
 
 func NewNoCache() *NoCache {
-	cfg := config.Get()
+	cfg := loader.Get()
 	mod := new(NoCache)
 	mod.enabled = cfg.Middleware.NoCache
 	return mod
