@@ -341,6 +341,15 @@
       try_file: "index.html",
       access: false,
       compress: false
+    },
+    {
+      type: "WebServer",
+      name: "Flower",
+      root: "/renj.io/app/Flower",
+      index: "index.html",
+      try_file: "index.html",
+      access: false,
+      compress: false
     }
   ]
 }
