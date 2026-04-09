@@ -3,7 +3,7 @@
   # 子配置入口
   pxy_backend_file: "config/backend.hamburger",
   pxy_frontend_file: "config/frontend.hamburger",
-  domain_map: "config/domains.json",
+  domain_map: "config/domains.hamburger",
 
   # 插件系统
   plugin: {
