@@ -12,7 +12,7 @@ func (i *Initializer) InitRuntime() Runner {
 		Priority: PriorityHigh,
 		fn: func() error {
 			runtime.InitRuntimeDomains(i.appConf)
-			runtime.InitDomainPortsMap()
+			runtime.InitServicePortsMap()
 			i.logger.Info().Msg("init app runtime data success")
 
 			go func() {

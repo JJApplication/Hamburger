@@ -3,6 +3,7 @@ package runtime
 import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
+	"Hamburger/internal/logger"
 	"Hamburger/internal/structure"
 	"Hamburger/internal/utils"
 	"sync"
@@ -38,6 +39,7 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 
 	// validate
 	if err := ValidateServiceMap(dmap); err != nil {
+		logger.L().Error().Err(err).Msg("validate service map failed")
 		loadDefaultDomainsMap()
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	"Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
+	"Hamburger/internal/utils"
 	"errors"
 	"net/http"
 	"strings"
@@ -119,7 +120,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			}
 		case constant.BackendType:
 			// 纯后端服务
-			ports, ok := runtime.DomainPortsMap.Get(host)
+			ports, ok := runtime.ServicePortsMap.Get(serviceMap.Service)
 			if !ok {
 				return RuleResult{
 					ProxyError: errDomainsPortEmpty,
@@ -147,7 +148,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			return RuleResult{
 				ProxyToType: Custom,
 				ProxyTo:     serviceMap.Service,
-				ProxyHost:   service.Host,
+				ProxyHost:   utils.DefaultString(service.Host, StaticHost),
 				ProxyPort:   service.Port,
 				ProxyScheme: StaticSchema,
 			}
@@ -165,7 +166,6 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 //go:inline
 func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool) {
 	requestPath := req.URL.Path
-	host := req.Host
 	for _, rule := range rules {
 		// 检查API路径和服务名是否配置
 		if rule.API == "" || rule.Backend == "" {
@@ -197,7 +197,7 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 		}
 
 		// 转发到后端服务
-		ports, ok := runtime.DomainPortsMap.Get(host)
+		ports, ok := runtime.ServicePortsMap.Get(rule.Backend)
 		if !ok {
 			return RuleResult{
 				ProxyError: errDomainsPortEmpty,
@@ -217,7 +217,6 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 
 func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProxy) (RuleResult, bool) {
 	requestPath := req.URL.Path
-	host := req.Host
 	for _, rule := range rules {
 		// 检查API路径和服务名是否配置
 		if rule.API == "" || rule.Service == "" {
@@ -268,7 +267,7 @@ func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProx
 				ProxyScheme: StaticSchema,
 			}, true
 		} else {
-			ports, ok := runtime.DomainPortsMap.Get(host)
+			ports, ok := runtime.ServicePortsMap.Get(rule.Service)
 			if !ok {
 				return RuleResult{
 					ProxyError: errDomainsPortEmpty,

@@ -38,8 +38,7 @@ type ServiceProxy struct {
 	Service      string       `json:"service" toml:"service"`
 	UseRewrite   bool         `json:"use_rewrite" toml:"use_rewrite"`
 	Rewrite      string       `json:"rewrite" toml:"rewrite"`
-	IsStatic     bool         `json:"is_static" toml:"is_static"` // 是否为静态目录
-	StaticDirect StaticDirect `json:"static_direct" toml:"static_direct"`
+	StaticDirect StaticDirect `json:"static_direct" toml:"static_direct"` // 静态文件转发
 	// 通用转发配置
 	ProxyDirect ProxyDirect `json:"proxy_direct" toml:"proxy_direct"` // 后端代理转发
 }

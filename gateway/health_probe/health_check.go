@@ -24,7 +24,7 @@ func InitProbeSyncer(cfg *config.Config, logger *zerolog.Logger) {
 
 func CheckDomainHealth() {
 	// 仅检查端口组的第一个端口
-	runtime.DomainPortsMap.Range(func(key string, value []int) bool {
+	runtime.ServicePortsMap.Range(func(key string, value []int) bool {
 		if len(value) == 0 {
 			return true
 		}

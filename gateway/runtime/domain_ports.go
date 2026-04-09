@@ -5,43 +5,43 @@ import (
 	"fmt"
 )
 
-// 域名和后端端口映射
+// GetDomainPortsMap 服务和后端端口映射
 type GetDomainPortsMap interface {
-	LoadDomainPorts() *structure.Map[[]int]
+	LoadServicePorts() *structure.Map[[]int]
 }
 
 var (
-	DomainPortsMap *structure.Map[[]int]
+	ServicePortsMap *structure.Map[[]int]
 )
 
 func init() {
-	DomainPortsMap = structure.NewMap[[]int]()
+	ServicePortsMap = structure.NewMap[[]int]()
 }
 
-// InitDomainPortsMap 初始化域名端口组映射
-func InitDomainPortsMap() {
-	loadDomainPortsMap()
+// InitServicePortsMap 初始化域名端口组映射
+func InitServicePortsMap() {
+	loadServicePortsMap()
 }
 
-// RefreshDomainPortsMap 更新端口组
-func RefreshDomainPortsMap() {
-	loadDomainPortsMap()
+// RefreshServicePortsMap 更新端口组
+func RefreshServicePortsMap() {
+	loadServicePortsMap()
 }
 
-func loadDomainPortsMap() {
-	DomainPortsMap = (&DomainPortsMongoAdapter{}).LoadDomainPorts()
+func loadServicePortsMap() {
+	ServicePortsMap = (&ServicePortsMongoAdapter{}).LoadServicePorts()
 }
 
-func getDomainPort(host string) []int {
-	if d, ok := DomainPortsMap.Get(host); ok {
+func getServicePort(service string) []int {
+	if d, ok := ServicePortsMap.Get(service); ok {
 		return d
 	}
 	return nil
 }
 
-// DomainReflect 将端口转换为ip地址 单机的ip都是127.0.0.1
-func DomainReflect(host string) []string {
-	group := getDomainPort(host)
+// ServiceReflect 将端口转换为ip地址 单机的ip都是127.0.0.1
+func ServiceReflect(service string) []string {
+	group := getServicePort(service)
 	if len(group) == 0 {
 		return nil
 	}
@@ -55,7 +55,7 @@ func DomainReflect(host string) []string {
 
 func GetDomainPortsSnapshot() map[string][]int {
 	result := map[string][]int{}
-	DomainPortsMap.Range(func(key string, value []int) bool {
+	ServicePortsMap.Range(func(key string, value []int) bool {
 		ports := make([]int, len(value))
 		copy(ports, value)
 		result[key] = ports

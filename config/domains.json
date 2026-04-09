@@ -81,10 +81,6 @@
       "service": "Taco"
     },
     {
-      "domain": "stat.renj.io",
-      "service": "Taco"
-    },
-    {
       "domain": "ai.renj.io",
       "service": "ProjectAI"
     },
@@ -164,6 +160,12 @@
           "api": "/api",
           "service": "Blog",
           "use_rewrite": false
+        },
+        {
+          "api": "/images",
+          "static_direct": {
+            "static_root": "/renj.io/app/Blog/images"
+          }
         }
       ]
     },
@@ -272,10 +274,6 @@
       "service_type": "frontend"
     },
     {
-      "service_name": "LoveLetter",
-      "service_type": "frontend"
-    },
-    {
       "service_name": "BabyBus",
       "service_type": "frontend"
     },
@@ -284,7 +282,7 @@
       "service_type": "frontend"
     },
     {
-      "service_name": "Calculator",
+      "service_name": "MarryMe",
       "service_type": "frontend"
     },
     {
