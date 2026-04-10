@@ -47,6 +47,7 @@ require (
 require (
 	github.com/cskr/pubsub v1.0.2
 	github.com/emersion/go-imap v1.2.1
+	github.com/joho/godotenv v1.5.1
 	github.com/miekg/dns v1.1.51
 	github.com/qeesung/image2ascii v1.0.1
 	go.etcd.io/bbolt v1.4.3

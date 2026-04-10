@@ -130,12 +130,13 @@ type SecurityConfig struct {
 	DenyIPs    []string `yaml:"deny_ips" json:"deny_ips"`       // 拒绝的IP列表
 	RateLimit  int      `yaml:"rate_limit" json:"rate_limit"`   // 速率限制
 
-	HSTS             bool `yaml:"hsts" json:"hsts"`                     // HSTS策略
-	HSTSSubdomain    bool `yaml:"hsts_subdomain" json:"hsts_subdomain"` // 包含子域名
-	HSTSPreload      bool `yaml:"hsts_preload" json:"hsts_preload"`     // 预加载
-	XssProtection    bool `yaml:"xss_protection" json:"xss_protection"` // XSS保护
-	IFrameProtection bool `yaml:"iframe_protection" json:"iframe_protection"`
-	SameSite         bool `yaml:"same_site" json:"same_site"` // 同源策略
+	HSTS             bool     `yaml:"hsts" json:"hsts"`                     // HSTS策略
+	HSTSSubdomain    bool     `yaml:"hsts_subdomain" json:"hsts_subdomain"` // 包含子域名
+	HSTSPreload      bool     `yaml:"hsts_preload" json:"hsts_preload"`     // 预加载
+	XssProtection    bool     `yaml:"xss_protection" json:"xss_protection"` // XSS保护
+	IFrameProtection bool     `yaml:"iframe_protection" json:"iframe_protection"`
+	SameSite         bool     `yaml:"same_site" json:"same_site"`                 // 同源策略
+	WhiteListDomain  []string `yaml:"white_list_domain" json:"white_list_domain"` // 白名单放行
 }
 
 type ProxyHeader struct {

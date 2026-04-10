@@ -68,7 +68,7 @@
       enabled: true,
       max_request_body: 50 * 1<<20,
       tls: {
-        min_version: "TLS13",
+        min_version: "TLS12",
         cert_map: {
           renj.io: {
             domains: ["renj.io", "service.renj.io", "pkg.renj.io", "dev.renj.io", "blog.renj.io", "me.renj.io", "gallery.renj.io"],

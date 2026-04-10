@@ -3,6 +3,7 @@ package loader
 import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/dsl_conf"
+	"Hamburger/internal/env"
 	"Hamburger/internal/json"
 	"os"
 	"path/filepath"
@@ -21,6 +22,9 @@ var globalConfig *config.Config
 var globalConfigLock sync.RWMutex
 
 func LoadConfig(file string) (*config.AppConfig, error) {
+	if err := env.LoadFromConfigFile(file); err != nil {
+		return nil, err
+	}
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err

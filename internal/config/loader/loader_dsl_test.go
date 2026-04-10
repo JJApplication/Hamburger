@@ -42,3 +42,31 @@ func TestLoadConfigDSL(t *testing.T) {
 		t.Fatalf("unexpected custom header: %+v", cfg.CustomHeader)
 	}
 }
+
+func TestLoadConfigDSLWithEnvFile(t *testing.T) {
+	content := `
+{
+  api_server_config: {
+    enabled: true,
+    host: "127.0.0.1",
+    port: $DSL_SERVER_PORT
+  }
+}
+`
+	tmpDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmpDir, "hamburger.env"), []byte("DSL_SERVER_PORT=9555\n"), 0644); err != nil {
+		t.Fatalf("write env file failed: %v", err)
+	}
+	file := filepath.Join(tmpDir, "config.hamburger")
+	if err := os.WriteFile(file, []byte(content), 0644); err != nil {
+		t.Fatalf("write config file failed: %v", err)
+	}
+
+	cfg, err := LoadConfig(file)
+	if err != nil {
+		t.Fatalf("load config failed: %v", err)
+	}
+	if cfg.ApiServerConfig.Port != 9555 {
+		t.Fatalf("unexpected api port: %d", cfg.ApiServerConfig.Port)
+	}
+}
