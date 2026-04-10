@@ -191,7 +191,8 @@
     strict_mode: true,
     allow_ips: [],
     deny_ips: [],
-    rate_limit: 1000
+    rate_limit: 1000,
+    white_list_domain: ["*.renj.io"]
   },
 
   # 代理头

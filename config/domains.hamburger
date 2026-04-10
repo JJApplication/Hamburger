@@ -282,6 +282,10 @@
       service_type: "frontend"
     },
     {
+      service_name: "HamburgerDoc",
+      service_type: "frontend"
+    },
+    {
       service_name: "MarryMe",
       service_type: "frontend"
     },
