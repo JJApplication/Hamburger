@@ -199,10 +199,10 @@
   # 状态统计
   stat: {
     db_file: "data/stat.db",
-    use_db: true,
+    use_db: false,
     compatible: true,
-    enabled: true,
-    enable_stat: true,
+    enabled: false,
+    enable_stat: false,
     sync_duration: 720,
     save_duration: 3600,
     save_file: "data/stat.json",
@@ -238,6 +238,13 @@
 
   # 实验模块
   exp_config: {
+    traversal: {
+      enabled: true,
+      listen_host: "0.0.0.0",
+      listen_port: 19090,
+      protocol: "tcp",
+      auth_key: "change-me"
+    },
     webdav: {
       enabled: false,
       host: "0.0.0.0",
