@@ -21,7 +21,15 @@ const (
 	defaultTraversalPort = 19090
 	tunnelJoinTimeout    = 10 * time.Second
 	relayIdleTimeout     = 90 * time.Second
+	relayBufferSize      = 32 * 1024
 )
+
+var relayBufferPool = sync.Pool{
+	New: func() any {
+		buf := make([]byte, relayBufferSize)
+		return &buf
+	},
+}
 
 type pendingTunnel struct {
 	publicConn net.Conn
@@ -350,14 +358,14 @@ func (s *Server) bridge(a net.Conn, b net.Conn) {
 	go func() {
 		_ = a.SetReadDeadline(time.Now().Add(relayIdleTimeout))
 		_ = b.SetWriteDeadline(time.Now().Add(relayIdleTimeout))
-		_, err := io.Copy(b, a)
+		_, err := copyWithPooledBuffer(b, a)
 		closeWrite(b)
 		errCh <- err
 	}()
 	go func() {
 		_ = b.SetReadDeadline(time.Now().Add(relayIdleTimeout))
 		_ = a.SetWriteDeadline(time.Now().Add(relayIdleTimeout))
-		_, err := io.Copy(a, b)
+		_, err := copyWithPooledBuffer(a, b)
 		closeWrite(a)
 		errCh <- err
 	}()
@@ -368,6 +376,12 @@ func (s *Server) bridge(a net.Conn, b net.Conn) {
 			return
 		}
 	}
+}
+
+func copyWithPooledBuffer(dst io.Writer, src io.Reader) (int64, error) {
+	bufPtr := relayBufferPool.Get().(*[]byte)
+	defer relayBufferPool.Put(bufPtr)
+	return io.CopyBuffer(dst, src, *bufPtr)
 }
 
 func closeWrite(conn net.Conn) {
