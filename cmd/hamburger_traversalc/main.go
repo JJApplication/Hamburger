@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -68,9 +69,26 @@ func main() {
 	client := &traversalClient{
 		cfg: cfg,
 	}
-	if err = client.run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-		fatalf("客户端退出: %v", err)
-	}
+
+	// goroutine
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			if err = client.run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+				log.Printf("客户端异常退出: %v，5s后重试", err)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(5 * time.Second):
+				}
+				continue
+			}
+			return
+		}
+	}()
+	wg.Wait()
 }
 
 type traversalClient struct {
