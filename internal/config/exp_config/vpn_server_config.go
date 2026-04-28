@@ -1,4 +1,4 @@
-package config
+package exp_config
 
 type VpnServerConfig struct {
 	Enabled   bool          `yaml:"enabled" json:"enabled"`

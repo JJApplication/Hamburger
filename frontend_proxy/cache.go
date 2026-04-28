@@ -2,6 +2,7 @@ package frontend_proxy
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/frontproxy_config"
 	"github.com/rs/zerolog"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 
 // CacheManager 缓存管理器
 type CacheManager struct {
-	config *config.PxyFrontConfig
+	config *frontproxy_config.PxyFrontConfig
 	logger *zerolog.Logger
 }
 

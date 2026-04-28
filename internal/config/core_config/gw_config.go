@@ -1,4 +1,4 @@
-package config
+package core_config
 
 type ProxyConfig struct {
 	FlushInterval   int64  `yaml:"flush_interval" json:"flush_interval"`

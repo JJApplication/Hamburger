@@ -1,14 +1,14 @@
 package logger
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"github.com/rs/zerolog"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
 )
 
-func NewWriter(cfg *config.LogConfig) io.Writer {
+func NewWriter(cfg *core_config.LogConfig) io.Writer {
 	if cfg.LogFile != "" {
 		rotator := &lumberjack.Logger{
 			Filename: cfg.LogFile,

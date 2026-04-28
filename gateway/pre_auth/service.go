@@ -1,7 +1,7 @@
 package pre_auth
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"errors"
 	"net/http"
 	"strings"
@@ -16,7 +16,7 @@ type Service struct {
 	authenticators    []Authenticator
 }
 
-func NewService(cfg config.PreAuthConfig) *Service {
+func NewService(cfg svr_config.PreAuthConfig) *Service {
 	authenticators := []Authenticator{
 		NewOAuth2Authenticator(cfg.OAuth2),
 		NewBasicAuthenticator(cfg.Basic),

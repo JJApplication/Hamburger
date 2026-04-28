@@ -1,6 +1,7 @@
 package imap
 
 import (
+	"Hamburger/internal/config/svr_config"
 	"bufio"
 	"context"
 	"crypto/tls"
@@ -10,8 +11,6 @@ import (
 	"net/smtp"
 	"strings"
 	"time"
-
-	"Hamburger/internal/config"
 
 	goimapclient "github.com/emersion/go-imap/client"
 )
@@ -25,11 +24,11 @@ var (
 
 // Service 邮件服务对接器
 type Service struct {
-	cfg config.NotifyMailConfig
+	cfg svr_config.NotifyMailConfig
 }
 
 // NewService 创建邮件服务对接器
-func NewService(cfg config.NotifyMailConfig) *Service {
+func NewService(cfg svr_config.NotifyMailConfig) *Service {
 	return &Service{cfg: cfg}
 }
 

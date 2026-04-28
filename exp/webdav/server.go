@@ -2,6 +2,7 @@ package webdav
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/exp_config"
 	"context"
 	"errors"
 	"net"
@@ -31,7 +32,7 @@ type WebDAVServer struct {
 
 	lockSystem webdav.LockSystem
 	handlers   map[string]http.Handler
-	users      map[string]config.WebDAVUserConfig
+	users      map[string]exp_config.WebDAVUserConfig
 
 	mu      sync.Mutex
 	started bool
@@ -72,7 +73,7 @@ func NewWebDAVServer(cfg *config.Config, logger *zerolog.Logger) *WebDAVServer {
 		timeout:    timeout,
 		lockSystem: webdav.NewMemLS(),
 		handlers:   make(map[string]http.Handler),
-		users:      make(map[string]config.WebDAVUserConfig),
+		users:      make(map[string]exp_config.WebDAVUserConfig),
 	}
 	s.buildUserHandlers(conf)
 	return s
@@ -143,7 +144,7 @@ func (s *WebDAVServer) Stop() error {
 	return err
 }
 
-func (s *WebDAVServer) buildUserHandlers(conf config.WebDAVConfig) {
+func (s *WebDAVServer) buildUserHandlers(conf exp_config.WebDAVConfig) {
 	for _, user := range conf.Users {
 		username := strings.TrimSpace(user.Username)
 		if username == "" || user.Password == "" || strings.TrimSpace(user.RootDir) == "" {

@@ -1,4 +1,4 @@
-package config
+package core_config
 
 type ProxyCacheConfig struct {
 	Enabled   bool   `yaml:"enabled" json:"enabled"`

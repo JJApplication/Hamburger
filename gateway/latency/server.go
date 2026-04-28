@@ -1,8 +1,8 @@
 package latency
 
 import (
-	"Hamburger/internal/config"
 	"Hamburger/internal/config/loader"
+	"Hamburger/internal/config/svr_config"
 	"context"
 	"fmt"
 	"net/http"
@@ -22,7 +22,7 @@ type LatencyServer struct {
 	server *http.Server
 }
 
-func NewLatencyServer(c config.LatencyConfig, l *zerolog.Logger) *LatencyServer {
+func NewLatencyServer(c svr_config.LatencyConfig, l *zerolog.Logger) *LatencyServer {
 	if !c.Enabled {
 		return new(LatencyServer)
 	}

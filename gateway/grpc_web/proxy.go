@@ -1,7 +1,7 @@
 package grpc_web
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/logger"
 	"bytes"
 	"crypto/tls"
@@ -19,7 +19,7 @@ import (
 )
 
 type GrpcWebProxy struct {
-	config    *config.GrpcProxyConfig
+	config    *core_config.GrpcProxyConfig
 	h2cClient *http.Client
 	tlsClient *http.Client
 }
@@ -32,7 +32,7 @@ const (
 	backendConnModeUDS
 )
 
-func NewGrpcWebProxy(cfg *config.GrpcProxyConfig) *GrpcWebProxy {
+func NewGrpcWebProxy(cfg *core_config.GrpcProxyConfig) *GrpcWebProxy {
 	h2cTransport := &http2.Transport{
 		AllowHTTP: true,
 		DialTLS: func(network, addr string, _ *tls.Config) (net.Conn, error) {

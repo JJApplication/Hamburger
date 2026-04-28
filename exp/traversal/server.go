@@ -2,6 +2,7 @@ package traversal
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/exp_config"
 	"bufio"
 	"errors"
 	"fmt"
@@ -50,7 +51,7 @@ type registeredClient struct {
 
 // Server 内网穿透服务端。
 type Server struct {
-	cfg            config.TraversalServerConfig
+	cfg            exp_config.TraversalServerConfig
 	logger         *zerolog.Logger
 	listener       net.Listener
 	proxyListeners map[int]*proxyListener

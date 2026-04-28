@@ -1,7 +1,7 @@
 package lua
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"fmt"
 	"net/http"
 	"sync"
@@ -24,7 +24,7 @@ type manager struct {
 var defaultManager = &manager{}
 
 // Init 初始化全局Lua虚拟机。
-func Init(cfg config.LuaConfig, logger *zerolog.Logger) error {
+func Init(cfg svr_config.LuaConfig, logger *zerolog.Logger) error {
 	return defaultManager.init(cfg, logger)
 }
 
@@ -33,7 +33,7 @@ func HandleRequest(request *http.Request) error {
 	return defaultManager.handleRequest(request)
 }
 
-func (m *manager) init(cfg config.LuaConfig, logger *zerolog.Logger) error {
+func (m *manager) init(cfg svr_config.LuaConfig, logger *zerolog.Logger) error {
 	m.once.Do(func() {
 		m.logger = logger
 		m.enabled = cfg.Enabled

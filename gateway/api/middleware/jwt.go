@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"Hamburger/internal/config/loader"
+	"Hamburger/internal/config/svr_config"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -12,13 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 
 	"github.com/gin-gonic/gin"
 )
 
-func JWT(cfg config.JWTConfig) gin.HandlerFunc {
+func JWT(cfg svr_config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !cfg.Enabled {
 			c.Next()
@@ -60,7 +60,7 @@ func extractJWTToken(req *http.Request, headerName string) (string, bool) {
 	return value, true
 }
 
-func validateJWTToken(token string, cfg config.JWTConfig) bool {
+func validateJWTToken(token string, cfg svr_config.JWTConfig) bool {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return false

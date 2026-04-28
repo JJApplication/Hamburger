@@ -1,5 +1,7 @@
 package config
 
+import "Hamburger/internal/config/frontproxy_config"
+
 // 服务配置
 //
 // 支持JJAPP内置的服务和自定义服务
@@ -34,11 +36,11 @@ type Service struct {
 }
 
 type ServiceProxy struct {
-	API          string       `json:"api" toml:"api"`
-	Service      string       `json:"service" toml:"service"`
-	UseRewrite   bool         `json:"use_rewrite" toml:"use_rewrite"`
-	Rewrite      string       `json:"rewrite" toml:"rewrite"`
-	StaticDirect StaticDirect `json:"static_direct" toml:"static_direct"` // 静态文件转发
+	API          string                         `json:"api" toml:"api"`
+	Service      string                         `json:"service" toml:"service"`
+	UseRewrite   bool                           `json:"use_rewrite" toml:"use_rewrite"`
+	Rewrite      string                         `json:"rewrite" toml:"rewrite"`
+	StaticDirect frontproxy_config.StaticDirect `json:"static_direct" toml:"static_direct"` // 静态文件转发
 	// 通用转发配置
-	ProxyDirect ProxyDirect `json:"proxy_direct" toml:"proxy_direct"` // 后端代理转发
+	ProxyDirect frontproxy_config.ProxyDirect `json:"proxy_direct" toml:"proxy_direct"` // 后端代理转发
 }

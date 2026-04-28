@@ -1,4 +1,4 @@
-package config
+package core_config
 
 // MongoConfig MongoDB配置结构体
 type MongoConfig struct {

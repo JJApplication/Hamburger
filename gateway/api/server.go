@@ -5,6 +5,7 @@ import (
 	"Hamburger/gateway/api/route"
 	"Hamburger/gateway/api/service"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"Hamburger/internal/utils"
 	"context"
 	"errors"
@@ -26,8 +27,8 @@ type Server struct {
 	engine  *gin.Engine
 	server  *http.Server
 	service *service.APIService
-	jwtCfg  config.JWTConfig
-	http2   config.APIHTTP2Config
+	jwtCfg  svr_config.JWTConfig
+	http2   svr_config.APIHTTP2Config
 }
 
 func NewAPIServer(cfg *config.Config, logger *zerolog.Logger) *Server {

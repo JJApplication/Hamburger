@@ -1,4 +1,4 @@
-package config
+package core_config
 
 // GzipConfig Gzip压缩配置结构体
 type GzipConfig struct {

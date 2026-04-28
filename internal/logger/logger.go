@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"github.com/rs/zerolog"
 	"os"
 	"sync"
@@ -20,7 +20,7 @@ func InitLogger() {
 	}).Level(zerolog.NoLevel).With().Timestamp().Logger()
 }
 
-func ReloadLogger(conf *config.LogConfig) {
+func ReloadLogger(conf *core_config.LogConfig) {
 	once.Do(func() {
 		globalLogger = zerolog.New(zerolog.ConsoleWriter{
 			Out:        NewWriter(conf),

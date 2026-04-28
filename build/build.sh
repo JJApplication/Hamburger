@@ -5,7 +5,7 @@ export GONOSUMDB=*
 export GOGC=50
 export GODEBUG=madvdontneed=1
 
-Version=0.1.0
+Version=2.0.0
 BuildHash=$(git rev-parse HEAD)
 GC_FLAGS="-d=loopvar=2"
 LD_FLAGS="-s -w -T 0x10000000 -X Hamburger/internal/buildinfo.Version=$Version -X Hamburger/internal/buildinfo.BuildHash=$BuildHash"

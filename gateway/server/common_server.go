@@ -2,6 +2,7 @@ package server
 
 import (
 	"Hamburger/gateway/stat"
+	"Hamburger/internal/config/core_config"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"Hamburger/gateway/tls"
-	"Hamburger/internal/config"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/utils"
 
@@ -43,7 +43,7 @@ func wrapHandlerWithConnHost(h http.Handler) http.Handler {
 	})
 }
 
-func wrapHandlerWithMaxBody(h http.Handler, logger *zerolog.Logger, serverConfig config.ServerConfig) http.Handler {
+func wrapHandlerWithMaxBody(h http.Handler, logger *zerolog.Logger, serverConfig core_config.ServerConfig) http.Handler {
 	logger.Debug().Msgf("server %s max request body size set: %d bytes (%.2f MB)",
 		serverConfig.Name, serverConfig.MaxRequestBody, float64(serverConfig.MaxRequestBody)/(1024*1024))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +71,7 @@ func wrapHandlerWithMaxBody(h http.Handler, logger *zerolog.Logger, serverConfig
 	})
 }
 
-func wrapHandlerWithAutoHttpsRedirect(h http.Handler, logger *zerolog.Logger, serverConfig config.ServerConfig) http.Handler {
+func wrapHandlerWithAutoHttpsRedirect(h http.Handler, logger *zerolog.Logger, serverConfig core_config.ServerConfig) http.Handler {
 	logger.Debug().Msgf("server %s auto https redirect", serverConfig.Name)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 内部请求不需要判断重定向
@@ -132,7 +132,7 @@ func wrapHandlerWithAutoHttpsRedirect(h http.Handler, logger *zerolog.Logger, se
 }
 
 // CommonHttpServer 通用http服务器
-func CommonHttpServer(serverConfig config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager, useNBIO bool) (*ServerInstance, error) {
+func CommonHttpServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager, useNBIO bool) (*ServerInstance, error) {
 	// 创建服务器实例
 	instance := &ServerInstance{
 		Name:   serverConfig.Name,

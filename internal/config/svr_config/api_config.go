@@ -1,4 +1,4 @@
-package config
+package svr_config
 
 // 内置API服务器配置 不开启API服务时
 // Stat在开启时也会记录

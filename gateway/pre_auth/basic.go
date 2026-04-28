@@ -1,7 +1,7 @@
 package pre_auth
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"net/http"
 )
 
@@ -10,7 +10,7 @@ type BasicAuthenticator struct {
 	users   map[string]string
 }
 
-func NewBasicAuthenticator(cfg config.BasicAuthConfig) *BasicAuthenticator {
+func NewBasicAuthenticator(cfg svr_config.BasicAuthConfig) *BasicAuthenticator {
 	users := make(map[string]string, len(cfg.Users))
 	for _, user := range cfg.Users {
 		if user.Username == "" {

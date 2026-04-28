@@ -1,11 +1,11 @@
-package config
+package svr_config
 
 // NotifyConfig 通知系统配置
 type NotifyConfig struct {
-	Enabled           bool              `yaml:"enabled" json:"enabled"`                         // 是否启用通知系统
-	Queue             NotifyQueueConfig `yaml:"queue" json:"queue"`                             // 消息系统配置
-	Mail              NotifyMailConfig  `yaml:"mail" json:"mail"`                               // 邮件系统配置
-	DefaultRecipients []string          `yaml:"default_recipients" json:"default_recipients"`   // 默认收件人
+	Enabled           bool              `yaml:"enabled" json:"enabled"`                       // 是否启用通知系统
+	Queue             NotifyQueueConfig `yaml:"queue" json:"queue"`                           // 消息系统配置
+	Mail              NotifyMailConfig  `yaml:"mail" json:"mail"`                             // 邮件系统配置
+	DefaultRecipients []string          `yaml:"default_recipients" json:"default_recipients"` // 默认收件人
 }
 
 // NotifyQueueConfig 消息系统配置

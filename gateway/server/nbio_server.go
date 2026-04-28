@@ -2,7 +2,7 @@ package server
 
 import (
 	"Hamburger/gateway/tls"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"context"
 	"fmt"
 	"github.com/lesismal/nbio/nbhttp"
@@ -52,7 +52,7 @@ func (r *nbioServerRunner) Close() error {
 	return nil
 }
 
-func CommonNbioServer(serverConfig config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager) (*ServerInstance, error) {
+func CommonNbioServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager) (*ServerInstance, error) {
 	instance := &ServerInstance{
 		Name:   serverConfig.Name,
 		Config: serverConfig,

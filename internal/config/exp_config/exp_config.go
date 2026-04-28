@@ -1,4 +1,4 @@
-package config
+package exp_config
 
 // 实验特性
 

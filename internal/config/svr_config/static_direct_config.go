@@ -1,4 +1,4 @@
-package config
+package svr_config
 
 type StaticDirectSvrConfig struct {
 	Enabled      bool     `json:"enabled" yaml:"enabled"`

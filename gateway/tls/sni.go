@@ -1,7 +1,7 @@
 package tls
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"crypto/tls"
 	"fmt"
 	lltls "github.com/lesismal/llib/std/crypto/tls"
@@ -75,7 +75,7 @@ func (m *TLSManager) InitCertMap() {
 	m.certMu.Lock()
 	defer m.certMu.Unlock()
 
-	m.certMap = make(map[string]config.CertConfig)
+	m.certMap = make(map[string]core_config.CertConfig)
 	for _, server := range m.config.Servers {
 		if server.TLS != nil && server.TLS.CertMap != nil {
 			for groupName, cert := range server.TLS.CertMap {

@@ -1,7 +1,7 @@
 package grpc_proxy
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"github.com/rs/zerolog"
 	"sync"
 )
@@ -16,7 +16,7 @@ func GetGrpcProxy() *GrpcProxy {
 	return globalProxy
 }
 
-func InitGrpcProxy(cfg *config.GrpcProxyConfig, logger *zerolog.Logger) {
+func InitGrpcProxy(cfg *core_config.GrpcProxyConfig, logger *zerolog.Logger) {
 	proxyOnce.Do(func() {
 		if cfg.Enabled {
 			globalProxy = NewGrpcProxy(cfg, logger)

@@ -1,4 +1,4 @@
-package config
+package backproxy_config
 
 import (
 	"Hamburger/internal/dsl_conf"

@@ -6,7 +6,7 @@ Created: 2021/12/14 by Landers
 package flow
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"fmt"
@@ -39,7 +39,7 @@ type FlowController struct {
 	globalLimiter *RateLimiter
 	ruleLimiters  map[string]*RateLimiter
 	mux           sync.RWMutex
-	config        *config.FlowControlConfig
+	config        *core_config.FlowControlConfig
 }
 
 // RateLimiter 多时间窗口速率限制器
@@ -65,7 +65,7 @@ type LimiterStrategy interface {
 type FlowCheckResult struct {
 	Allowed     bool
 	RuleName    string
-	MatchedRule *config.FlowControlRule
+	MatchedRule *core_config.FlowControlRule
 	Reason      string
 }
 
@@ -80,7 +80,7 @@ func NewFlowController() *FlowController {
 
 	// 初始化全局限流器
 	if cfg.Enabled {
-		fc.globalLimiter = fc.createRateLimiter([]config.RateLimit{cfg.GlobalLimit})
+		fc.globalLimiter = fc.createRateLimiter([]core_config.RateLimit{cfg.GlobalLimit})
 
 		// 初始化规则限流器
 		for _, rule := range cfg.Rules {
@@ -94,7 +94,7 @@ func NewFlowController() *FlowController {
 }
 
 // createRateLimiter 创建速率限制器
-func (fc *FlowController) createRateLimiter(limits []config.RateLimit) *RateLimiter {
+func (fc *FlowController) createRateLimiter(limits []core_config.RateLimit) *RateLimiter {
 	rl := &RateLimiter{
 		rules:    make([]ParsedRule, 0, len(limits)),
 		limiters: make(map[string][]LimiterStrategy),
@@ -191,8 +191,8 @@ func (fc *FlowController) CheckRequest(req *http.Request) *FlowCheckResult {
 }
 
 // getSortedRules 获取按优先级排序的规则
-func (fc *FlowController) getSortedRules() []config.FlowControlRule {
-	rules := make([]config.FlowControlRule, len(fc.config.Rules))
+func (fc *FlowController) getSortedRules() []core_config.FlowControlRule {
+	rules := make([]core_config.FlowControlRule, len(fc.config.Rules))
 	copy(rules, fc.config.Rules)
 
 	// 按优先级排序，数字越小优先级越高
@@ -208,7 +208,7 @@ func (fc *FlowController) getSortedRules() []config.FlowControlRule {
 }
 
 // matchRule 匹配规则
-func (fc *FlowController) matchRule(req *http.Request, rule *config.FlowControlRule) bool {
+func (fc *FlowController) matchRule(req *http.Request, rule *core_config.FlowControlRule) bool {
 	switch rule.MatchType {
 	case "host":
 		return req.Host == rule.MatchValue || strings.Contains(req.Host, rule.MatchValue)
@@ -224,7 +224,7 @@ func (fc *FlowController) matchRule(req *http.Request, rule *config.FlowControlR
 }
 
 // generateKey 生成限流key
-func (fc *FlowController) generateKey(req *http.Request, rule *config.FlowControlRule) string {
+func (fc *FlowController) generateKey(req *http.Request, rule *core_config.FlowControlRule) string {
 	switch rule.MatchType {
 	case "host":
 		return fmt.Sprintf("rule:%s:host:%s", rule.Name, req.Host)

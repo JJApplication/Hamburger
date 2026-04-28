@@ -1,6 +1,10 @@
 package loader
 
-import "Hamburger/internal/config"
+import (
+	"Hamburger/internal/config"
+	"Hamburger/internal/config/backproxy_config"
+	"Hamburger/internal/config/frontproxy_config"
+)
 
 // Merge 合并配置 配置文件中的配置优先级更好
 func Merge(appConfig *config.AppConfig) *config.Config {
@@ -37,14 +41,14 @@ func Merge(appConfig *config.AppConfig) *config.Config {
 	}
 
 	if appConfig.PxyFrontendFile != "" {
-		fc, err := config.LoadFrontConfig(appConfig.PxyFrontendFile)
+		fc, err := frontproxy_config.LoadFrontConfig(appConfig.PxyFrontendFile)
 		if err == nil {
 			conf.PxyFrontend = fc
 		}
 	}
 
 	if appConfig.PxyBackendFile != "" {
-		bc, err := config.LoadBackendConfig(appConfig.PxyBackendFile)
+		bc, err := backproxy_config.LoadBackendConfig(appConfig.PxyBackendFile)
 		if err == nil {
 			conf.PxyBackend = bc
 		}

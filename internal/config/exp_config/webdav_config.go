@@ -1,4 +1,4 @@
-package config
+package exp_config
 
 type WebDAVConfig struct {
 	Enabled      bool               `yaml:"enabled" json:"enabled"`

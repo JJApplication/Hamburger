@@ -2,7 +2,7 @@ package service
 
 import (
 	"Hamburger/gateway/api/model"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"errors"
 	"fmt"
 	"strings"
@@ -19,8 +19,8 @@ var (
 )
 
 type APIService struct {
-	jwtCfg     config.JWTConfig
-	bboltCfg   config.APIBBoltConfig
+	jwtCfg     svr_config.JWTConfig
+	bboltCfg   svr_config.APIBBoltConfig
 	db         *bbolt.DB
 	userBucket []byte
 	initErr    error
@@ -28,7 +28,7 @@ type APIService struct {
 	restartFn  map[string]func() error
 }
 
-func NewAPIService(apiCfg config.ApiServerConfig) *APIService {
+func NewAPIService(apiCfg svr_config.ApiServerConfig) *APIService {
 	s := &APIService{
 		jwtCfg:   apiCfg.JWT,
 		bboltCfg: apiCfg.BBolt,

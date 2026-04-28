@@ -2,6 +2,7 @@ package svr
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/backproxy_config"
 	"context"
 	"fmt"
 	"io"
@@ -18,7 +19,7 @@ type TcpProxyServer struct {
 	logger      *zerolog.Logger
 	host        string
 	port        int
-	backendConf config.BackendServer
+	backendConf backproxy_config.BackendServer
 	listener    net.Listener
 	stopCh      chan struct{}
 	stopOnce    sync.Once
@@ -26,7 +27,7 @@ type TcpProxyServer struct {
 }
 
 // NewTcpProxyServer 创建TCP代理服务器
-func NewTcpProxyServer(cfg *config.Config, logger *zerolog.Logger, backendConf config.BackendServer) *TcpProxyServer {
+func NewTcpProxyServer(cfg *config.Config, logger *zerolog.Logger, backendConf backproxy_config.BackendServer) *TcpProxyServer {
 	return &TcpProxyServer{
 		cfg:         cfg,
 		logger:      logger,

@@ -1,7 +1,7 @@
 package lua
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,7 +24,7 @@ end
 	}
 
 	m := &manager{}
-	if err := m.init(config.LuaConfig{
+	if err := m.init(svr_config.LuaConfig{
 		Enabled:     true,
 		ScriptsRoot: root,
 	}, nil); err != nil {
@@ -69,7 +69,7 @@ end
 	}
 
 	m := &manager{}
-	if err := m.init(config.LuaConfig{
+	if err := m.init(svr_config.LuaConfig{
 		Enabled:     true,
 		ScriptsRoot: root,
 	}, nil); err != nil {
@@ -123,7 +123,7 @@ end
 	}
 
 	m := &manager{}
-	if err := m.init(config.LuaConfig{
+	if err := m.init(svr_config.LuaConfig{
 		Enabled:     true,
 		ScriptsRoot: root,
 	}, nil); err != nil {

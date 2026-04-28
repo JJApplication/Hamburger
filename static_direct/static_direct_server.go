@@ -3,6 +3,7 @@ package static_direct
 import (
 	"Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/frontproxy_config"
 	"Hamburger/internal/constant"
 	"context"
 	"fmt"
@@ -67,7 +68,7 @@ func NewStaticDirectServer(cfg *config.Config, logger *zerolog.Logger) *StaticDi
 	}
 }
 
-func initDynamicHandler(fcs []config.FrontServerConfig) map[string][]DynamicFileHandler {
+func initDynamicHandler(fcs []frontproxy_config.FrontServerConfig) map[string][]DynamicFileHandler {
 	m := make(map[string][]DynamicFileHandler)
 	for _, fc := range fcs {
 		// 根据前端服务查询域名

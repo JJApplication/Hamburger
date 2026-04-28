@@ -1,7 +1,7 @@
 package pre_auth
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -23,7 +23,7 @@ type JWTAuthenticator struct {
 	allowedMethods map[string]func() hash.Hash
 }
 
-func NewJWTAuthenticator(cfg config.JWTAuthConfig) *JWTAuthenticator {
+func NewJWTAuthenticator(cfg svr_config.JWTAuthConfig) *JWTAuthenticator {
 	methods := make(map[string]func() hash.Hash)
 	for _, method := range cfg.AllowedMethods {
 		method = strings.TrimSpace(method)

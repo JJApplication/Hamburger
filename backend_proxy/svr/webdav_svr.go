@@ -2,6 +2,7 @@ package svr
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/backproxy_config"
 	"context"
 	"fmt"
 	"net/http"
@@ -17,12 +18,12 @@ type WebDavServer struct {
 	logger      *zerolog.Logger
 	host        string
 	port        int
-	backendConf config.BackendServer
+	backendConf backproxy_config.BackendServer
 	svr         *http.Server
 	started     bool
 }
 
-func NewWebDavServer(cfg *config.Config, logger *zerolog.Logger, backendConf config.BackendServer) *WebDavServer {
+func NewWebDavServer(cfg *config.Config, logger *zerolog.Logger, backendConf backproxy_config.BackendServer) *WebDavServer {
 	return &WebDavServer{
 		cfg:         cfg,
 		logger:      logger,

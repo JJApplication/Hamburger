@@ -1,4 +1,4 @@
-package config
+package svr_config
 
 type PreAuthConfig struct {
 	Enabled           bool             `yaml:"enabled" json:"enabled"`

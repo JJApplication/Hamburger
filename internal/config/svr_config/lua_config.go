@@ -1,4 +1,4 @@
-package config
+package svr_config
 
 // LuaConfig 定义Lua脚本运行时配置。
 type LuaConfig struct {

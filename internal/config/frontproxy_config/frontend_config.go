@@ -1,4 +1,4 @@
-package config
+package frontproxy_config
 
 import (
 	"Hamburger/internal/dsl_conf"

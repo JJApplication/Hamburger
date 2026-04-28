@@ -1,7 +1,7 @@
 package server
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/config/loader"
 	"net/http"
 	"strings"
@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func wrapHandlerWithWebSocket(h http.Handler, logger *zerolog.Logger, serverConfig config.ServerConfig) http.Handler {
+func wrapHandlerWithWebSocket(h http.Handler, logger *zerolog.Logger, serverConfig core_config.ServerConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !isWebSocketUpgrade(r) {
 			h.ServeHTTP(w, r)
@@ -60,7 +60,7 @@ func headerHasToken(header http.Header, key string, token string) bool {
 	return false
 }
 
-func isWsDomainAllowed(host string, serverConfig config.ServerConfig) bool {
+func isWsDomainAllowed(host string, serverConfig core_config.ServerConfig) bool {
 	host = stripHostPort(host)
 	if host == "" {
 		return false

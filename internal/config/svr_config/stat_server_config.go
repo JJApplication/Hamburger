@@ -1,4 +1,4 @@
-package config
+package svr_config
 
 // inner stat server
 
