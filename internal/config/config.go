@@ -20,6 +20,7 @@ type Config struct {
 	Latency            LatencyConfig         `yaml:"latency" json:"latency"`                     // 延迟统计配置
 	CustomHeader       map[string]string     `yaml:"custom_header" json:"custom_header"`         // 自定义Header
 	Plugin             PluginConfig          `yaml:"plugin" json:"plugin"`                       // 插件配置
+	Lua                LuaConfig             `yaml:"lua" json:"lua"`                             // Lua脚本配置
 	Syncer             Syncer                `yaml:"syncer" json:"syncer"`                       // 定时器时间
 	Debug              bool                  `yaml:"debug" json:"debug"`                         // 调试模式
 	DevMode            bool                  `yaml:"dev_mode" json:"dev_mode"`                   // 开发模式

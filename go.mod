@@ -28,6 +28,7 @@ require (
 	github.com/tetratelabs/wazero v1.7.0
 	github.com/txthinking/runnergroup v0.0.0-20230211072751-d11f16258c86 // indirect
 	github.com/txthinking/socks5 v0.0.0-20230307062227-0e1677eca4ba
+	github.com/yuin/gopher-lua v1.1.1
 	github.com/v2fly/v2ray-core/v4 v4.42.1
 	github.com/valyala/fasthttp v1.69.0
 	github.com/xtaci/smux v1.5.24

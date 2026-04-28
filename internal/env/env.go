@@ -52,6 +52,22 @@ func LoadDir(dir string) error {
 	return nil
 }
 
+// Snapshot 返回当前进程环境变量快照。
+func Snapshot() map[string]string {
+	out := map[string]string{}
+	for _, item := range os.Environ() {
+		if item == "" {
+			continue
+		}
+		idx := strings.Index(item, "=")
+		if idx <= 0 {
+			continue
+		}
+		out[item[:idx]] = item[idx+1:]
+	}
+	return out
+}
+
 func loadFile(file string, protected map[string]struct{}) error {
 	pairs, err := godotenv.Read(file)
 	if err != nil {

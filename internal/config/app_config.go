@@ -31,6 +31,7 @@ type AppConfig struct {
 	CustomHeader    map[string]string `yaml:"custom_header" json:"custom_header"` // 自定义Header
 	PreAuthConfig   PreAuthConfig     `yaml:"pre_auth_config" json:"pre_auth_config"`
 	NotifyConfig    NotifyConfig      `yaml:"notify_config" json:"notify_config"` // 通知系统配置
+	Lua             LuaConfig         `yaml:"lua" json:"lua"`                     // Lua脚本配置
 	Syncer          Syncer            `yaml:"syncer" json:"syncer"`               // 定时器时间
 	Debug           bool              `yaml:"debug" json:"debug"`                 // 调试模式
 	DevMode         bool              `yaml:"dev_mode" json:"dev_mode"`           // 开发模式
@@ -51,6 +52,10 @@ func GetDefaultConfig() *AppConfig {
 			Enabled: true,
 			Root:    "plugins",
 			Plugins: []PluginItem{},
+		},
+		Lua: LuaConfig{
+			Enabled:     true,
+			ScriptsRoot: "lua_scripts",
 		},
 		Servers: []ServerConfig{
 			{

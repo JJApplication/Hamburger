@@ -164,7 +164,7 @@
       proxy_pass: [
         {
           api: "/api",
-          service: "Blog",
+          service: "RustBlog",
           use_rewrite: false
         },
         {
@@ -183,6 +183,10 @@
     },
     {
       service_name: "Blog",
+      service_type: "backend"
+    },
+    {
+      service_name: "RustBlog",
       service_type: "backend"
     },
     {

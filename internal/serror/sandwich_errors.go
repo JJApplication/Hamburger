@@ -22,6 +22,8 @@ const (
 	SandwichBackendError = "SandwichBackendError"
 	// SandwichPluginError wasm插件异常
 	SandwichPluginError = "SandwichPluginError"
+	// SandwichLuaError Lua异常
+	SandwichLuaError = "SandwichLuaError"
 	// SandwichPreAuthFailed 前置认证失败
 	SandwichPreAuthFailed = "SandwichPreAuthFailed"
 	// SandwichFailedResponseError 响应失败错误

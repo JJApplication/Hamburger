@@ -87,3 +87,12 @@ func TestLoadFromConfigFile(t *testing.T) {
 		t.Fatalf("unexpected APP_TOKEN: %q", v)
 	}
 }
+
+func TestSnapshot(t *testing.T) {
+	t.Setenv("HAMBURGER_SNAPSHOT_KEY", "snapshot-value")
+
+	values := Snapshot()
+	if values["HAMBURGER_SNAPSHOT_KEY"] != "snapshot-value" {
+		t.Fatalf("unexpected snapshot value: %q", values["HAMBURGER_SNAPSHOT_KEY"])
+	}
+}

@@ -80,6 +80,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitBackendServer())
 	i.Register(i.InitGrpcProxy())
 	i.Register(i.InitModifierManager())
+	i.Register(i.InitLuaVM())
 	i.Register(i.InitPreHandlerManager())
 	i.Register(i.InitNotifier())
 	i.Register(i.InitStatManager())

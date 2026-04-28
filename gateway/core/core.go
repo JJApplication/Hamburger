@@ -20,6 +20,7 @@ import (
 	"Hamburger/gateway/wasm_plugin"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
+	applua "Hamburger/internal/lua"
 	"Hamburger/internal/serror"
 	"Hamburger/internal/utils"
 
@@ -171,6 +172,12 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 				request.URL = &url.URL{Scheme: constant.SchemeSandwich}
 				return
 			}
+		}
+		if err := applua.HandleRequest(request); err != nil {
+			logger.Debug().Err(err).Msg("lua request middleware failed")
+			request.Header.Set(serror.SandwichInternalFlag, serror.SandwichLuaError)
+			request.URL = &url.URL{Scheme: constant.SchemeSandwich}
+			return
 		}
 		// 处理解析缓存 只缓存后端前端由Helios控制
 		if cfg.Features.ProxyCache.Enabled {
