@@ -1,0 +1,204 @@
+{
+  services: [
+    {
+      service_name: "Homeland",
+      service_type: "frontend",
+      service_domain: "renj.io"
+    },
+    {
+      service_name: "Resume",
+      service_type: "frontend",
+      service_domain: "me.renj.io"
+    },
+    {
+      service_name: "CV",
+      service_type: "frontend",
+      service_domain: "cv.renj.io"
+    },
+    {
+      service_name: "DevDoc",
+      service_type: "frontend",
+      service_domain: "dev.renj.io"
+    },
+    {
+      service_name: "BlogNext",
+      service_type: "custom",
+      service_domain: "blog.renj.io",
+      host: "127.0.0.1",
+      port: 3000,
+      proxy_pass: [
+        {
+          api: "/api",
+          service: "RustBlog",
+          use_rewrite: false
+        },
+        {
+          api: "/images",
+          static_direct: {
+            static_root: "/renj.io/app/Blog/images"
+          }
+        }
+      ]
+    },
+    {
+      service_name: "BlogFront",
+      service_type: "frontend",
+      service_domain: "blog.v1.renj.io"
+    },
+    {
+      service_name: "Blog",
+      service_type: "backend"
+    },
+    {
+      service_name: "RustBlog",
+      service_type: "backend"
+    },
+    {
+      service_name: "Palace",
+      service_type: "frontend",
+      service_domain: "/(life|gallery).renj.io/"
+    },
+    {
+      service_name: "MySite",
+      service_type: "backend",
+      service_domain: "page.renj.io"
+    },
+    {
+      service_name: "Apollo",
+      service_type: "backend",
+      service_domain: "service.renj.io"
+    },
+    {
+      service_name: "JJServiceFront",
+      service_type: "frontend",
+      service_domain: "app.renj.io"
+    },
+    {
+      service_name: "JJService",
+      service_type: "backend"
+    },
+    {
+      service_name: "JJGo",
+      service_type: "backend"
+    },
+    {
+      service_name: "Mgek",
+      service_type: "backend",
+      service_domain: "mgek.renj.io"
+    },
+    {
+      service_name: "MgekDoc",
+      service_type: "backend",
+      service_domain: "doc.renj.io"
+    },
+    {
+      service_name: "Works",
+      service_type: "frontend",
+      service_domain: "works.renj.io"
+    },
+    {
+      service_name: "Demeter",
+      service_type: "frontend",
+      service_domain: "plan.renj.io"
+    },
+    {
+      service_name: "BlackHole",
+      service_type: "backend",
+      service_domain: "pkg.renj.io"
+    },
+    {
+      service_name: "JJAppX",
+      service_type: "frontend",
+      service_domain: "x.renj.io"
+    },
+    {
+      service_name: "PlumeFront",
+      service_type: "frontend",
+      service_domain: "plume.renj.io"
+    },
+    {
+      service_name: "Plume",
+      service_type: "backend"
+    },
+    {
+      service_name: "Status",
+      service_type: "backend",
+      service_domain: "status.renj.io"
+    },
+    {
+      service_name: "Taco",
+      service_type: "frontend",
+      service_domain: "stat.renj.io"
+    },
+    {
+      service_name: "ProjectAI",
+      service_type: "frontend",
+      service_domain: "ai.renj.io"
+    },
+    {
+      service_name: "ShinningCard",
+      service_type: "frontend",
+      service_domain: "shinning-card.ai.renj.io"
+    },
+    {
+      service_name: "VisualAtom",
+      service_type: "frontend",
+      service_domain: "visual-atom.ai.renj.io"
+    },
+    {
+      service_name: "LivePhoto",
+      service_type: "frontend",
+      service_domain: "live-photo.ai.renj.io"
+    },
+    {
+      service_name: "AimTest",
+      service_type: "frontend",
+      service_domain: "aimtest.ai.renj.io"
+    },
+    {
+      service_name: "Calculator",
+      service_type: "frontend",
+      service_domain: "calc.ai.renj.io"
+    },
+    {
+      service_name: "MyHome",
+      service_type: "frontend",
+      service_domain: "home.renj.io"
+    },
+    {
+      service_name: "LoveLetter",
+      service_type: "frontend",
+      service_domain: "love.renj.io"
+    },
+    {
+      service_name: "BabyBus",
+      service_type: "frontend",
+      service_domain: "baby.renj.io"
+    },
+    {
+      service_name: "HamburgerDoc",
+      service_type: "frontend",
+      service_domain: "hamburger.renj.io"
+    },
+    {
+      service_name: "MarryMe",
+      service_type: "frontend",
+      service_domain: "marry-me.renj.io"
+    },
+    {
+      service_name: "Ring",
+      service_type: "frontend",
+      service_domain: "ring.renj.io"
+    },
+    {
+      service_name: "Flower",
+      service_type: "frontend",
+      service_domain: "flower.renj.io"
+    },
+    {
+      service_name: "Archive",
+      service_type: "frontend",
+      service_domain: "/(^v1|archive).renj.io/"
+    }
+  ]
+}

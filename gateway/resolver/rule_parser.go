@@ -91,7 +91,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		// 内部调用
 		r.logger.Debug().Str("URL", req.URL.RawPath).Msg("host is localhost")
 	} else {
-		serviceMap, ok := runtime.DomainsRuntimeMap.DomainsMap.Get(host)
+		serviceMap, ok := runtime.GetDomain2Service(host)
 		if !ok {
 			return RuleResult{
 				ProxyError: errDomainsMapEmpty,
@@ -101,7 +101,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		rules := r.apiRules[host]
 		r.rwLock.RUnlock()
 
-		serviceType, _ := runtime.DomainsRuntimeMap.ServiceMap.Get(serviceMap.Service)
+		serviceType, _ := runtime.DomainsRuntimeMap.ServiceMap.Get(serviceMap.ServiceName)
 		// 根据请求和域名判断转发到的真实服务
 		switch serviceType.ServiceType {
 		case constant.FrontendType:
@@ -110,17 +110,17 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			if result, ok := r.MatchAPIRule(req, rules); ok {
 				return result
 			}
-			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Service)
+			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.ServiceName)
 			return RuleResult{
 				ProxyToType: Frontend,
-				ProxyTo:     serviceMap.Service,
+				ProxyTo:     serviceMap.ServiceName,
 				ProxyHost:   r.cfg.PxyFrontend.Host,
 				ProxyPort:   r.cfg.PxyFrontend.Port,
 				ProxyScheme: StaticSchema,
 			}
 		case constant.BackendType:
 			// 纯后端服务
-			ports, ok := runtime.ServicePortsMap.Get(serviceMap.Service)
+			ports, ok := runtime.ServicePortsMap.Get(serviceMap.ServiceName)
 			if !ok {
 				return RuleResult{
 					ProxyError: errDomainsPortEmpty,
@@ -128,28 +128,22 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			}
 			return RuleResult{
 				ProxyToType: Backend,
-				ProxyTo:     serviceMap.Service,
+				ProxyTo:     serviceMap.ServiceName,
 				ProxyHost:   StaticHost,
 				ProxyPort:   balancer.PickOneRoundRobin(ports),
 				ProxyScheme: StaticSchema,
 			}
 		case constant.CustomType:
-			service, ok := runtime.DomainsRuntimeMap.ServiceMap.Get(serviceMap.Service)
-			if !ok {
-				return RuleResult{
-					ProxyError: errDomainsMapEmpty,
-				}
-			}
-			if result, ok := r.MatchCustomAPIRule(req, service.ProxyPass); ok {
+			if result, ok := r.MatchCustomAPIRule(req, serviceMap.ProxyPass); ok {
 				return result
 			}
 
-			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Service)
+			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.ServiceName)
 			return RuleResult{
 				ProxyToType: Custom,
-				ProxyTo:     serviceMap.Service,
-				ProxyHost:   utils.DefaultString(service.Host, StaticHost),
-				ProxyPort:   service.Port,
+				ProxyTo:     serviceMap.ServiceName,
+				ProxyHost:   utils.DefaultString(serviceMap.Host, StaticHost),
+				ProxyPort:   serviceMap.Port,
 				ProxyScheme: StaticSchema,
 			}
 		default:

@@ -42,25 +42,21 @@ func (p *Proxy) matchStaticAlias(req *http.Request) (file string, ok bool) {
 		return "", false
 	}
 
-	domain, ok := runtime.DomainsRuntimeMap.DomainsMap.Get(host)
-	if !ok {
-		return "", false
-	}
-	service, ok := runtime.DomainsRuntimeMap.ServiceMap.Get(domain.Service)
+	service, ok := runtime.GetDomain2Service(host)
 	if !ok {
 		return "", false
 	}
 	if len(service.ProxyPass) == 0 {
 		return "", false
 	}
-	if file, ok = p.cachedAlias(domain.Service, requestPath); ok {
+	if file, ok = p.cachedAlias(service.ServiceName, requestPath); ok {
 		return file, true
 	}
 	for _, proxy := range service.ProxyPass {
 		if strings.HasPrefix(requestPath, proxy.API) && proxy.StaticDirect.StaticRoot != "" {
 			urlPath := strings.TrimPrefix(requestPath, proxy.API)
 			file = filepath.Join(proxy.StaticDirect.StaticRoot, urlPath)
-			p.cacheAlias(domain.Service, requestPath, file)
+			p.cacheAlias(service.ServiceName, requestPath, file)
 
 			return file, true
 		}

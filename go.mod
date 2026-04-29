@@ -28,10 +28,10 @@ require (
 	github.com/tetratelabs/wazero v1.7.0
 	github.com/txthinking/runnergroup v0.0.0-20230211072751-d11f16258c86 // indirect
 	github.com/txthinking/socks5 v0.0.0-20230307062227-0e1677eca4ba
-	github.com/yuin/gopher-lua v1.1.1
 	github.com/v2fly/v2ray-core/v4 v4.42.1
 	github.com/valyala/fasthttp v1.69.0
 	github.com/xtaci/smux v1.5.24
+	github.com/yuin/gopher-lua v1.1.1
 	go.mongodb.org/mongo-driver v1.17.6
 	golang.org/x/crypto v0.46.0
 	golang.org/x/net v0.48.0
@@ -62,6 +62,7 @@ require (
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/emmansun/gmsm v0.15.5 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect

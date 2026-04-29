@@ -8,15 +8,7 @@ import "Hamburger/internal/config/frontproxy_config"
 // JJAPP内置的服务支持内置端口加载
 
 type DomainServiceMap struct {
-	DomainService []DomainService `yaml:"domain_service" json:"domain_service"`
-	Sevices       []Service       `yaml:"services" json:"services"`
-}
-
-type DomainService struct {
-	Domain  string `yaml:"domain" json:"domain"` // 本地调试项目domain可以为localhost
-	Tag     string `yaml:"tag" json:"tag"`
-	Group   string `yaml:"group" json:"group"`     // 标签名称
-	Service string `yaml:"service" json:"service"` // 映射的服务
+	Sevices []Service `yaml:"services" json:"services"`
 }
 
 // Service 由Helios代理的前端代理转发都在Helios配置
@@ -24,10 +16,11 @@ type DomainService struct {
 // 自定义服务的代理转发都由gw处理在Service中处理
 // 同一域名只能映射一个服务
 type Service struct {
-	Tag         string `yaml:"tag" json:"tag"`
-	Group       string `yaml:"group" json:"group"` // 标签名称
-	ServiceName string `yaml:"service_name" json:"service_name"`
-	ServiceType string `yaml:"service_type" json:"service_type"` // 前端 后端 自定义
+	Tag           string `yaml:"tag" json:"tag"`
+	Group         string `yaml:"group" json:"group"` // 标签名称
+	ServiceName   string `yaml:"service_name" json:"service_name"`
+	ServiceType   string `yaml:"service_type" json:"service_type"`     // 前端 后端 自定义
+	ServiceDomain string `yaml:"service_domain" json:"service_domain"` // 正则表达式或直接域名配置
 	// 自定义服务需要的扩展参数
 	ServiceRoot string         `yaml:"service_root" json:"service_root"`
 	Host        string         `yaml:"host" json:"host"`

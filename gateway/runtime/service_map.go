@@ -2,13 +2,16 @@ package runtime
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/utils"
 	"fmt"
 )
 
 // ValidateServiceMap 校验域名服务映射
 func ValidateServiceMap(dm config.DomainServiceMap) error {
 	// 临时的域名map
-	tempDomainMap := map[string]string{}
+	tempDomainMap := map[string]struct{}{}
+	// 域名正则规则
+	var tempDomainPatterns []string
 	// 临时的服务map
 	tempServiceMap := map[string]struct{}{}
 
@@ -20,20 +23,29 @@ func ValidateServiceMap(dm config.DomainServiceMap) error {
 			return fmt.Errorf("duplicate service name: %s", service.ServiceName)
 		}
 		tempServiceMap[service.ServiceName] = struct{}{}
+
+		// 允许服务不配置域名 不对外暴露
+		if service.ServiceDomain != "" {
+			if _, ok := tempDomainMap[service.ServiceDomain]; ok {
+				return fmt.Errorf("duplicate service domain: %s", service.ServiceDomain)
+			}
+			tempDomainPatterns = append(tempDomainPatterns, service.ServiceDomain)
+			tempDomainMap[service.ServiceDomain] = struct{}{}
+		}
+
 	}
 
-	for _, domainService := range dm.DomainService {
-		if domainService.Domain == "" || domainService.Service == "" {
-			return fmt.Errorf("invalid domain service: %s", domainService.Service)
-		}
-		if _, ok := tempServiceMap[domainService.Service]; !ok {
-			return fmt.Errorf("domain service name: %s not exist", domainService.Service)
-		}
-		if _, ok := tempDomainMap[domainService.Domain]; ok {
-			return fmt.Errorf("duplicate domain service: %s", domainService.Service)
-		}
-		tempDomainMap[domainService.Domain] = domainService.Service
-	}
+	return validateDomainDuplicate(tempDomainPatterns)
+}
 
+// 检查域名正则是否互斥规则
+func validateDomainDuplicate(domains []string) error {
+	if len(domains) == 0 {
+		return nil
+	}
+	ok, badPatterns := utils.IsRegexListMutuallyExclusive(domains)
+	if !ok {
+		return fmt.Errorf("invalid domain list: %s", badPatterns)
+	}
 	return nil
 }
