@@ -5,7 +5,26 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 )
+
+var (
+	// 预编译的正则表达式
+	regexSyncMap = sync.Map{}
+)
+
+func loadRegex(pattern string) (*regexp.Regexp, error) {
+	r, ok := regexSyncMap.Load(pattern)
+	if !ok {
+		r, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, err
+		}
+		regexSyncMap.Store(pattern, r)
+		return r, nil
+	}
+	return r.(*regexp.Regexp), nil
+}
 
 // IsRegexValid 判断字符串是否为合法的 /pattern/ 正则格式。
 func IsRegexValid(pattern string) bool {
@@ -26,7 +45,7 @@ func MatchDomainByRegex(pattern, domain string) bool {
 	if !isRegex {
 		return strings.EqualFold(rule, domain)
 	}
-	re, err := regexp.Compile(regexBody)
+	re, err := loadRegex(regexBody)
 	if err != nil {
 		return false
 	}
@@ -131,7 +150,7 @@ func buildRuleMatcher(pattern string) ruleMatcher {
 	if !isRegex {
 		return ruleMatcher{domain: strings.ToLower(rule)}
 	}
-	re, err := regexp.Compile(regexBody)
+	re, err := loadRegex(regexBody)
 	if err != nil {
 		return ruleMatcher{isRegex: true, invalid: true}
 	}
@@ -211,7 +230,7 @@ func guessPlainDomain(pattern string) string {
 
 func extractDomainLiterals(pattern string) []string {
 	normalized := strings.ReplaceAll(pattern, `\.`, ".")
-	re := regexp.MustCompile(`[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+`)
+	re, _ := loadRegex(`[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+`)
 	return re.FindAllString(normalized, -1)
 }
 
