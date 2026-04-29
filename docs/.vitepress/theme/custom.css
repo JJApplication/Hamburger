@@ -80,3 +80,16 @@
 .dark .hero-shell {
   border-color: rgba(96, 165, 250, 0.3);
 }
+
+.VPNavBarTitle .title {
+  display: inline-flex;
+  align-items: center;
+}
+
+.VPNavBarTitle .title .logo {
+  order: 2;
+  margin-left: 8px;
+  margin-right: 0;
+  width: 24px;
+  height: 24px;
+}

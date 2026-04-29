@@ -1,7 +1,7 @@
 package prehandler
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"net/http"
 	"sync"
 )
@@ -24,7 +24,7 @@ var (
 // NewHeaderSanitizer 创建单例的HeaderSanitizer
 func NewHeaderSanitizer() *HeaderSanitizer {
 	sanitizerOnce.Do(func() {
-		cf := config.Get()
+		cf := loader.Get()
 		k := map[string]struct{}{
 			cf.ProxyHeader.TraceId:            {},
 			cf.ProxyHeader.FrontendHostHeader: {},

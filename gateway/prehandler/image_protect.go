@@ -1,7 +1,7 @@
 package prehandler
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"errors"
 	"net/http"
 	"net/url"
@@ -23,7 +23,7 @@ var imageProtect *ImageProtect
 
 func NewImageProtectModifier() *ImageProtect {
 	sync.OnceFunc(func() {
-		cfg := config.Get()
+		cfg := loader.Get()
 		imageProtect = &ImageProtect{
 			enabled: cfg.Middleware.ImageProtect.Enabled,
 			mime:    cfg.Middleware.ImageProtect.ImageType,

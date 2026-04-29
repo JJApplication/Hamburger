@@ -7,6 +7,7 @@ package proxy_cache
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/json"
 	"Hamburger/internal/utils"
 	"context"
@@ -63,7 +64,7 @@ var (
 )
 
 func NewPxyCacheManager() *PxyCacheManager {
-	cfg := config.Get()
+	cfg := loader.Get()
 	if !cfg.Features.ProxyCache.Enabled {
 		return &PxyCacheManager{cfg: cfg}
 	}

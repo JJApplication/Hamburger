@@ -1,7 +1,7 @@
 package frontend_proxy
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/frontproxy_config"
 	"bytes"
 	"context"
 	"fmt"
@@ -26,7 +26,7 @@ func BackendProxyMiddleware(server *HeliosServer) gin.HandlerFunc {
 		}
 
 		// 查找对应的服务器配置
-		var serverConfig *config.FrontServerConfig
+		var serverConfig *frontproxy_config.FrontServerConfig
 
 		for _, srv := range server.config.Servers {
 			if srv.Name == internalFlag {
@@ -70,7 +70,7 @@ func BackendProxyMiddleware(server *HeliosServer) gin.HandlerFunc {
 }
 
 // proxyToBackend 代理请求到后端服务
-func proxyToBackend(server *HeliosServer, c *gin.Context, backend *config.BackendConfig) {
+func proxyToBackend(server *HeliosServer, c *gin.Context, backend *frontproxy_config.BackendConfig) {
 	server.logger.Debug().Str("backend_service", backend.Service).Msg("proxy request to backend")
 	// 构建目标URL，处理URL重写
 	targetPath := c.Request.URL.Path

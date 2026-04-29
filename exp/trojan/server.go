@@ -3,6 +3,7 @@ package trojan
 import (
 	"Hamburger/exp/trojan/log"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/exp_config"
 	"Hamburger/internal/logger"
 	"context"
 	"io"
@@ -43,7 +44,7 @@ func NewTrojanServer(cfg *config.Config, logger *zerolog.Logger) (*TrojanServer,
 func NewTrojanServerFromConfig(configPath string) (*TrojanServer, error) {
 	logger.InitLogger()
 	cfg := &config.Config{
-		ExpConfig: config.ExpConfig{
+		ExpConfig: exp_config.ExpConfig{
 			TrojanServer: configPath,
 		},
 	}

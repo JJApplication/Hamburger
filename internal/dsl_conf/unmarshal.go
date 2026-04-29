@@ -969,9 +969,9 @@ func (p *parser) scan() token {
 			return token{typ: tokenShiftRight, lit: ">>", pos: start}
 		}
 	case '"':
-		s, ok := p.scanString()
-		if !ok {
-			return token{typ: tokenEOF, pos: start, lit: "unterminated string"}
+		s, err := p.scanString()
+		if err != nil {
+			return token{typ: tokenEOF, pos: start, lit: err.Error()}
 		}
 		return token{typ: tokenString, lit: s, pos: start}
 	case '$':
@@ -1003,7 +1003,7 @@ func (p *parser) scan() token {
 	return token{typ: tokenEOF, lit: string(ch), pos: start}
 }
 
-func (p *parser) scanString() (string, bool) {
+func (p *parser) scanString() (string, error) {
 	p.pos++
 	start := p.pos
 	var b strings.Builder
@@ -1012,13 +1012,13 @@ func (p *parser) scanString() (string, bool) {
 		if ch == '"' {
 			b.WriteString(string(p.src[start:p.pos]))
 			p.pos++
-			return b.String(), true
+			return b.String(), nil
 		}
 		if ch == '\\' {
 			b.WriteString(string(p.src[start:p.pos]))
 			p.pos++
 			if p.pos >= len(p.src) {
-				return "", false
+				return "", fmt.Errorf("unterminated string")
 			}
 			esc := p.src[p.pos]
 			switch esc {
@@ -1037,9 +1037,31 @@ func (p *parser) scanString() (string, bool) {
 			start = p.pos
 			continue
 		}
+		if ch == '$' {
+			b.WriteString(string(p.src[start:p.pos]))
+			p.pos++
+			nameStart := p.pos
+			if p.pos >= len(p.src) || !isEnvVarStart(p.src[p.pos]) {
+				b.WriteRune('$')
+				start = p.pos
+				continue
+			}
+			p.pos++
+			for p.pos < len(p.src) && isEnvVarPart(p.src[p.pos]) {
+				p.pos++
+			}
+			name := string(p.src[nameStart:p.pos])
+			raw, exists := os.LookupEnv(name)
+			if !exists {
+				return "", fmt.Errorf("environment variable %s not found", name)
+			}
+			b.WriteString(raw)
+			start = p.pos
+			continue
+		}
 		p.pos++
 	}
-	return "", false
+	return "", fmt.Errorf("unterminated string")
 }
 
 func (p *parser) scanIdentifierWithStart() string {
@@ -1101,4 +1123,12 @@ func isIdentifierStart(r rune) bool {
 
 func isIdentifierPart(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-' || r == '.'
+}
+
+func isEnvVarStart(r rune) bool {
+	return unicode.IsLetter(r) || r == '_'
+}
+
+func isEnvVarPart(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_'
 }

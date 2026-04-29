@@ -1,7 +1,7 @@
 package frontend_proxy
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/frontproxy_config"
 	"github.com/rs/zerolog"
 	"time"
 
@@ -9,7 +9,7 @@ import (
 )
 
 // LoggingMiddleware 日志中间件
-func LoggingMiddleware(logger *zerolog.Logger, config *config.PxyFrontConfig) gin.HandlerFunc {
+func LoggingMiddleware(logger *zerolog.Logger, config *frontproxy_config.PxyFrontConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
@@ -58,7 +58,7 @@ func LoggingMiddleware(logger *zerolog.Logger, config *config.PxyFrontConfig) gi
 }
 
 // CustomHeadersMiddleware 自定义响应头中间件
-func CustomHeadersMiddleware(config *config.PxyFrontConfig) gin.HandlerFunc {
+func CustomHeadersMiddleware(config *frontproxy_config.PxyFrontConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, header := range config.CustomHeaders {
 			c.Header(header.Name, header.Value)
@@ -78,7 +78,7 @@ func RoutingMiddleware(server *HeliosServer) gin.HandlerFunc {
 		}
 
 		// 查找对应的服务器配置
-		var serverConfig *config.FrontServerConfig
+		var serverConfig *frontproxy_config.FrontServerConfig
 
 		for _, srv := range server.config.Servers {
 			if srv.Name == internalFlag {

@@ -2,7 +2,7 @@ package prehandler
 
 import (
 	"Hamburger/gateway/pre_auth"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/serror"
 	"net/http"
 	"sync"
@@ -20,7 +20,7 @@ var (
 
 func NewPreAuth() *PreAuth {
 	preAuthOnce.Do(func() {
-		cfg := config.Get()
+		cfg := loader.Get()
 		service := pre_auth.NewService(cfg.PreAuthConfig)
 		preAuth = &PreAuth{
 			enabled: service.Enabled(),

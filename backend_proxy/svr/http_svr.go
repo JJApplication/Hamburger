@@ -2,6 +2,7 @@ package svr
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/backproxy_config"
 	"context"
 	"fmt"
 	"net/http"
@@ -19,12 +20,12 @@ type Server struct {
 	logger      *zerolog.Logger
 	host        string
 	port        int
-	backendConf config.BackendServer
+	backendConf backproxy_config.BackendServer
 	svr         *http.Server
 	started     bool
 }
 
-func NewHttpServer(cfg *config.Config, logger *zerolog.Logger, backendConf config.BackendServer) *Server {
+func NewHttpServer(cfg *config.Config, logger *zerolog.Logger, backendConf backproxy_config.BackendServer) *Server {
 	return &Server{
 		cfg:         cfg,
 		logger:      logger,

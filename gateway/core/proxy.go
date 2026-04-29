@@ -42,5 +42,5 @@ func (p *Proxy) Create() http.Handler {
 }
 
 func (p *Proxy) proxy() http.Handler {
-	return p.handler
+	return p.GlobalStaticAlias(p.handler)
 }

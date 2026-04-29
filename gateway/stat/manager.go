@@ -1,6 +1,7 @@
 package stat
 
 import (
+	"Hamburger/internal/config/loader"
 	"context"
 	"sync"
 	"sync/atomic"
@@ -66,7 +67,7 @@ func InitManager(cfg *config.Config) *StatManager {
 }
 
 func GetManager() *StatManager {
-	return InitManager(config.Get())
+	return InitManager(loader.Get())
 }
 
 func (m *StatManager) C() *bigcache.BigCache {
@@ -77,7 +78,7 @@ func (m *StatManager) getCfg() *config.Config {
 	if m.cfg != nil {
 		return m.cfg
 	}
-	cfg := config.Get()
+	cfg := loader.Get()
 	m.cfg = cfg
 	return cfg
 }

@@ -1,7 +1,7 @@
 package data
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/data/model"
 	"Hamburger/internal/logger"
 	"time"
@@ -14,7 +14,7 @@ import (
 // mongo客户端
 
 func InitMongo() {
-	cf := config.Get()
+	cf := loader.Get()
 	logger.L().Info().Msg("init mongodb")
 	err := mgm.SetDefaultConfig(&mgm.Config{CtxTimeout: 5 * time.Second}, cf.Database.Mongo.Database, options.Client().ApplyURI(cf.Database.Mongo.URL))
 	if err != nil {

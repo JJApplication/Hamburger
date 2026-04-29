@@ -2,6 +2,7 @@ package webdav
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/exp_config"
 	"bytes"
 	"io"
 	"net/http"
@@ -30,9 +31,9 @@ func TestWebDAVIsolationByUser(t *testing.T) {
 		t.Fatalf("write bob file failed: %v", err)
 	}
 
-	s := newTestServer(config.WebDAVConfig{
+	s := newTestServer(exp_config.WebDAVConfig{
 		Enabled: true,
-		Users: []config.WebDAVUserConfig{
+		Users: []exp_config.WebDAVUserConfig{
 			{Username: "alice", Password: "pass1", RootDir: aliceRoot},
 			{Username: "bob", Password: "pass2", RootDir: bobRoot},
 		},
@@ -63,10 +64,10 @@ func TestWebDAVReadOnlyRejectWrite(t *testing.T) {
 		t.Fatalf("mkdir root failed: %v", err)
 	}
 
-	s := newTestServer(config.WebDAVConfig{
+	s := newTestServer(exp_config.WebDAVConfig{
 		Enabled:  true,
 		ReadOnly: true,
-		Users: []config.WebDAVUserConfig{
+		Users: []exp_config.WebDAVUserConfig{
 			{Username: "alice", Password: "pass1", RootDir: root},
 		},
 	})
@@ -88,9 +89,9 @@ func TestWebDAVUnauthorized(t *testing.T) {
 		t.Fatalf("mkdir root failed: %v", err)
 	}
 
-	s := newTestServer(config.WebDAVConfig{
+	s := newTestServer(exp_config.WebDAVConfig{
 		Enabled: true,
-		Users: []config.WebDAVUserConfig{
+		Users: []exp_config.WebDAVUserConfig{
 			{Username: "alice", Password: "pass1", RootDir: root},
 		},
 	})
@@ -102,9 +103,9 @@ func TestWebDAVUnauthorized(t *testing.T) {
 	}
 }
 
-func newTestServer(webdavCfg config.WebDAVConfig) *WebDAVServer {
+func newTestServer(webdavCfg exp_config.WebDAVConfig) *WebDAVServer {
 	cfg := &config.Config{
-		ExpConfig: config.ExpConfig{
+		ExpConfig: exp_config.ExpConfig{
 			WebDAV: webdavCfg,
 		},
 	}

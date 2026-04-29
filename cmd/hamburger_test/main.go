@@ -2,6 +2,9 @@ package main
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/backproxy_config"
+	"Hamburger/internal/config/frontproxy_config"
+	"Hamburger/internal/config/loader"
 	"flag"
 	"fmt"
 	"os"
@@ -22,7 +25,7 @@ func main() {
 		writeErrorAndExit(fmt.Sprintf("解析配置文件路径失败: %v", err))
 	}
 
-	appCfg, err := config.LoadConfig(resolvedConfigPath)
+	appCfg, err := loader.LoadConfig(resolvedConfigPath)
 	if err != nil {
 		writeErrorAndExit(fmt.Sprintf("加载主配置失败: %v", err))
 	}
@@ -32,7 +35,7 @@ func main() {
 	appCfg.PxyBackendFile = normalizeSubConfigPath(configBaseDir, appCfg.PxyBackendFile)
 
 	validationErrors := validateSubConfigs(appCfg)
-	merged := config.Merge(appCfg)
+	merged := loader.Merge(appCfg)
 	if merged == nil {
 		writeErrorAndExit("合并配置失败")
 	}
@@ -62,7 +65,7 @@ func validateSubConfigs(appCfg *config.AppConfig) []string {
 		if !fileExists(appCfg.PxyFrontendFile) {
 			appCfg.PxyFrontendFile = ""
 		} else {
-			if _, err := config.LoadFrontConfig(appCfg.PxyFrontendFile); err != nil {
+			if _, err := frontproxy_config.LoadFrontConfig(appCfg.PxyFrontendFile); err != nil {
 				errs = append(errs, fmt.Sprintf("前端配置加载失败: %s (%v)", appCfg.PxyFrontendFile, err))
 			}
 		}
@@ -71,7 +74,7 @@ func validateSubConfigs(appCfg *config.AppConfig) []string {
 		if !fileExists(appCfg.PxyBackendFile) {
 			appCfg.PxyBackendFile = ""
 		} else {
-			if _, err := config.LoadBackendConfig(appCfg.PxyBackendFile); err != nil {
+			if _, err := backproxy_config.LoadBackendConfig(appCfg.PxyBackendFile); err != nil {
 				errs = append(errs, fmt.Sprintf("后端配置加载失败: %s (%v)", appCfg.PxyBackendFile, err))
 			}
 		}

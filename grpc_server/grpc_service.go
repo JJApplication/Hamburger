@@ -1,6 +1,7 @@
 package grpc_server
 
 import (
+	"Hamburger/internal/config/loader"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,7 +22,6 @@ import (
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/prehandler"
 	gwRuntime "Hamburger/gateway/runtime"
-	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 
 	"google.golang.org/grpc/codes"
@@ -63,7 +63,7 @@ func (s *AppService) GetGatewayStatus(ctx context.Context, _ *appgrpc.Empty) (*a
 	if managerInstance == nil {
 		return nil, status.Error(codes.Unavailable, "gateway manager unavailable")
 	}
-	cfg := config.Get()
+	cfg := loader.Get()
 	resp := &appgrpc.GatewayStatusResponse{}
 	gwStatus := managerInstance.GetServerStatus()
 	for _, instance := range gwStatus {
@@ -132,7 +132,7 @@ func (s *AppService) GetGatewayStatus(ctx context.Context, _ *appgrpc.Empty) (*a
 }
 
 func (s *AppService) GetFrontProxyStatus(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.FrontProxyStatusResponse, error) {
-	cfg := config.Get()
+	cfg := loader.Get()
 	if cfg == nil {
 		return nil, status.Error(codes.Unavailable, "config unavailable")
 	}
@@ -202,7 +202,7 @@ func (s *AppService) GetModifierManagerInfo(ctx context.Context, _ *appgrpc.Empt
 }
 
 func (s *AppService) GetStatServerConfig(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.StatServerConfigResponse, error) {
-	cfg := config.Get()
+	cfg := loader.Get()
 	if cfg == nil {
 		return nil, status.Error(codes.Unavailable, "config unavailable")
 	}
@@ -225,7 +225,7 @@ func (s *AppService) GetRuntime(ctx context.Context, _ *appgrpc.Empty) (*appgrpc
 	var mem stdRuntime.MemStats
 	stdRuntime.ReadMemStats(&mem)
 	netIoBlock := false
-	cfg := config.Get()
+	cfg := loader.Get()
 	if cfg != nil {
 		netIoBlock = strings.EqualFold(cfg.CoreProxy.NetIO, constant.NetIO_NET)
 	}
@@ -242,14 +242,11 @@ func (s *AppService) GetDomainMap(ctx context.Context, _ *appgrpc.Empty) (*appgr
 	domains, domainMap, frontMap := gwRuntime.GetDomainsSnapshot()
 	resp := &appgrpc.DomainMapResponse{
 		Domains:        domains,
-		DomainsMap:     map[string]*appgrpc.ServiceMap{},
+		DomainsMap:     map[string]string{},
 		DomainFrontMap: map[string]string{},
 	}
 	for domain, m := range domainMap {
-		resp.DomainsMap[domain] = &appgrpc.ServiceMap{
-			Frontend: m["frontend"],
-			Backend:  m["backend"],
-		}
+		resp.DomainsMap[domain] = m
 	}
 	for k, v := range frontMap {
 		resp.DomainFrontMap[k] = v
@@ -462,7 +459,7 @@ func (s *AppService) DumpRuntime(ctx context.Context, req *appgrpc.DumpRuntimeRe
 		"goroutines":   stdRuntime.NumGoroutine(),
 		"memory_bytes": mem.Alloc,
 		"rss_bytes":    mem.Sys,
-		"config":       config.Get(),
+		"config":       loader.Get(),
 	}
 	data, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
@@ -498,17 +495,17 @@ func reloadConfigInPlace(file string) error {
 	if path == "" {
 		path = "config/config.json"
 	}
-	appCfg, err := config.LoadConfig(path)
+	appCfg, err := loader.LoadConfig(path)
 	if err != nil {
 		return err
 	}
-	mergedCfg := config.Merge(appCfg)
-	currentCfg := config.Get()
+	mergedCfg := loader.Merge(appCfg)
+	currentCfg := loader.Get()
 	if currentCfg == nil {
-		config.Set(mergedCfg)
+		loader.Set(mergedCfg)
 		return nil
 	}
 	*currentCfg = *mergedCfg
-	config.Set(currentCfg)
+	loader.Set(currentCfg)
 	return nil
 }

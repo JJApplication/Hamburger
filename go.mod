@@ -31,6 +31,7 @@ require (
 	github.com/v2fly/v2ray-core/v4 v4.42.1
 	github.com/valyala/fasthttp v1.69.0
 	github.com/xtaci/smux v1.5.24
+	github.com/yuin/gopher-lua v1.1.1
 	go.mongodb.org/mongo-driver v1.17.6
 	golang.org/x/crypto v0.46.0
 	golang.org/x/net v0.48.0
@@ -47,6 +48,7 @@ require (
 require (
 	github.com/cskr/pubsub v1.0.2
 	github.com/emersion/go-imap v1.2.1
+	github.com/joho/godotenv v1.5.1
 	github.com/miekg/dns v1.1.51
 	github.com/qeesung/image2ascii v1.0.1
 	go.etcd.io/bbolt v1.4.3
@@ -60,6 +62,7 @@ require (
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/emmansun/gmsm v0.15.5 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect

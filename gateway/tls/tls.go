@@ -3,6 +3,7 @@ package tls
 import (
 	autocert2 "Hamburger/gateway/autocert"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/structure"
 	"crypto/rand"
 	"crypto/rsa"
@@ -41,7 +42,7 @@ type TLSManager struct {
 	sf      singleflight.Group // 用于合并并发的证书请求
 	// cert map
 	certMu  sync.RWMutex
-	certMap map[string]config.CertConfig
+	certMap map[string]core_config.CertConfig
 	// SelfTLS
 	selfCertMu sync.Mutex
 	selfCert   *tls.Certificate
@@ -66,7 +67,7 @@ func (m *TLSManager) RegisterAfterAutoCert(f func() error) {
 }
 
 // ConfigureTLS 配置 TLS
-func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.Listener) (*tls.Config, net.Listener, error) {
+func (m *TLSManager) ConfigureTLS(tlsConfig *core_config.TLSConfig, listener net.Listener) (*tls.Config, net.Listener, error) {
 	if tlsConfig == nil {
 		return nil, nil, fmt.Errorf("HTTPS server missing TLS configuration")
 	}
@@ -168,7 +169,7 @@ func (m *TLSManager) ConfigureTLS(tlsConfig *config.TLSConfig, listener net.List
 	return tlsCfg, lis, nil
 }
 
-func (m *TLSManager) GetTlsConfig(tlsConfig *config.TLSConfig) (*tls.Config, error) {
+func (m *TLSManager) GetTlsConfig(tlsConfig *core_config.TLSConfig) (*tls.Config, error) {
 	if tlsConfig == nil {
 		return nil, fmt.Errorf("HTTP3 server missing TLS configuration")
 	}
@@ -199,7 +200,7 @@ func (m *TLSManager) GetTlsConfig(tlsConfig *config.TLSConfig) (*tls.Config, err
 	return tlsCfg, nil
 }
 
-func (m *TLSManager) GetNbioTLSConfig(tlsConfig *config.TLSConfig) (*lltls.Config, error) {
+func (m *TLSManager) GetNbioTLSConfig(tlsConfig *core_config.TLSConfig) (*lltls.Config, error) {
 	if tlsConfig == nil {
 		return nil, fmt.Errorf("HTTPS server missing TLS configuration")
 	}
@@ -338,7 +339,7 @@ func GetTLSVersion(minVersion string) uint16 {
 	return tls.VersionTLS12
 }
 
-func (m *TLSManager) shouldUseSelfTLS(tlsConfig *config.TLSConfig) bool {
+func (m *TLSManager) shouldUseSelfTLS(tlsConfig *core_config.TLSConfig) bool {
 	if tlsConfig == nil {
 		return false
 	}

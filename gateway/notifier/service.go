@@ -1,13 +1,13 @@
 package notifier
 
 import (
+	"Hamburger/internal/config/svr_config"
 	"context"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"Hamburger/internal/config"
 	"Hamburger/internal/imap"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/queue"
@@ -15,11 +15,11 @@ import (
 
 // Service 通知服务
 type Service struct {
-	cfg         config.NotifyConfig
-	queueServer *queue.Server
-	mailService *imap.Service
+	cfg          svr_config.NotifyConfig
+	queueServer  *queue.Server
+	mailService  *imap.Service
 	subscription *queue.Subscription
-	log         *loggerWrapper
+	log          *loggerWrapper
 }
 
 type loggerWrapper struct{}
@@ -46,7 +46,7 @@ var (
 )
 
 // Register 注册并启动通知服务
-func Register(cfg config.NotifyConfig) (*Service, error) {
+func Register(cfg svr_config.NotifyConfig) (*Service, error) {
 	if !cfg.Enabled {
 		return nil, nil
 	}

@@ -8,7 +8,7 @@ Copyright Renj
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/utils"
 	"net/http"
@@ -24,7 +24,7 @@ type CustomHeaderModifier struct {
 
 // NewCustomHeaderModifier 创建新的自定义响应头修改器实例
 func NewCustomHeaderModifier() *CustomHeaderModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 	cm := &CustomHeaderModifier{
 		enabled: len(cfg.CustomHeader) > 0, // 如果有自定义头配置则启用
 		headers: make(map[string]string),
@@ -68,7 +68,7 @@ func (cm *CustomHeaderModifier) IsEnabled() bool {
 
 // UpdateConfig 更新配置（支持热更新）
 func (cm *CustomHeaderModifier) UpdateConfig() {
-	cfg := config.Get()
+	cfg := loader.Get()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()

@@ -1,7 +1,7 @@
 package error_page
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"bytes"
 	"compress/gzip"
@@ -22,7 +22,7 @@ func minify(w http.ResponseWriter, b []byte) {
 }
 
 func useGzip(request *http.Request) bool {
-	cf := config.Get()
+	cf := loader.Get()
 	if !cf.Middleware.Gzip.Enabled {
 		return false
 	}

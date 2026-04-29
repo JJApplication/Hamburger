@@ -182,3 +182,51 @@ func TestNullCollections(t *testing.T) {
 		t.Fatalf("expected nil dict, got: %#v", cfg.Dict)
 	}
 }
+
+func TestStringEnvInterpolation(t *testing.T) {
+	t.Setenv("ROOT", "/root")
+	type pathCfg struct {
+		PathA string `json:"path_a"`
+		PathB string `json:"path_b"`
+		PathC string `json:"path_c"`
+	}
+	data := `
+{
+  path_a: "$ROOT/data",
+  path_b: "data/$ROOT",
+  path_c: "pre-$ROOT-post"
+}
+`
+	var cfg pathCfg
+	if err := Unmarshal([]byte(data), &cfg); err != nil {
+		t.Fatalf("unmarshal interpolation failed: %v", err)
+	}
+	if cfg.PathA != "/root/data" {
+		t.Fatalf("unexpected path_a: %s", cfg.PathA)
+	}
+	if cfg.PathB != "data//root" {
+		t.Fatalf("unexpected path_b: %s", cfg.PathB)
+	}
+	if cfg.PathC != "pre-/root-post" {
+		t.Fatalf("unexpected path_c: %s", cfg.PathC)
+	}
+}
+
+func TestStringEnvInterpolationMissingEnv(t *testing.T) {
+	type pathCfg struct {
+		Path string `json:"path"`
+	}
+	data := `
+{
+  path: "$NOT_EXIST_ENV/data"
+}
+`
+	var cfg pathCfg
+	err := Unmarshal([]byte(data), &cfg)
+	if err == nil {
+		t.Fatalf("expected interpolation missing env error")
+	}
+	if !strings.Contains(err.Error(), "NOT_EXIST_ENV") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

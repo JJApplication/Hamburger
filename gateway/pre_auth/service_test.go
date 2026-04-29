@@ -1,7 +1,7 @@
 package pre_auth
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -13,9 +13,9 @@ import (
 )
 
 func TestBasicAuthenticatorSuccess(t *testing.T) {
-	auth := NewBasicAuthenticator(config.BasicAuthConfig{
+	auth := NewBasicAuthenticator(svr_config.BasicAuthConfig{
 		Enabled: true,
-		Users: []config.BasicUserConfig{
+		Users: []svr_config.BasicUserConfig{
 			{Username: "admin", Password: "123456"},
 		},
 	})
@@ -37,7 +37,7 @@ func TestJWTAuthenticatorSuccess(t *testing.T) {
 		"aud": "backend",
 		"exp": time.Now().Add(5 * time.Minute).Unix(),
 	})
-	auth := NewJWTAuthenticator(config.JWTAuthConfig{
+	auth := NewJWTAuthenticator(svr_config.JWTAuthConfig{
 		Enabled:        true,
 		TokenHeader:    "Authorization",
 		Secret:         secret,
@@ -57,7 +57,7 @@ func TestJWTAuthenticatorSuccess(t *testing.T) {
 }
 
 func TestOAuth2AuthenticatorStaticToken(t *testing.T) {
-	auth := NewOAuth2Authenticator(config.OAuth2AuthConfig{
+	auth := NewOAuth2Authenticator(svr_config.OAuth2AuthConfig{
 		Enabled:      true,
 		TokenHeader:  "Authorization",
 		AccessTokens: []string{"valid-token"},
@@ -74,13 +74,13 @@ func TestOAuth2AuthenticatorStaticToken(t *testing.T) {
 }
 
 func TestServiceAuthenticateSetsHeaders(t *testing.T) {
-	service := NewService(config.PreAuthConfig{
+	service := NewService(svr_config.PreAuthConfig{
 		Enabled:           true,
 		PassThroughHeader: "X-Backend-Bypass-Auth",
 		PassThroughValue:  "allow",
-		Basic: config.BasicAuthConfig{
+		Basic: svr_config.BasicAuthConfig{
 			Enabled: true,
-			Users: []config.BasicUserConfig{
+			Users: []svr_config.BasicUserConfig{
 				{Username: "svc", Password: "pwd"},
 			},
 		},

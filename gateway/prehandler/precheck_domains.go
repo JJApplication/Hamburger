@@ -2,7 +2,8 @@ package prehandler
 
 import (
 	"Hamburger/gateway/runtime"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
+	"Hamburger/internal/utils"
 	"fmt"
 	"net/http"
 )
@@ -13,11 +14,10 @@ type PreCheckDomains struct {
 }
 
 func NewPreCheckDomains() *PreCheckDomains {
-	cf := config.Get()
-	domains := runtime.Domains
+	cf := loader.Get()
 	return &PreCheckDomains{
 		enabled:        cf.Middleware.DomainCheck.Enabled,
-		allowedDomains: domains,
+		allowedDomains: runtime.DomainsRuntimeMap.Domains,
 	}
 }
 
@@ -36,6 +36,9 @@ func (cf *PreCheckDomains) Handle(r *http.Request) error {
 	}
 	for _, ad := range cf.allowedDomains {
 		if ad == domain {
+			return nil
+		}
+		if utils.MatchDomainByRegex(ad, domain) {
 			return nil
 		}
 	}

@@ -2,6 +2,7 @@ package modifier
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"bytes"
 	"compress/gzip"
 	"io"
@@ -85,7 +86,7 @@ func benchmarkGzipModifier(b *testing.B, dataSize int) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(dataSize)
@@ -122,7 +123,7 @@ func benchmarkGzipLevel(b *testing.B, level int) {
 	cfg.Middleware.Gzip.Level = level
 	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024) // 50KB
@@ -160,7 +161,7 @@ func benchmarkGzipContentType(b *testing.B, contentType string, data []byte) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json", "text/css"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 
@@ -184,7 +185,7 @@ func BenchmarkGzipModifier_WithPool(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -229,7 +230,7 @@ func BenchmarkGzipModifier_BelowThreshold(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 10240 // 10KB阈值
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(5 * 1024) // 5KB数据，低于阈值
@@ -254,7 +255,7 @@ func BenchmarkGzipModifier_Concurrent(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -281,7 +282,7 @@ func BenchmarkGzipModifier_CompressionRatio(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(100 * 1024)

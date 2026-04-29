@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"Hamburger/internal/config/loader"
 	"fmt"
 	"os"
 	"os/exec"
@@ -72,11 +73,11 @@ func newTestCmd(configFile *string) *cobra.Command {
 		Use:   "test",
 		Short: "test config",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig(*configFile)
+			cfg, err := loader.LoadConfig(*configFile)
 			if err != nil {
 				return err
 			}
-			_ = config.Merge(cfg)
+			_ = loader.Merge(cfg)
 			fmt.Fprintln(os.Stdout, "config ok")
 			return nil
 		},

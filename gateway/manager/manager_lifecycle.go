@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/constant"
 	"context"
 	"errors"
@@ -88,7 +89,7 @@ func (m *Manager) Start() error {
 }
 
 // startServer 启动单个服务器
-func (m *Manager) startServer(serverConfig config.ServerConfig, logger *zerolog.Logger) error {
+func (m *Manager) startServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger) error {
 	netIO := strings.TrimSpace(strings.ToLower(m.config.CoreProxy.NetIO))
 	var instance *server.ServerInstance
 	var err error
@@ -114,7 +115,7 @@ func (m *Manager) startServer(serverConfig config.ServerConfig, logger *zerolog.
 	return nil
 }
 
-func (m *Manager) startHttp3Server(cfg config.HTTP3Config, serverConfig config.ServerConfig, logger *zerolog.Logger, handler http.Handler) error {
+func (m *Manager) startHttp3Server(cfg core_config.HTTP3Config, serverConfig core_config.ServerConfig, logger *zerolog.Logger, handler http.Handler) error {
 	addr := fmt.Sprintf("%s:%d", serverConfig.Host, serverConfig.Port)
 	http3Srv := server.NewHttp3Server(cfg, handler, logger)
 	m.http3Server[serverConfig.Name] = http3Srv
@@ -332,8 +333,8 @@ func (m *Manager) afterHandleAutoCert() error {
 }
 
 // GetEnabledServers 获取所有启用的服务器配置
-func GetEnabledServers(cf *config.Config) []config.ServerConfig {
-	var enabled []config.ServerConfig
+func GetEnabledServers(cf *config.Config) []core_config.ServerConfig {
+	var enabled []core_config.ServerConfig
 	for _, svr := range cf.Servers {
 		if svr.Enabled {
 			enabled = append(enabled, svr)

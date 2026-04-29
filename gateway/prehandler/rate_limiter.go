@@ -2,7 +2,7 @@ package prehandler
 
 import (
 	flow "Hamburger/gateway/flow_control"
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/serror"
 	"net/http"
@@ -14,7 +14,7 @@ type RateLimiter struct {
 }
 
 func NewRateLimiter() *RateLimiter {
-	cf := config.Get()
+	cf := loader.Get()
 	flowController := flow.NewFlowController()
 	go flowController.CleanupExpiredRecords()
 	return &RateLimiter{

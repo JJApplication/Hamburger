@@ -1,7 +1,7 @@
 package pre_auth
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/svr_config"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -22,7 +22,7 @@ type OAuth2Authenticator struct {
 	client           *http.Client
 }
 
-func NewOAuth2Authenticator(cfg config.OAuth2AuthConfig) *OAuth2Authenticator {
+func NewOAuth2Authenticator(cfg svr_config.OAuth2AuthConfig) *OAuth2Authenticator {
 	timeout := cfg.TimeoutSeconds
 	if timeout <= 0 {
 		timeout = 3

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/utils"
 	"context"
 	"crypto/tls"
@@ -21,22 +21,22 @@ import (
 // Server HTTP/3 服务器
 // 基于 QUIC 协议实现的 HTTP/3 服务器
 type Server struct {
-	config   config.HTTP3Config // HTTP/3 配置
-	server   *http3.Server      // HTTP/3 服务器实例
-	listener *quic.Listener     // QUIC 监听器
-	handler  http.Handler       // 请求处理器
-	logger   *zerolog.Logger    // 日志记录器
-	mu       sync.RWMutex       // 读写锁
-	started  bool               // 是否已启动
-	ctx      context.Context    // 上下文
-	cancel   context.CancelFunc // 取消函数
+	config   core_config.HTTP3Config // HTTP/3 配置
+	server   *http3.Server           // HTTP/3 服务器实例
+	listener *quic.Listener          // QUIC 监听器
+	handler  http.Handler            // 请求处理器
+	logger   *zerolog.Logger         // 日志记录器
+	mu       sync.RWMutex            // 读写锁
+	started  bool                    // 是否已启动
+	ctx      context.Context         // 上下文
+	cancel   context.CancelFunc      // 取消函数
 
 	Name    string
 	Address string
 }
 
 // NewHttp3Server 创建新的 HTTP/3 服务器
-func NewHttp3Server(cfg config.HTTP3Config, handler http.Handler, logger *zerolog.Logger) *Server {
+func NewHttp3Server(cfg core_config.HTTP3Config, handler http.Handler, logger *zerolog.Logger) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Server{
@@ -205,7 +205,7 @@ type Stats struct {
 }
 
 // UpdateConfig 更新配置
-func (s *Server) UpdateConfig(newConfig config.HTTP3Config) error {
+func (s *Server) UpdateConfig(newConfig core_config.HTTP3Config) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -242,7 +242,7 @@ func (s *Server) SetHandler(handler http.Handler) {
 }
 
 // GetConfig 获取当前配置
-func (s *Server) GetConfig() config.HTTP3Config {
+func (s *Server) GetConfig() core_config.HTTP3Config {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.config

@@ -584,7 +584,7 @@ func (x *RuntimeResponse) GetNetIoBlock() bool {
 type DomainMapResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Domains        []string               `protobuf:"bytes,1,rep,name=domains,proto3" json:"domains,omitempty"`
-	DomainsMap     map[string]*ServiceMap `protobuf:"bytes,2,rep,name=domains_map,json=domainsMap,proto3" json:"domains_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	DomainsMap     map[string]string `protobuf:"bytes,2,rep,name=domains_map,json=domainsMap,proto3" json:"domains_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	DomainFrontMap map[string]string      `protobuf:"bytes,3,rep,name=domain_front_map,json=domainFrontMap,proto3" json:"domain_front_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -627,7 +627,7 @@ func (x *DomainMapResponse) GetDomains() []string {
 	return nil
 }
 
-func (x *DomainMapResponse) GetDomainsMap() map[string]*ServiceMap {
+func (x *DomainMapResponse) GetDomainsMap() map[string]string {
 	if x != nil {
 		return x.DomainsMap
 	}

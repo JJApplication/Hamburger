@@ -5,7 +5,7 @@ gRPC代理模块，实现HTTP请求到gRPC调用的转换
 package grpc_proxy
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -41,14 +41,14 @@ type GrpcResponse struct {
 
 // GrpcProxy gRPC代理处理器
 type GrpcProxy struct {
-	config    *config.GrpcProxyConfig
+	config    *core_config.GrpcProxyConfig
 	logger    *zerolog.Logger
 	connPool  map[string]*grpc.ClientConn // 连接池
 	connMutex sync.RWMutex
 }
 
 // NewGrpcProxy 创建新的gRPC代理实例
-func NewGrpcProxy(cfg *config.GrpcProxyConfig, logger *zerolog.Logger) *GrpcProxy {
+func NewGrpcProxy(cfg *core_config.GrpcProxyConfig, logger *zerolog.Logger) *GrpcProxy {
 	return &GrpcProxy{
 		config:   cfg,
 		logger:   logger,

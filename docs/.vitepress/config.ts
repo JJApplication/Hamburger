@@ -7,8 +7,8 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   themeConfig: {
-    logo: '🍔',
-    siteTitle: 'Hamburger Docs',
+    logo: '/logo-hamburger-transparent.png',
+    siteTitle: 'Hamburger',
     nav: [
       { text: '首页', link: '/' },
       { text: '功能总览', link: '/guide/overview' },
@@ -22,6 +22,8 @@ export default defineConfig({
           { text: '功能总览', link: '/guide/overview' },
           { text: '核心特性', link: '/guide/features' },
           { text: '配置指南', link: '/guide/configuration' },
+          { text: '实验特性', link: '/guide/experiments' },
+          { text: '扩展工具', link: '/guide/tools' },
           { text: '快速开始', link: '/guide/quick-start' }
         ]
       }

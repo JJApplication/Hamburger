@@ -6,6 +6,7 @@ package resolver
 const (
 	Frontend = iota
 	Backend
+	Custom
 )
 
 type RuleResult struct {

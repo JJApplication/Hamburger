@@ -2,6 +2,7 @@ package modifier
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"bytes"
 	"io"
 	"net/http"
@@ -32,7 +33,7 @@ func benchmarkOptimizedGzip(b *testing.B, dataSize int) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	testData := generateTestData(dataSize)
@@ -57,7 +58,7 @@ func BenchmarkOptimizedGzip_WithCache(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.cacheEnabled = true
@@ -88,7 +89,7 @@ func BenchmarkOptimizedGzip_AsyncCompression(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.asyncThreshold = 50 * 1024      // 50KB异步阈值
@@ -114,7 +115,7 @@ func BenchmarkOptimizedGzip_Concurrent(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -141,7 +142,7 @@ func BenchmarkComparison_Original_50KB(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -165,7 +166,7 @@ func BenchmarkComparison_Optimized_50KB(b *testing.B) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	testData := generateTestData(50 * 1024)
@@ -190,7 +191,7 @@ func TestOptimizedGzipModifier_BasicFunctionality(t *testing.T) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html", "application/json"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 
@@ -246,7 +247,7 @@ func TestOptimizedGzipModifier_CacheHit(t *testing.T) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.cacheEnabled = true
@@ -284,7 +285,7 @@ func TestOptimizedGzipModifier_Stats(t *testing.T) {
 	cfg.Middleware.Gzip.Level = 6
 	cfg.Middleware.Gzip.Types = []string{"text/html"}
 	cfg.Middleware.Gzip.Threshold = 1024
-	config.Set(config.Merge(cfg))
+	loader.Set(loader.Merge(cfg))
 
 	modifier := NewOptimizedGzipModifier()
 	modifier.cacheEnabled = false // 禁用缓存以测试压缩次数

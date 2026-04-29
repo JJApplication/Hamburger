@@ -1,7 +1,7 @@
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/utils"
 	"net/http"
 )
@@ -12,7 +12,7 @@ type TraceModifier struct {
 }
 
 func NewTraceModifier() *TraceModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 
 	mod := new(TraceModifier)
 	mod.enable = cfg.Middleware.Trace.Enabled

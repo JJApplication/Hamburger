@@ -2,6 +2,7 @@ package frontend_proxy
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/frontproxy_config"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -24,7 +25,7 @@ import (
 
 // HeliosServer 服务器结构体
 type HeliosServer struct {
-	config       *config.PxyFrontConfig
+	config       *frontproxy_config.PxyFrontConfig
 	logger       *zerolog.Logger
 	gin          *gin.Engine
 	cacheManager *CacheManager
@@ -94,7 +95,7 @@ func (s *HeliosServer) GetHandler() http.Handler {
 }
 
 // HandleStaticFile 处理静态文件请求
-func (s *HeliosServer) HandleStaticFile(c *gin.Context, serverConfig *config.FrontServerConfig) {
+func (s *HeliosServer) HandleStaticFile(c *gin.Context, serverConfig *frontproxy_config.FrontServerConfig) {
 	requestPath := c.Request.URL.Path
 	if requestPath == "/" {
 		requestPath = "/" + serverConfig.Index

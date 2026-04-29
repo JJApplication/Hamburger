@@ -2,6 +2,7 @@ package core
 
 import (
 	"Hamburger/gateway/runtime"
+	"Hamburger/internal/utils"
 	"strings"
 )
 
@@ -15,8 +16,11 @@ func BlockBlackHost(host string) (block bool, skip bool) {
 	if strings.Contains(host, ":") && len(strings.Split(host, ":")) > 0 {
 		realHost = strings.Split(host, ":")[0]
 	}
-	for _, domain := range runtime.Domains {
+	for _, domain := range runtime.DomainsRuntimeMap.Domains {
 		if domain == realHost {
+			return false, false
+		}
+		if utils.MatchDomainByRegex(domain, realHost) {
 			return false, false
 		}
 	}

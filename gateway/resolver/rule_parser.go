@@ -4,6 +4,8 @@ import (
 	"Hamburger/gateway/balancer"
 	"Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
+	"Hamburger/internal/utils"
 	"errors"
 	"net/http"
 	"strings"
@@ -89,12 +91,8 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		// 内部调用
 		r.logger.Debug().Str("URL", req.URL.RawPath).Msg("host is localhost")
 	} else {
-		serviceMap, ok := runtime.DomainsRuntimeMap.DomainsMap.Get(host)
+		serviceMap, ok := runtime.GetDomain2Service(host)
 		if !ok {
-			// 未匹配运行时域名映射时尝试自定义服务映射
-			if r.IsCustomServiceEnabled() {
-				return r.ResolveCustomService(host)
-			}
 			return RuleResult{
 				ProxyError: errDomainsMapEmpty,
 			}
@@ -103,21 +101,26 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		rules := r.apiRules[host]
 		r.rwLock.RUnlock()
 
+		serviceType, _ := runtime.DomainsRuntimeMap.ServiceMap.Get(serviceMap.ServiceName)
 		// 根据请求和域名判断转发到的真实服务
-		if serviceMap.Frontend != "" && serviceMap.Backend == "" {
+		switch serviceType.ServiceType {
+		case constant.FrontendType:
 			// 纯前端服务
-			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Frontend)
+			// 未匹配API转发时直接转到前端处理
+			if result, ok := r.MatchAPIRule(req, rules); ok {
+				return result
+			}
+			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.ServiceName)
 			return RuleResult{
 				ProxyToType: Frontend,
-				ProxyTo:     serviceMap.Frontend,
+				ProxyTo:     serviceMap.ServiceName,
 				ProxyHost:   r.cfg.PxyFrontend.Host,
 				ProxyPort:   r.cfg.PxyFrontend.Port,
 				ProxyScheme: StaticSchema,
 			}
-		}
-		if serviceMap.Frontend == "" && serviceMap.Backend != "" {
+		case constant.BackendType:
 			// 纯后端服务
-			ports, ok := runtime.DomainPortsMap.Get(host)
+			ports, ok := runtime.ServicePortsMap.Get(serviceMap.ServiceName)
 			if !ok {
 				return RuleResult{
 					ProxyError: errDomainsPortEmpty,
@@ -125,27 +128,27 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			}
 			return RuleResult{
 				ProxyToType: Backend,
-				ProxyTo:     serviceMap.Backend,
+				ProxyTo:     serviceMap.ServiceName,
 				ProxyHost:   StaticHost,
 				ProxyPort:   balancer.PickOneRoundRobin(ports),
 				ProxyScheme: StaticSchema,
 			}
-		}
+		case constant.CustomType:
+			if result, ok := r.MatchCustomAPIRule(req, serviceMap.ProxyPass); ok {
+				return result
+			}
 
-		result, ok := r.MatchAPIRule(req, rules, serviceMap.Backend)
-		if ok {
-			return result
-		} else {
-			if serviceMap.Backend != "" && serviceMap.Frontend != "" {
-				// 前后端分离服务
-				req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.Frontend)
-				return RuleResult{
-					ProxyToType: Frontend,
-					ProxyTo:     serviceMap.Frontend,
-					ProxyHost:   r.cfg.PxyFrontend.Host,
-					ProxyPort:   r.cfg.PxyFrontend.Port,
-					ProxyScheme: StaticSchema,
-				}
+			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.ServiceName)
+			return RuleResult{
+				ProxyToType: Custom,
+				ProxyTo:     serviceMap.ServiceName,
+				ProxyHost:   utils.DefaultString(serviceMap.Host, StaticHost),
+				ProxyPort:   serviceMap.Port,
+				ProxyScheme: StaticSchema,
+			}
+		default:
+			return RuleResult{
+				ProxyError: errUnknownPath,
 			}
 		}
 	}
@@ -155,9 +158,8 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 }
 
 //go:inline
-func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule, backendService string) (RuleResult, bool) {
+func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool) {
 	requestPath := req.URL.Path
-	host := req.Host
 	for _, rule := range rules {
 		// 检查API路径和服务名是否配置
 		if rule.API == "" || rule.Backend == "" {
@@ -177,10 +179,10 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule, backendService str
 		}
 
 		// 是否为单纯proxy端口转发
-		if rule.Proxy.Host != "" && rule.Proxy.Port > 0 && backendService != "" && backendService == rule.Backend {
+		if rule.Proxy.Host != "" && rule.Proxy.Port > 0 {
 			return RuleResult{
 				ProxyToType: Backend,
-				ProxyTo:     backendService,
+				ProxyTo:     "",
 				ProxyPath:   targetPath,
 				ProxyHost:   rule.Proxy.Host,
 				ProxyPort:   rule.Proxy.Port,
@@ -188,7 +190,8 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule, backendService str
 			}, true
 		}
 
-		ports, ok := runtime.DomainPortsMap.Get(host)
+		// 转发到后端服务
+		ports, ok := runtime.ServicePortsMap.Get(rule.Backend)
 		if !ok {
 			return RuleResult{
 				ProxyError: errDomainsPortEmpty,
@@ -206,40 +209,76 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule, backendService str
 	return RuleResult{}, false
 }
 
-//go:inline
-func (r *Ruler) IsCustomServiceEnabled() bool {
-	return r.cfg.PxyCustomService.Enable
-}
+func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProxy) (RuleResult, bool) {
+	requestPath := req.URL.Path
+	for _, rule := range rules {
+		// 检查API路径和服务名是否配置
+		if rule.API == "" || rule.Service == "" {
+			continue
+		}
 
-// ResolveCustomService 处理自定义后端服务转发
-//
-//go:inline
-func (r *Ruler) ResolveCustomService(host string) RuleResult {
-	for _, serviceConfig := range r.cfg.PxyCustomService.CustomService {
-		if host == serviceConfig.Domain {
-			addrs := make([]struct {
-				Host string
-				Port int
-			}, len(serviceConfig.Upstream))
-			for i, upstream := range serviceConfig.Upstream {
-				addrs[i] = struct {
-					Host string
-					Port int
-				}{Host: upstream.Host, Port: upstream.Port}
-			}
-			realHost, port := balancer.PickOneAddrRoundRobin(addrs)
+		// 检查请求路径是否匹配backend.api
+		if !strings.HasPrefix(requestPath, rule.API) {
+			continue
+		}
+		// 执行后端代理转发
+
+		// 是否rewrite url
+		targetPath := requestPath
+		if rule.UseRewrite {
+			targetPath = rule.Rewrite + requestPath[len(rule.API):]
+		}
+
+		// 是否为单纯proxy端口转发
+		if rule.ProxyDirect.ProxyHost != "" && rule.ProxyDirect.ProxyPort > 0 {
 			return RuleResult{
-				ProxyToType: Backend,
-				ProxyTo:     "",
-				ProxyHost:   realHost,
-				ProxyPort:   port,
+				ProxyToType: Custom,
+				ProxyTo:     rule.Service,
+				ProxyPath:   targetPath,
+				ProxyHost:   rule.ProxyDirect.ProxyHost,
+				ProxyPort:   rule.ProxyDirect.ProxyPort,
 				ProxyScheme: StaticSchema,
+			}, true
+		}
+
+		// TODO 静态文件代理
+
+		// 转发到后端服务
+		// 转发到后端自定义服务
+		service, ok := runtime.DomainsRuntimeMap.ServiceMap.Get(rule.Service)
+		if !ok {
+			return RuleResult{
+				ProxyError: errDomainsMapEmpty,
+			}, true
+		}
+		if service.ServiceType == constant.CustomType {
+			return RuleResult{
+				ProxyToType: Custom,
+				ProxyTo:     service.ServiceName,
+				ProxyPath:   targetPath,
+				ProxyHost:   service.Host,
+				ProxyPort:   service.Port,
+				ProxyScheme: StaticSchema,
+			}, true
+		} else {
+			ports, ok := runtime.ServicePortsMap.Get(rule.Service)
+			if !ok {
+				return RuleResult{
+					ProxyError: errDomainsPortEmpty,
+				}, true
 			}
+			return RuleResult{
+				ProxyToType: Custom,
+				ProxyTo:     service.ServiceName,
+				ProxyHost:   StaticHost,
+				ProxyPath:   targetPath,
+				ProxyPort:   balancer.PickOneRoundRobin(ports),
+				ProxyScheme: StaticSchema,
+			}, true
 		}
 	}
-	return RuleResult{
-		ProxyError: errUnknownHost,
-	}
+
+	return RuleResult{}, false
 }
 
 //go:inline

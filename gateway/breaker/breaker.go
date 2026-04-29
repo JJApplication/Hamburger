@@ -10,7 +10,8 @@ Copyright Renj
 package breaker
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/structure"
 	"Hamburger/internal/utils"
@@ -39,13 +40,13 @@ type BreakerBucket struct {
 
 type Breaker struct {
 	serviceBucket *structure.Map[*BreakerBucket]
-	cf            *config.BreakConfig
+	cf            *core_config.BreakConfig
 }
 
 func NewBreaker() *Breaker {
 	return &Breaker{
 		serviceBucket: structure.NewSizeMap[*BreakerBucket](DefaultBucket),
-		cf:            &config.Get().Features.Break,
+		cf:            &loader.Get().Features.Break,
 	}
 }
 

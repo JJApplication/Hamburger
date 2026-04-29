@@ -8,7 +8,7 @@ Copyright Renj
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/logger"
 	"bytes"
 	"compress/gzip"
@@ -31,7 +31,7 @@ type GzipModifier struct {
 
 // NewGzipModifier 创建新的gzip中间件实例
 func NewGzipModifier() *GzipModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 	gm := &GzipModifier{
 		enabled:   cfg.Middleware.Gzip.Enabled,
 		level:     cfg.Middleware.Gzip.Level,
@@ -131,7 +131,7 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 	// 设置新的响应体
 	response.Body = io.NopCloser(bytes.NewReader(compressedBody))
 
-	if config.Get().Debug {
+	if loader.Get().Debug {
 		logger.GetLogger().Debug().
 			Int("original_size", len(originalBody)).
 			Int("compressed_size", len(compressedBody)).
@@ -226,7 +226,7 @@ func (g *GzipModifier) GetTypes() []string {
 
 // UpdateConfig 更新配置（支持热更新）
 func (g *GzipModifier) UpdateConfig() {
-	cfg := config.Get()
+	cfg := loader.Get()
 	oldLevel := g.level
 	g.enabled = cfg.Middleware.Gzip.Enabled
 	g.level = cfg.Middleware.Gzip.Level

@@ -1,7 +1,7 @@
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/utils"
 	"net/http"
 )
@@ -11,7 +11,7 @@ type SecureHeaderModifier struct {
 }
 
 func NewSecureHeaderModifier() *SecureHeaderModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 	mod := new(SecureHeaderModifier)
 	mod.enable = cfg.Middleware.SecureHeader
 	return mod

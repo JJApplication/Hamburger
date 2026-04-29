@@ -15,9 +15,9 @@ func InitRuntimeSyncer(cfg *config.AppConfig, logger *zerolog.Logger) {
 		}).Start()
 
 	job_syncer.NewJobSyncer(logger,
-		"sync runtime-domain-ports",
+		"sync runtime-service-ports",
 		cfg.Syncer.JobSyncDomainPorts.Get(3600),
 		func() {
-			RefreshDomainPortsMap()
+			RefreshServicePortsMap()
 		}).Start()
 }

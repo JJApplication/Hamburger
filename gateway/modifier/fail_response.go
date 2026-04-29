@@ -1,7 +1,7 @@
 package modifier
 
 import (
-	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ type FailResponseModifier struct {
 }
 
 func NewFailResponseModifier() *FailResponseModifier {
-	cfg := config.Get()
+	cfg := loader.Get()
 	codes := cfg.Middleware.FailResponse.Code
 	if len(codes) == 0 {
 		codes = []int{http.StatusInternalServerError}
@@ -48,7 +48,7 @@ func (f *FailResponseModifier) IsEnabled() bool {
 }
 
 func (f *FailResponseModifier) UpdateConfig() {
-	cfg := config.Get()
+	cfg := loader.Get()
 	codes := cfg.Middleware.FailResponse.Code
 	if len(codes) == 0 {
 		codes = []int{http.StatusInternalServerError}

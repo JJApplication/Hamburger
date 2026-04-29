@@ -3,7 +3,7 @@
   # 子配置入口
   pxy_backend_file: "config/backend.hamburger",
   pxy_frontend_file: "config/frontend.hamburger",
-  domain_map: "config/domains.hamburger",
+  domain_map: "config/services.hamburger",
 
   # 插件系统
   plugin: {
@@ -68,7 +68,7 @@
       enabled: true,
       max_request_body: 50 * 1<<20,
       tls: {
-        min_version: "TLS13",
+        min_version: "TLS12",
         cert_map: {
           renj.io: {
             domains: ["renj.io", "service.renj.io", "pkg.renj.io", "dev.renj.io", "blog.renj.io", "me.renj.io", "gallery.renj.io"],
@@ -191,7 +191,8 @@
     strict_mode: true,
     allow_ips: [],
     deny_ips: [],
-    rate_limit: 1000
+    rate_limit: 1000,
+    white_list_domain: ["*.renj.io"]
   },
 
   # 代理头

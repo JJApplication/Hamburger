@@ -1,0 +1,20 @@
+{
+  "server_ip": "192.168.27.131",
+  "server_port": 19090,
+  "server_protocol": "tcp",
+  "auth_key": "change-me",
+  "proxy_server": [
+    {
+      "name": "server1",
+      "remote_port": 20090,
+      "local_host": "127.0.0.1",
+      "local_port": 8080
+    },
+    {
+      "name": "server2",
+      "remote_port": 20091,
+      "local_host": "127.0.0.1",
+      "local_port": 8080
+    }
+  ]
+}

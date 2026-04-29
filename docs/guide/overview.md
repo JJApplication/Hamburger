@@ -32,28 +32,52 @@ Hamburger 是一个以 Go 构建的网关与代理编排系统，核心目标是
 
 ## 对接JJApps
 
-基于**JJApps**的通用全局配置元数据`octopus_meta`根据微服务名称自动解析路由和端口转发规则
-```json
-  "your.domain": {
-    "frontend": "Service1",
-    "backend": "Service2"
-  }
-```
+当前对接配置已统一为 `config/domains.json`，通过 `domain_service + services` 两部分描述域名与服务能力映射。
 
-自动解析域名对应的前后端服务，通过配置自动转发
+- `domain_service`：定义域名对应的服务名
+- `services`：定义服务类型与具体配置
+- `service_type`：支持 `frontend`、`backend`、`custom`
+
+配置示例：
+
 ```json
+{
+  "domain_service": [
     {
-      "type": "WebServer",
-      "name": "Service1",
-      "root": "/data",
-      "index": "index.html",
-      "try_file": "index.html",
-      "backends": [
+      "domain": "blog.renj.io",
+      "service": "BlogNext"
+    }
+  ],
+  "services": [
+    {
+      "service_name": "BlogNext",
+      "service_type": "custom",
+      "host": "127.0.0.1",
+      "port": 3000,
+      "proxy_pass": [
         {
           "api": "/api",
-          "service": "Service2",
+          "service": "Blog",
           "use_rewrite": false
+        },
+        {
+          "api": "/images",
+          "static_direct": {
+            "static_root": "/renj.io/app/Blog/images"
+          }
         }
       ]
+    },
+    {
+      "service_name": "Blog",
+      "service_type": "backend"
+    },
+    {
+      "service_name": "Resume",
+      "service_type": "frontend"
     }
+  ]
+}
 ```
+
+这样可以在一份配置里同时管理前端服务、后端服务和自定义服务转发逻辑。

@@ -2,6 +2,7 @@ package svr
 
 import (
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/backproxy_config"
 	"context"
 	"fmt"
 	"github.com/rs/zerolog"
@@ -16,12 +17,12 @@ type TransparentServer struct {
 	logger      *zerolog.Logger
 	host        string
 	port        int
-	backendConf config.BackendServer
+	backendConf backproxy_config.BackendServer
 	svr         *http.Server
 	started     bool
 }
 
-func NewTransparentServer(cfg *config.Config, logger *zerolog.Logger, backendConf config.BackendServer) *TransparentServer {
+func NewTransparentServer(cfg *config.Config, logger *zerolog.Logger, backendConf backproxy_config.BackendServer) *TransparentServer {
 	return &TransparentServer{
 		cfg:         cfg,
 		logger:      logger,

@@ -1,17 +1,16 @@
 package vpn_proxy
 
 import (
+	"Hamburger/internal/config/exp_config"
 	"errors"
 	"io"
 	"math/rand"
 	"strings"
 	"time"
-
-	"Hamburger/internal/config"
 )
 
 type obfsEngine struct {
-	cfg  config.VpnObfsConfig
+	cfg  exp_config.VpnObfsConfig
 	mode string
 	rng  *rand.Rand
 }
@@ -23,7 +22,7 @@ const (
 	obfsModePulse   = "pulse"
 )
 
-func newObfsEngine(cfg config.VpnObfsConfig) *obfsEngine {
+func newObfsEngine(cfg exp_config.VpnObfsConfig) *obfsEngine {
 	mode := strings.ToLower(strings.TrimSpace(cfg.Mode))
 	if mode == "" {
 		mode = obfsModeReflect
