@@ -3,6 +3,11 @@
     {
       service_name: "Homeland",
       service_type: "frontend",
+      service_domain: "home.v1.renj.io"
+    },
+    {
+      service_name: "HomelandV2",
+      service_type: "frontend",
       service_domain: "renj.io"
     },
     {

@@ -84,6 +84,15 @@
     },
     {
       type: "WebServer",
+      name: "HomelandV2",
+      root: "/renj.io/app/HomelandV2",
+      index: "index.html",
+      try_file: "index.html",
+      access: false,
+      compress: false
+    },    
+    {
+      type: "WebServer",
       name: "CV",
       root: "/renj.io/app/CV",
       index: "index.html",
