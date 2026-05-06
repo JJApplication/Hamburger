@@ -47,8 +47,22 @@ type TraversalServerConfig struct {
 	ListenHost string `yaml:"listen_host" json:"listen_host"`
 	// ListenPort 控制通道监听端口。
 	ListenPort int `yaml:"listen_port" json:"listen_port"`
-	// Protocol 监听协议，当前仅支持 tcp。
+	// Protocol 控制通道监听协议。
+	// 支持：
+	//   - "tcp"     : 仅启用 TCP 控制监听（默认）
+	//   - "kcp"     : 仅启用 KCP 控制监听
+	//   - "tcp+kcp" : 同时启用 TCP 和 KCP 控制监听
 	Protocol string `yaml:"protocol" json:"protocol"`
+	// KCP KCP 控制通道参数（仅当 protocol 启用 kcp 时生效）。
+	KCP TraversalKCPControlConfig `yaml:"kcp" json:"kcp"`
 	// AuthKey 客户端认证密钥。
 	AuthKey string `yaml:"auth_key" json:"auth_key"`
+}
+
+// TraversalKCPControlConfig KCP 控制通道参数。
+type TraversalKCPControlConfig struct {
+	// HeartbeatInterval 心跳间隔（秒）。<=0 表示关闭心跳。
+	HeartbeatInterval int `yaml:"heartbeat_interval" json:"heartbeat_interval"`
+	// HeartbeatTimeout 心跳超时（秒）。当超过该时间未收到对端任何控制消息（含 pong），将断开控制连接。
+	HeartbeatTimeout int `yaml:"heartbeat_timeout" json:"heartbeat_timeout"`
 }

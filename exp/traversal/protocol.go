@@ -17,6 +17,10 @@ const (
 	MessageTypeOpen = "open"
 	// MessageTypeJoin 客户端绑定数据通道消息。
 	MessageTypeJoin = "join"
+	// MessageTypePing 控制通道心跳探测。
+	MessageTypePing = "ping"
+	// MessageTypePong 控制通道心跳响应。
+	MessageTypePong = "pong"
 	// MessageTypeError 错误响应消息。
 	MessageTypeError = "error"
 )

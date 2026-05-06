@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	kcp "github.com/xtaci/kcp-go/v5"
 )
 
 const (
@@ -47,15 +48,17 @@ type registeredClient struct {
 	conn   net.Conn
 	writer *bufio.Writer
 	mu     sync.Mutex
+
+	lastSeenUnixNano int64
 }
 
 // Server 内网穿透服务端。
 type Server struct {
-	cfg            exp_config.TraversalServerConfig
-	logger         *zerolog.Logger
-	listener       net.Listener
-	proxyListeners map[int]*proxyListener
-	proxyMu        sync.Mutex
+	cfg              exp_config.TraversalServerConfig
+	logger           *zerolog.Logger
+	controlListeners []net.Listener
+	proxyListeners   map[int]*proxyListener
+	proxyMu          sync.Mutex
 
 	clientMu sync.RWMutex
 	client   *registeredClient
@@ -82,12 +85,21 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger) *Server {
 	if serverCfg.Protocol == "" {
 		serverCfg.Protocol = "tcp"
 	}
+	if serverCfg.KCP.HeartbeatInterval == 0 {
+		// 默认 20s 心跳，适合移动网络保持活性；<=0 可显式关闭。
+		serverCfg.KCP.HeartbeatInterval = 20
+	}
+	if serverCfg.KCP.HeartbeatTimeout == 0 {
+		// 默认 60s 超时，避免网络抖动造成误判。
+		serverCfg.KCP.HeartbeatTimeout = 60
+	}
 	return &Server{
-		cfg:            serverCfg,
-		logger:         logger,
-		pending:        make(map[string]*pendingTunnel),
-		proxyListeners: make(map[int]*proxyListener),
-		stopCh:         make(chan struct{}),
+		cfg:              serverCfg,
+		logger:           logger,
+		controlListeners: make([]net.Listener, 0, 2),
+		pending:          make(map[string]*pendingTunnel),
+		proxyListeners:   make(map[int]*proxyListener),
+		stopCh:           make(chan struct{}),
 	}
 }
 
@@ -99,16 +111,36 @@ func (s *Server) Start() error {
 	if strings.TrimSpace(s.cfg.AuthKey) == "" {
 		return errors.New("traversal auth_key is required")
 	}
-	if s.cfg.Protocol != "tcp" {
-		return fmt.Errorf("traversal protocol %q is not supported, only tcp is supported", s.cfg.Protocol)
-	}
-
 	controlAddr := net.JoinHostPort(s.cfg.ListenHost, strconv.Itoa(s.cfg.ListenPort))
-	controlLn, err := net.Listen("tcp", controlAddr)
+
+	hasTCP, hasKCP, err := s.parseProtocols()
 	if err != nil {
 		return err
 	}
-	s.listener = controlLn
+
+	var controlListeners []net.Listener
+	if hasTCP {
+		ln, err := listenTCP(controlAddr)
+		if err != nil {
+			return fmt.Errorf("listen tcp %s failed: %w", controlAddr, err)
+		}
+		controlListeners = append(controlListeners, ln)
+	}
+	if hasKCP {
+		ln, err := listenKCP(controlAddr)
+		if err != nil {
+			// 关闭已创建的监听，避免泄露。
+			for _, item := range controlListeners {
+				_ = item.Close()
+			}
+			return fmt.Errorf("listen kcp %s failed: %w", controlAddr, err)
+		}
+		controlListeners = append(controlListeners, ln)
+	}
+	if len(controlListeners) == 0 {
+		return fmt.Errorf("traversal protocol %q is not supported, only tcp, kcp, tcp+kcp are supported", s.cfg.Protocol)
+	}
+	s.controlListeners = controlListeners
 
 	s.logger.Info().
 		Str("control_addr", controlAddr).
@@ -116,9 +148,10 @@ func (s *Server) Start() error {
 		Msg("traversal server started")
 
 	errCh := make(chan error, 1)
-	s.stopWg.Add(1)
-
-	go s.serveControl(errCh)
+	for _, ln := range s.controlListeners {
+		s.stopWg.Add(1)
+		go s.serveControl(ln, errCh)
+	}
 
 	err = <-errCh
 	if err == nil || errors.Is(err, net.ErrClosed) {
@@ -136,11 +169,12 @@ func (s *Server) Stop() error {
 	var stopErr error
 	s.stopMux.Do(func() {
 		close(s.stopCh)
-		if s.listener != nil {
-			if err := s.listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) && stopErr == nil {
+		for _, ln := range s.controlListeners {
+			if err := ln.Close(); err != nil && !errors.Is(err, net.ErrClosed) && stopErr == nil {
 				stopErr = err
 			}
 		}
+		s.controlListeners = nil
 		if err := s.closeProxyListeners(); err != nil && stopErr == nil {
 			stopErr = err
 		}
@@ -156,10 +190,10 @@ func (s *Server) Stop() error {
 	return stopErr
 }
 
-func (s *Server) serveControl(errCh chan<- error) {
+func (s *Server) serveControl(ln net.Listener, errCh chan<- error) {
 	defer s.stopWg.Done()
 	for {
-		conn, err := s.listener.Accept()
+		conn, err := ln.Accept()
 		if err != nil {
 			if s.isStopping() || errors.Is(err, net.ErrClosed) {
 				errCh <- nil
@@ -237,8 +271,9 @@ func (s *Server) handleRegister(conn net.Conn, reader *bufio.Reader, msg Message
 	}
 
 	client := &registeredClient{
-		conn:   conn,
-		writer: bufio.NewWriter(conn),
+		conn:             conn,
+		writer:           bufio.NewWriter(conn),
+		lastSeenUnixNano: time.Now().UnixNano(),
 	}
 
 	s.clientMu.Lock()
@@ -260,8 +295,22 @@ func (s *Server) handleRegister(conn net.Conn, reader *bufio.Reader, msg Message
 		Str("proxy_addr", proxyAddrDesc).
 		Msg("traversal client registered")
 
+	// KCP 控制通道心跳：服务端主动 ping，客户端需回 pong。
+	// 仅对 KCP 控制连接启用（TCP 不需要）。
+	if session, ok := conn.(*kcp.UDPSession); ok {
+		session.SetStreamMode(true)
+		interval := time.Duration(s.cfg.KCP.HeartbeatInterval) * time.Second
+		timeout := time.Duration(s.cfg.KCP.HeartbeatTimeout) * time.Second
+		if interval > 0 && timeout > 0 {
+			done := make(chan struct{})
+			defer close(done)
+			go s.kcpHeartbeatLoop(client, interval, timeout, done)
+		}
+	}
+
 	for {
-		if _, err := ReadMessage(reader); err != nil {
+		m, err := ReadMessage(reader)
+		if err != nil {
 			s.clientMu.Lock()
 			if s.client != nil && s.client.conn == conn {
 				s.client = nil
@@ -270,6 +319,35 @@ func (s *Server) handleRegister(conn net.Conn, reader *bufio.Reader, msg Message
 			s.clientMu.Unlock()
 			_ = conn.Close()
 			s.logger.Info().Str("remote", conn.RemoteAddr().String()).Msg("traversal client disconnected")
+			return
+		}
+		atomic.StoreInt64(&client.lastSeenUnixNano, time.Now().UnixNano())
+
+		switch m.Type {
+		case MessageTypePing:
+			_ = client.send(Message{Type: MessageTypePong})
+		case MessageTypePong:
+		default:
+		}
+	}
+}
+
+func (s *Server) kcpHeartbeatLoop(client *registeredClient, interval, timeout time.Duration, done <-chan struct{}) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			last := time.Unix(0, atomic.LoadInt64(&client.lastSeenUnixNano))
+			if time.Since(last) > timeout {
+				_ = client.conn.Close()
+				return
+			}
+			_ = client.send(Message{Type: MessageTypePing})
+		case <-s.stopCh:
+			return
+		case <-done:
 			return
 		}
 	}
@@ -392,6 +470,35 @@ func closeWrite(conn net.Conn) {
 	if cw, ok := conn.(closeWriter); ok {
 		_ = cw.CloseWrite()
 	}
+}
+
+// parseProtocols 解析并校验控制协议配置。
+// 支持的取值：
+//   - "tcp"      : 仅启用 TCP 控制监听
+//   - "kcp"      : 仅启用 KCP 控制监听
+//   - "tcp+kcp"  : 同时启用 TCP 和 KCP 控制监听
+func (s *Server) parseProtocols() (hasTCP, hasKCP bool, err error) {
+	raw := strings.TrimSpace(s.cfg.Protocol)
+	if raw == "" || raw == "tcp" {
+		return true, false, nil
+	}
+	parts := strings.Split(raw, "+")
+	for _, part := range parts {
+		p := strings.TrimSpace(part)
+		switch p {
+		case "tcp":
+			hasTCP = true
+		case "kcp":
+			hasKCP = true
+		case "":
+		default:
+			return false, false, fmt.Errorf("traversal protocol %q is not supported, only tcp, kcp, tcp+kcp are supported", s.cfg.Protocol)
+		}
+	}
+	if !hasTCP && !hasKCP {
+		return false, false, fmt.Errorf("traversal protocol %q is not supported, only tcp, kcp, tcp+kcp are supported", s.cfg.Protocol)
+	}
+	return hasTCP, hasKCP, nil
 }
 
 func (s *Server) tryCreateProxyListeners(bindings []ProxyServerBinding) ([]*proxyListener, string, error) {

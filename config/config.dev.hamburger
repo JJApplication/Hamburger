@@ -242,7 +242,17 @@
       enabled: true,
       listen_host: "0.0.0.0",
       listen_port: 19090,
+      # 控制通道协议：
+      #   "tcp"     : 仅 TCP（默认）
+      #   "kcp"     : 仅 KCP
+      #   "tcp+kcp" : 同时启用 TCP 与 KCP，便于兼容老客户端并让新客户端走 KCP
       protocol: "tcp",
+      kcp: {
+        # KCP 控制通道心跳（秒）。<=0 关闭心跳。
+        heartbeat_interval: 20,
+        # KCP 控制通道心跳超时（秒）。超过该时间未收到任何控制消息将断开连接。
+        heartbeat_timeout: 60
+      },
       auth_key: "change-me"
     },
     webdav: {

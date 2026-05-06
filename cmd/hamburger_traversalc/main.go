@@ -29,7 +29,7 @@ type clientConfig struct {
 	ServerIP string `json:"server_ip"`
 	// ServerPort 服务端控制端口。
 	ServerPort int `json:"server_port"`
-	// ServerProtocol 服务端协议，当前仅支持 tcp。
+	// ServerProtocol 服务端协议，支持 tcp / kcp，默认 tcp。
 	ServerProtocol string `json:"server_protocol"`
 	// AuthKey 认证密钥。
 	AuthKey string `json:"auth_key"`
@@ -97,7 +97,7 @@ type traversalClient struct {
 
 func (c *traversalClient) run(ctx context.Context) error {
 	addr := net.JoinHostPort(c.cfg.ServerIP, strconv.Itoa(c.cfg.ServerPort))
-	conn, err := net.DialTimeout("tcp", addr, dialTimeout)
+	conn, err := traversal.DialServer(c.cfg.ServerProtocol, addr, dialTimeout)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (c *traversalClient) run(ctx context.Context) error {
 	}
 
 	done := make(chan error, 1)
-	go c.readLoop(reader, done)
+	go c.readLoop(reader, writer, done)
 
 	select {
 	case <-ctx.Done():
@@ -157,27 +157,39 @@ func (c *traversalClient) run(ctx context.Context) error {
 	}
 }
 
-func (c *traversalClient) readLoop(reader *bufio.Reader, done chan<- error) {
+func (c *traversalClient) readLoop(reader *bufio.Reader, writer *bufio.Writer, done chan<- error) {
 	for {
 		msg, err := traversal.ReadMessage(reader)
 		if err != nil {
 			done <- err
 			return
 		}
-		if msg.Type != traversal.MessageTypeOpen || strings.TrimSpace(msg.ConnID) == "" {
-			continue
-		}
-		go func(openMsg traversal.Message) {
-			if tunnelErr := c.handleOpen(openMsg); tunnelErr != nil {
-				log.Printf(
-					"处理隧道失败 conn_id=%s mapping=%s remote_port=%d err=%v",
-					openMsg.ConnID,
-					openMsg.MappingName,
-					openMsg.RemotePort,
-					tunnelErr,
-				)
+		switch msg.Type {
+		case traversal.MessageTypePing:
+			if err = traversal.WriteMessage(writer, traversal.Message{Type: traversal.MessageTypePong}); err == nil {
+				err = writer.Flush()
 			}
-		}(msg)
+			if err != nil {
+				done <- err
+				return
+			}
+		case traversal.MessageTypeOpen:
+			if strings.TrimSpace(msg.ConnID) == "" {
+				continue
+			}
+			go func(openMsg traversal.Message) {
+				if tunnelErr := c.handleOpen(openMsg); tunnelErr != nil {
+					log.Printf(
+						"处理隧道失败 conn_id=%s mapping=%s remote_port=%d err=%v",
+						openMsg.ConnID,
+						openMsg.MappingName,
+						openMsg.RemotePort,
+						tunnelErr,
+					)
+				}
+			}(msg)
+		default:
+		}
 	}
 }
 
@@ -188,7 +200,7 @@ func (c *traversalClient) handleOpen(openMsg traversal.Message) error {
 	}
 
 	serverAddr := net.JoinHostPort(c.cfg.ServerIP, strconv.Itoa(c.cfg.ServerPort))
-	dataConn, err := net.DialTimeout("tcp", serverAddr, dialTimeout)
+	dataConn, err := traversal.DialServer(c.cfg.ServerProtocol, serverAddr, dialTimeout)
 	if err != nil {
 		return err
 	}
@@ -306,8 +318,8 @@ func (c clientConfig) validate() error {
 		return errors.New("server_ip 不能为空")
 	case c.ServerPort <= 0:
 		return errors.New("server_port 必须大于 0")
-	case c.ServerProtocol != "tcp":
-		return errors.New("server_protocol 目前仅支持 tcp")
+	case c.ServerProtocol != "tcp" && c.ServerProtocol != "kcp":
+		return errors.New("server_protocol 目前仅支持 tcp 或 kcp")
 	case c.AuthKey == "":
 		return errors.New("auth_key 不能为空")
 	default:
@@ -318,6 +330,9 @@ func (c clientConfig) validate() error {
 func (c *clientConfig) normalize() {
 	c.ServerIP = strings.TrimSpace(c.ServerIP)
 	c.ServerProtocol = strings.ToLower(strings.TrimSpace(c.ServerProtocol))
+	if c.ServerProtocol == "" {
+		c.ServerProtocol = "tcp"
+	}
 	c.AuthKey = strings.TrimSpace(c.AuthKey)
 	for i := range c.ProxyServers {
 		c.ProxyServers[i].Name = strings.TrimSpace(c.ProxyServers[i].Name)
