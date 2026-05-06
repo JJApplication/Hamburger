@@ -6,31 +6,31 @@ Hamburger 使用结构化配置文件管理运行参数，推荐以主配置为�
 
 | 文件 | 作用 |
 | --- | --- |
-| `config/config.json` | 主配置入口，定义服务端口、中间件、数据库、实验模块等 |
-| `config/frontend.json` | 前端代理与静态站点相关配置 |
-| `config/domains.json` | 域名到前后端服务的映射关系 |
-| `config/trojan.json` | Trojan 实验模块配置入口 |
+| `config/config.hamburger` | 主配置入口，定义服务端口、中间件、数据库、实验模块等 |
+| `config/frontend.hamburger` | 前端代理与静态站点相关配置 |
+| `config/services.hamburger` | 服务列表与域名映射配置 |
+| `config/trojan.hamburger` | Trojan 实验模块配置入口 |
 
-也可以直接使用 `config/config.hamburger` 作为主配置入口，并保持子配置文件继续使用 `json/toml/hamburger`。
+推荐统一使用 `.hamburger` 作为主配置和子配置格式，便于复用环境变量、表达式和字符串插值能力。
 
 ## 主配置关键字段
 
-```json
+```hamburger
 {
-  "pxy_frontend_file": "config/frontend.json",
-  "pxy_backend_file": "config/backend.json",
-  "servers": {
-    "gateway": {
-      "enable_http3": true,
-      "enable_fast_proxy": true
+  pxy_frontend_file: "config/frontend.hamburger",
+  pxy_backend_file: "config/backend.hamburger",
+  servers: {
+    gateway: {
+      enable_http3: true,
+      enable_fast_proxy: true
     }
   },
-  "middleware": {
-    "gateway": {
-      "prehandlers": {
-        "pre_auth": {
-          "enabled": true,
-          "mode": "jwt"
+  middleware: {
+    gateway: {
+      prehandlers: {
+        pre_auth: {
+          enabled: true,
+          mode: "jwt"
         }
       }
     }
@@ -40,10 +40,10 @@ Hamburger 使用结构化配置文件管理运行参数，推荐以主配置为�
 
 ## 配置组织建议
 
-- 按职责拆分：入口配置、前端配置、域名映射、实验配置分离管理
+- 按职责拆分：入口配置、前端配置、服务映射、实验配置分离管理
 - 按环境管理：为开发、测试、生产维护独立配置副本
 - 先校验后启动：上线前使用 `test` 子命令验证配置有效性
-- 保持一致性：域名映射与服务端口配置同步更新
+- 保持一致性：`services.hamburger` 中的域名声明与服务端口配置同步更新
 
 ## 注意事项
 
@@ -170,38 +170,139 @@ FEATURE_ENABLED=true
 }
 ```
 
-## 自定义服务
+## 服务映射配置
 
-`domains.json` 支持配置 `service_type: "custom"` 的自定义服务，用于在同一个服务下组合 API 转发与静态文件代理能力。
+`service_map.go` 当前使用的是 v2 版本服务映射模型，配置文件已从 `domains.hamburger` 升级为 `services.hamburger`。
 
-参考 `config/domains.json` 中 `BlogNext`（类型为 `custom`）配置：
+### v1：`domains.hamburger` 配置示例
 
-```json
+v1 版本使用 `domain_service + services` 两段式结构：前者负责域名到服务名的映射，后者负责服务类型和扩展参数。
+
+```hamburger
 {
-  "service_name": "BlogNext",
-  "service_type": "custom",
-  "host": "127.0.0.1",
-  "port": 3000,
-  "proxy_pass": [
+  domain_service: [
     {
-      "api": "/api",
-      "service": "Blog",
-      "use_rewrite": false
+      domain: "blog.renj.io",
+      service: "BlogNext"
     },
     {
-      "api": "/images",
-      "static_direct": {
-        "static_root": "/renj.io/app/Blog/images"
-      }
+      domain: "gallery.renj.io",
+      service: "Palace"
+    },
+    {
+      domain: "archive.renj.io",
+      service: "Archive"
+    }
+  ],
+  services: [
+    {
+      host: "127.0.0.1",
+      port: 3000,
+      proxy_pass: [
+        {
+          api: "/api",
+          service: "RustBlog",
+          use_rewrite: false
+        },
+        {
+          api: "/images",
+          static_direct: {
+            static_root: "/renj.io/app/Blog/images"
+          }
+        }
+      ],
+      service_name: "BlogNext",
+      service_type: "custom"
+    },
+    {
+      service_name: "Palace",
+      service_type: "frontend"
+    },
+    {
+      service_name: "Archive",
+      service_type: "frontend"
+    },
+    {
+      service_name: "RustBlog",
+      service_type: "backend"
     }
   ]
 }
 ```
 
+### v2：`services.hamburger` 配置示例
+
+v2 版本将域名配置合并进单个服务项，统一通过 `service_domain` 描述域名或正则表达式，配置结构更直接。
+
+```hamburger
+{
+  services: [
+    {
+      service_name: "BlogNext",
+      service_type: "custom",
+      service_domain: "blog.renj.io",
+      host: "127.0.0.1",
+      port: 3000,
+      proxy_pass: [
+        {
+          api: "/api",
+          service: "RustBlog",
+          use_rewrite: false
+        },
+        {
+          api: "/images",
+          static_direct: {
+            static_root: "/renj.io/app/Blog/images"
+          }
+        }
+      ]
+    },
+    {
+      service_name: "Palace",
+      service_type: "frontend",
+      service_domain: "/(life|gallery).renj.io/"
+    },
+    {
+      service_name: "Archive",
+      service_type: "frontend",
+      service_domain: "/(^v1|archive).renj.io/"
+    },
+    {
+      service_name: "RustBlog",
+      service_type: "backend"
+    }
+  ]
+}
+```
+
+### 从 v1 迁移到 v2
+
+核心变化是将“域名映射”从独立数组合并到服务定义本身：
+
+| v1 字段 | v2 字段 | 迁移说明 |
+| --- | --- | --- |
+| `domain_service[].domain` | `services[].service_domain` | 将域名直接写入对应服务项 |
+| `domain_service[].service` | `services[].service_name` | 继续通过服务名关联，但不再单独维护映射表 |
+| `services[].service_type` | `services[].service_type` | 保持不变 |
+| `services[].host/port/proxy_pass` | `services[].host/port/proxy_pass` | 自定义服务扩展参数保持不变 |
+
+推荐按以下步骤迁移：
+
+1. 以 `domain_service[].service` 为键，对照找到 `services[]` 中对应的服务定义。
+2. 将 `domain_service[].domain` 写入该服务的 `service_domain` 字段。
+3. 删除旧的 `domain_service` 数组，仅保留统一的 `services` 数组。
+4. 如果一个服务需要响应多个域名，可改为正则表达式形式，例如 `/(life|gallery).renj.io/`。
+5. 纯后端内部服务如果不直接对外暴露域名，可以继续不填写 `service_domain`。
+
+### 自定义服务
+
+`service_type: "custom"` 仍用于在同一个服务下组合 API 转发与静态文件代理能力，v2 只是把域名入口从独立映射改为 `service_domain` 内联配置。
+
 ### 核心行为
 
 - `proxy_pass`：按 `api` 前缀匹配请求并转发；默认转发到 `service` 对应服务的端口
 - `static_direct`：当该配置不为空时，表示静态文件代理，行为类似 nginx 的 `alias`
+- `service_domain`：支持直接域名和正则表达式，同一域名仍然只能映射一个服务
 - 路径映射：会将 `api` 后的请求路径拼接到 `static_root`，并转发到本地路径
 
 例如：
