@@ -115,6 +115,25 @@
         "font/otf"
       ],
       threshold: 2048
+    },
+    zstd: {
+      enabled: true,
+      level: 6,
+      types: [
+        "text/html",
+        "text/css",
+        "text/javascript",
+        "text/plain",
+        "text/xml",
+        "application/javascript",
+        "application/xml",
+        "application/json",
+        "font/ttf",
+        "font/woff",
+        "font/woff2",
+        "font/otf"
+      ],
+      threshold: 2048
     }
   },
 
