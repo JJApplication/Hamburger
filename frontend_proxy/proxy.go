@@ -173,6 +173,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *frontproxy_co
 	server.logger.Info().
 		Str("original_path", c.Request.URL.Path).
 		Str("target_url", targetURL.String()).
-		Str("backend_service", backend.Service).Int("status_code", resp.StatusCode).
+		Str("backend_service", backend.Service).
+		Int("status_code", resp.StatusCode).
 		Msg("backend proxy request")
 }

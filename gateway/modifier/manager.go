@@ -58,6 +58,7 @@ func InitModifiers() {
 	mm.RegisterModifier(NewNoCache())
 	// custom header
 	mm.RegisterModifier(NewCustomHeaderModifier())
+	mm.RegisterModifier(NewZstdModifier())
 	// 应用gzip压缩中间件
 	mm.RegisterModifier(NewGzipModifier())
 	// 应用cors
@@ -137,6 +138,9 @@ func (mm *ModifierManager) GetStatus() map[string]interface{} {
 		// 添加特定修改器的详细信息
 		switch m := modifier.(type) {
 		case *GzipModifier:
+			modifierInfo["level"] = m.GetLevel()
+			modifierInfo["types"] = m.GetTypes()
+		case *ZstdModifier:
 			modifierInfo["level"] = m.GetLevel()
 			modifierInfo["types"] = m.GetTypes()
 		case *CustomHeaderModifier:

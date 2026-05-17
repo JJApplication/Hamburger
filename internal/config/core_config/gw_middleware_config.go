@@ -8,6 +8,13 @@ type GzipConfig struct {
 	Threshold int      `yaml:"threshold" json:"threshold"` // 开启压缩的阈值
 }
 
+type ZstdConfig struct {
+	Enabled   bool     `yaml:"enabled" json:"enabled"`
+	Level     int      `yaml:"level" json:"level"`
+	Types     []string `yaml:"types" json:"types"`
+	Threshold int      `yaml:"threshold" json:"threshold"`
+}
+
 type TraceConfig struct {
 	Enabled bool   `yaml:"enabled" json:"enabled"`
 	TraceId string `yaml:"trace_id" json:"trace_id"`

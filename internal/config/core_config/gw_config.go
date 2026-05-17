@@ -86,6 +86,7 @@ type DomainConfig struct {
 // MiddlewareConfig 中间件配置结构体
 type MiddlewareConfig struct {
 	Gzip         GzipConfig   `yaml:"gzip" json:"gzip"` // Gzip压缩配置
+	Zstd         ZstdConfig   `yaml:"zstd" json:"zstd"`
 	NoCache      bool         `yaml:"no_cache" json:"no_cache"`
 	SecureHeader bool         `yaml:"secure_header" json:"secure_header"` // 安全响应头
 	Trace        TraceConfig  `yaml:"trace" json:"trace"`                 // 请求跟踪

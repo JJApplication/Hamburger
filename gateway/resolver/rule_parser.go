@@ -52,6 +52,7 @@ func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
 	rules := make(map[string][]Rule)
 	// 转换为域名的规则映射
 	for _, server := range apiServers {
+		// domain为字符串匹配或正则匹配
 		domain, ok := runtime.DomainsRuntimeMap.DomainFrontMap.Get(server.Name)
 		if !ok {
 			continue
@@ -97,8 +98,15 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 				ProxyError: errDomainsMapEmpty,
 			}
 		}
+		var rules []Rule
 		r.rwLock.RLock()
-		rules := r.apiRules[host]
+		// 判断域名是否匹配正则
+		for pattern, rs := range r.apiRules {
+			if utils.MatchDomainByRegex(pattern, host) {
+				rules = rs
+			}
+		}
+
 		r.rwLock.RUnlock()
 
 		serviceType, _ := runtime.DomainsRuntimeMap.ServiceMap.Get(serviceMap.ServiceName)

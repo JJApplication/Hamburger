@@ -96,6 +96,12 @@ func GetDefaultConfig() *AppConfig {
 				Level:   6,
 				Types:   []string{"text/html", "text/css", "text/javascript", "application/json"},
 			},
+			Zstd: core_config.ZstdConfig{
+				Enabled:   false,
+				Level:     3,
+				Types:     []string{"text/html", "text/css", "text/javascript", "application/json"},
+				Threshold: 1024,
+			},
 			FailResponse: core_config.FailResponse{
 				Enabled: false,
 				Code:    []int{500},

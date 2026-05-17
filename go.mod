@@ -49,6 +49,7 @@ require (
 	github.com/cskr/pubsub v1.0.2
 	github.com/emersion/go-imap v1.2.1
 	github.com/joho/godotenv v1.5.1
+	github.com/klauspost/compress v1.18.2
 	github.com/miekg/dns v1.1.51
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/xtaci/kcp-go/v5 v5.6.72
@@ -83,7 +84,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/reedsolomon v1.12.0 // indirect
 	github.com/kr/text v0.2.0 // indirect

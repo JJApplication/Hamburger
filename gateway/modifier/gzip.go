@@ -69,8 +69,8 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 		return nil
 	}
 
-	// 检查客户端是否支持gzip
-	if !g.clientSupportsGzip(response.Request) {
+	best := bestCompressionEncoding(response.Request, g.enabled, loader.Get().Middleware.Zstd.Enabled)
+	if best != "gzip" {
 		return nil
 	}
 
