@@ -368,6 +368,15 @@
       try_file: "index.html",
       access: false,
       compress: false
-    }
+    },
+    {
+      type: "WebServer",
+      name: "ImageToolkit",
+      root: "/renj.io/app/ImageToolkit",
+      index: "index.html",
+      try_file: "index.html",
+      access: false,
+      compress: false
+    }    
   ]
 }

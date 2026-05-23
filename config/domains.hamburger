@@ -139,7 +139,11 @@
     {
       domain: "archive.renj.io",
       service: "Archive"
-    }
+    },
+    {
+      domain: "toolkit.renj.io",
+      service: "ImageToolkit"
+    }   
   ],
   services: [
     {
@@ -312,6 +316,10 @@
     {
       service_name: "Archive",
       service_type: "frontend"
-    }
+    },
+    {
+      service_name: "ImageToolkit",
+      service_type: "frontend"
+    }    
   ]
 }

@@ -204,6 +204,11 @@
       service_name: "Archive",
       service_type: "frontend",
       service_domain: "/(^v1|archive).renj.io/"
-    }
+    },
+    {
+      service_name: "ImageToolkit",
+      service_type: "frontend",
+      service_domain: "toolkit.renj.io"
+    }    
   ]
 }
