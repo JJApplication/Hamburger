@@ -1,12 +1,15 @@
 package runtime
 
 import (
+	"net"
+	"strings"
+	"sync"
+
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/structure"
 	"Hamburger/internal/utils"
-	"sync"
 )
 
 var (
@@ -121,6 +124,10 @@ func GetDomainsSnapshot() ([]string, map[string]string, map[string]string) {
 }
 
 func GetDomain2Service(host string) (config.Service, bool) {
+	host = NormalizeRequestHost(host)
+	if DomainsRuntimeMap.DomainsMap == nil || DomainsRuntimeMap.ServiceMap == nil {
+		return config.Service{}, false
+	}
 	if domainMap, ok := DomainsRuntimeMap.DomainsMap.Get(host); ok {
 		return domainMap, true
 	}
@@ -134,5 +141,34 @@ func GetDomain2Service(host string) (config.Service, bool) {
 		}
 	}
 
+	return config.Service{}, false
+}
+
+// NormalizeRequestHost 去掉 Host 头中的端口，便于与 service_domain 匹配。
+func NormalizeRequestHost(host string) string {
+	host = strings.TrimSpace(host)
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		return strings.Trim(h, "[]")
+	}
+	if strings.Count(host, ":") == 1 && !strings.Contains(host, "]") {
+		if idx := strings.LastIndex(host, ":"); idx > 0 {
+			return host[:idx]
+		}
+	}
+	return strings.Trim(host, "[]")
+}
+
+// FindPrecheckEnabledService 返回第一个开启前置检查的服务（用于按 IP 直接访问 challenge 路径等调试场景）。
+func FindPrecheckEnabledService() (config.Service, bool) {
+	DomainLock.RLock()
+	defer DomainLock.RUnlock()
+	if DomainsRuntimeMap.ServiceMap == nil {
+		return config.Service{}, false
+	}
+	for _, service := range DomainsRuntimeMap.ServiceMap.Values() {
+		if service.PreCheck.Enabled {
+			return service, true
+		}
+	}
 	return config.Service{}, false
 }

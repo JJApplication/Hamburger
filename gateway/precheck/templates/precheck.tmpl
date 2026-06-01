@@ -1,0 +1,167 @@
+{{ define "precheck" }}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>安全检查</title>
+  <style>
+.wrap {
+  max-width: 720px;
+  margin: 8vh auto;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  color: #111827;
+}
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+}
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px 0;
+}
+.title {
+  font-size: 18px;
+  font-weight: 650;
+  margin: 0;
+}
+.guard-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #9ca3af;
+  margin: 0 0 14px 0;
+}
+.guard-desc a {
+  color: #6b7280;
+  text-decoration: underline;
+}
+.desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0 0 16px 0;
+}
+.meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 12px;
+  word-break: break-all;
+}
+.btn {
+  display: inline-block;
+  background: #111827;
+  color: #ffffff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 10px;
+}
+.spinner {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #111827;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.spinner.hidden {
+  display: none;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="title-row">
+        <div class="spinner" id="loading" aria-hidden="true"></div>
+        <h1 class="title">正在进行安全检查</h1>
+      </div>
+      <p class="guard-desc">此站点正在使用Hamburger Guard进行访问保护。详情请见<a href="http://hamburger.renj.io">Use Hamburger Guard</a></p>
+      <p class="desc">
+        我们需要确认你的访问不是自动化请求。检查通过后会自动跳转回原页面。
+      </p>
+
+      <form id="f" method="post" action="{{ .VerifyPath }}">
+        <input type="hidden" name="u" id="returnURL" value="{{ .ReturnURL }}" />
+        <button id="btn" class="btn" type="submit" disabled>继续访问</button>
+      </form>
+
+      <div class="hint" id="hint">页面加载后将自动完成检查。</div>
+      <div class="meta">请求ID：{{ .RequestID }}</div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var form = document.getElementById('f');
+    var btn = document.getElementById('btn');
+    var hint = document.getElementById('hint');
+    var loading = document.getElementById('loading');
+    var returnInput = document.getElementById('returnURL');
+    if (!form || !returnInput) return;
+
+    var returnURL = returnInput.value || '/';
+    var minDelayMs = 2500;
+    var startedAt = Date.now();
+
+    function hideLoading() {
+      if (loading) loading.classList.add('hidden');
+    }
+
+    function runVerify() {
+      if (hint) hint.textContent = '正在完成检查...';
+      fetch(form.action, {
+        method: 'POST',
+        redirect: 'manual',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'u=' + encodeURIComponent(returnURL)
+      }).then(function(resp){
+        hideLoading();
+        if (resp.status >= 300 && resp.status < 400) {
+          var loc = resp.headers.get('Location');
+          if (loc) {
+            window.location.href = loc;
+            return;
+          }
+        }
+        if (resp.redirected && resp.url) {
+          window.location.href = resp.url;
+          return;
+        }
+        window.location.href = returnURL;
+      }).catch(function(){
+        hideLoading();
+        if (btn) btn.disabled = false;
+        if (hint) hint.textContent = '自动检查失败，请点击「继续访问」。';
+      });
+    }
+
+    var elapsed = Date.now() - startedAt;
+    var wait = Math.max(0, minDelayMs - elapsed);
+    setTimeout(runVerify, wait);
+  })();
+  </script>
+</body>
+</html>
+{{ end }}

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"Hamburger/gateway/precheck"
 	"Hamburger/gateway/tls"
 	"Hamburger/internal/logger"
 	"Hamburger/internal/utils"
@@ -74,7 +75,11 @@ func wrapHandlerWithMaxBody(h http.Handler, logger *zerolog.Logger, serverConfig
 func wrapHandlerWithAutoHttpsRedirect(h http.Handler, logger *zerolog.Logger, serverConfig core_config.ServerConfig) http.Handler {
 	logger.Debug().Msgf("server %s auto https redirect", serverConfig.Name)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 内部请求不需要判断重定向
+		// challenge 页面必须在当前 HTTP 监听上处理，不能先被 301 到 HTTPS（内层 precheck 尚未执行）。
+		if precheck.ShouldBypassHTTPRedirect(r) {
+			h.ServeHTTP(w, r)
+			return
+		}
 
 		// 检查是否需要自动重定向HTTP到HTTPS
 		if serverConfig.Protocol == "http" {

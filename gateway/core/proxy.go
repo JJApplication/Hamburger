@@ -1,6 +1,7 @@
 package core
 
 import (
+	"Hamburger/gateway/precheck"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
 	"github.com/rs/zerolog"
@@ -42,5 +43,6 @@ func (p *Proxy) Create() http.Handler {
 }
 
 func (p *Proxy) proxy() http.Handler {
-	return p.GlobalStaticAlias(p.handler)
+	base := p.GlobalStaticAlias(p.handler)
+	return precheck.NewRouter(base).Handler()
 }

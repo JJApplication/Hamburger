@@ -21,11 +21,21 @@ type Service struct {
 	ServiceName   string `yaml:"service_name" json:"service_name"`
 	ServiceType   string `yaml:"service_type" json:"service_type"`     // 前端 后端 自定义
 	ServiceDomain string `yaml:"service_domain" json:"service_domain"` // 正则表达式或直接域名配置
+	PreCheck      PreCheckConfig `yaml:"pre_check" json:"pre_check"`   // 前置检查（类似 Cloudflare challenge）
 	// 自定义服务需要的扩展参数
 	ServiceRoot string         `yaml:"service_root" json:"service_root"`
 	Host        string         `yaml:"host" json:"host"`
 	Port        int            `yaml:"port" json:"port"`
 	ProxyPass   []ServiceProxy `yaml:"proxy_pass" json:"proxy_pass"` // 代理转发
+}
+
+type PreCheckConfig struct {
+	Enabled       bool     `yaml:"enabled" json:"enabled"`
+	TTLSeconds    int64    `yaml:"ttl_seconds" json:"ttl_seconds"`         // 通过后免检时长（秒）
+	CacheMaxMB    int      `yaml:"cache_max_mb" json:"cache_max_mb"`       // bigcache 最大内存（MB）
+	PathPrefix    string   `yaml:"path_prefix" json:"path_prefix"`         // challenge 路由前缀，如 /__precheck
+	ExcludePaths  []string `yaml:"exclude_paths" json:"exclude_paths"`     // 不走前置检查的路径前缀
+	VerifyTimeout int64    `yaml:"verify_timeout" json:"verify_timeout"`   // 校验流程超时（秒），用于页面提示/重试（可选）
 }
 
 type ServiceProxy struct {
