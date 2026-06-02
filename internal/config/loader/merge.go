@@ -27,6 +27,7 @@ func Merge(appConfig *config.AppConfig) *config.Config {
 		Module:          appConfig.Module,
 		Stat:            appConfig.Stat,
 		CustomHeader:    appConfig.CustomHeader,
+		GlobalPreCheck:  appConfig.GlobalPreCheck,
 		Plugin:          appConfig.Plugin,
 		Lua:             appConfig.Lua,
 		Syncer:          appConfig.Syncer,

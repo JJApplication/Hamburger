@@ -26,6 +26,7 @@ type Config struct {
 	Stat               svr_config.StatConfig             `yaml:"stat" json:"stat"`                           // 状态统计配置
 	Latency            svr_config.LatencyConfig          `yaml:"latency" json:"latency"`                     // 延迟统计配置
 	CustomHeader       map[string]string                 `yaml:"custom_header" json:"custom_header"`         // 自定义Header
+	GlobalPreCheck     PreCheckConfig                    `yaml:"pre_check" json:"pre_check"`                // 全局前置检查配置（服务级可继承）
 	Plugin             PluginConfig                      `yaml:"plugin" json:"plugin"`                       // 插件配置
 	Lua                svr_config.LuaConfig              `yaml:"lua" json:"lua"`                             // Lua脚本配置
 	Syncer             Syncer                            `yaml:"syncer" json:"syncer"`                       // 定时器时间

@@ -3,12 +3,43 @@ package precheck
 import (
 	"Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/structure"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+func TestEffectivePrecheckConfig_GlobalFallback(t *testing.T) {
+	loader.Set(&config.Config{
+		GlobalPreCheck: config.PreCheckConfig{
+			TTLSeconds:       123,
+			CacheMaxMB:       77,
+			PathPrefix:       "/__guard",
+			ExcludePaths:     []string{"/health"},
+			ExcludeExtensions: []string{".jpg"},
+			VerifyTimeout:    9,
+		},
+	})
+
+	pc := effectivePreCheckConfig(config.PreCheckConfig{Enabled: true})
+	if !pc.Enabled {
+		t.Fatal("expected enabled")
+	}
+	if pc.TTLSeconds != 123 || pc.CacheMaxMB != 77 || pc.PathPrefix != "/__guard" {
+		t.Fatalf("unexpected merged config: %+v", pc)
+	}
+	if len(pc.ExcludePaths) != 1 || pc.ExcludePaths[0] != "/health" {
+		t.Fatalf("unexpected exclude paths: %+v", pc.ExcludePaths)
+	}
+	if len(pc.ExcludeExtensions) != 1 || pc.ExcludeExtensions[0] != ".jpg" {
+		t.Fatalf("unexpected exclude extensions: %+v", pc.ExcludeExtensions)
+	}
+	if pc.VerifyTimeout != 9 {
+		t.Fatalf("unexpected verify timeout: %d", pc.VerifyTimeout)
+	}
+}
 
 func TestShouldSkipPrecheck(t *testing.T) {
 	pc := config.PreCheckConfig{
@@ -51,6 +82,7 @@ func TestSanitizeReturnURL(t *testing.T) {
 }
 
 func TestPrecheck_PageRendersWithIPFallback(t *testing.T) {
+	loader.Set(&config.Config{})
 	runtime.DomainLock.Lock()
 	runtime.DomainsRuntimeMap.ServiceMap = structure.NewMap[config.Service]()
 	runtime.DomainsRuntimeMap.DomainsMap = structure.NewMap[config.Service]()
@@ -66,7 +98,8 @@ func TestPrecheck_PageRendersWithIPFallback(t *testing.T) {
 	})
 	h := NewRouter(next).Handler()
 
-	req := httptest.NewRequest(http.MethodGet, "/__precheck?u=https://evil.com", nil)
+	pc := effectivePreCheckConfig(config.PreCheckConfig{Enabled: true})
+	req := httptest.NewRequest(http.MethodGet, pc.PathPrefix+"?u=https://evil.com", nil)
 	req.Host = "192.168.1.1:88"
 	req.RemoteAddr = "127.0.0.1:12345"
 	rr := httptest.NewRecorder()

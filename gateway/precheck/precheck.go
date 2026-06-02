@@ -14,6 +14,7 @@ import (
 	"Hamburger/gateway/precheck_cache"
 	"Hamburger/gateway/runtime"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 )
 
 const (
@@ -208,16 +209,85 @@ func sanitizeReturnURL(returnURL string) string {
 func resolveServiceForRequest(req *http.Request) (config.Service, config.PreCheckConfig, bool) {
 	host := runtime.NormalizeRequestHost(req.Host)
 	if svc, ok := runtime.GetDomain2Service(host); ok {
-		pc := normalizePreCheckConfig(svc.PreCheck)
+		pc := effectivePreCheckConfig(svc.PreCheck)
 		return svc, pc, true
 	}
 	if svc, ok := runtime.FindPrecheckEnabledService(); ok {
-		pc := normalizePreCheckConfig(svc.PreCheck)
+		pc := effectivePreCheckConfig(svc.PreCheck)
 		if strings.HasPrefix(req.URL.Path, pc.PathPrefix) {
 			return svc, pc, true
 		}
 	}
 	return config.Service{}, config.PreCheckConfig{}, false
+}
+
+// effectivePreCheckConfig 将“全局 pre_check”与“服务 pre_check”做继承合并：
+// - 服务未开启 enabled：直接返回规范化后的服务配置（上层会判断 enabled）
+// - 若存在全局配置：服务启用且未显式配置其它字段时，优先使用全局配置
+// - 若服务显式配置了部分字段，则在全局基础上覆盖这些字段
+func effectivePreCheckConfig(servicePC config.PreCheckConfig) config.PreCheckConfig {
+	// 先把服务自身最基本的默认补齐（便于判空/判未配置）
+	servicePC = normalizePreCheckConfig(servicePC)
+
+	cfg := loader.Get()
+	if cfg == nil {
+		return servicePC
+	}
+	globalPC := cfg.GlobalPreCheck
+	if isZeroPrecheckConfigExceptEnabled(globalPC) {
+		// 没有全局配置
+		return servicePC
+	}
+	// 全局也走规范化（补齐 PathPrefix/TTL/CacheMaxMB/数组归一化等）
+	globalPC = normalizePreCheckConfig(globalPC)
+
+	// 仅当服务开启时才继承全局（避免全局误开启）
+	if !servicePC.Enabled {
+		return servicePC
+	}
+
+	// 若服务除 Enabled 外完全未配置，则直接用全局（Enabled 保持 true）
+	if isZeroPrecheckConfigExceptEnabled(servicePC) {
+		globalPC.Enabled = true
+		return globalPC
+	}
+
+	// 否则：全局为底，服务显式字段覆盖
+	out := globalPC
+	out.Enabled = true
+
+	// PathPrefix
+	if strings.TrimSpace(servicePC.PathPrefix) != "" && servicePC.PathPrefix != defaultPathPrefix {
+		out.PathPrefix = servicePC.PathPrefix
+	}
+	// TTLSeconds/CacheMaxMB/VerifyTimeout：非零覆盖
+	if servicePC.TTLSeconds != defaultTTLSeconds && servicePC.TTLSeconds > 0 {
+		out.TTLSeconds = servicePC.TTLSeconds
+	}
+	if servicePC.CacheMaxMB != defaultCacheMaxMB && servicePC.CacheMaxMB > 0 {
+		out.CacheMaxMB = servicePC.CacheMaxMB
+	}
+	if servicePC.VerifyTimeout > 0 {
+		out.VerifyTimeout = servicePC.VerifyTimeout
+	}
+	// ExcludePaths / ExcludeExtensions：只要服务有配置（len>0）就覆盖
+	if len(servicePC.ExcludePaths) > 0 {
+		out.ExcludePaths = servicePC.ExcludePaths
+	}
+	if len(servicePC.ExcludeExtensions) > 0 {
+		out.ExcludeExtensions = servicePC.ExcludeExtensions
+		out.ExcludeExtensions = normalizeExcludeExtensions(out.ExcludeExtensions)
+	}
+	return normalizePreCheckConfig(out)
+}
+
+func isZeroPrecheckConfigExceptEnabled(pc config.PreCheckConfig) bool {
+	return pc.TTLSeconds == 0 &&
+		pc.CacheMaxMB == 0 &&
+		strings.TrimSpace(pc.PathPrefix) == "" &&
+		pc.VerifyTimeout == 0 &&
+		len(pc.ExcludePaths) == 0 &&
+		len(pc.ExcludeExtensions) == 0
 }
 
 func normalizePreCheckConfig(pc config.PreCheckConfig) config.PreCheckConfig {
