@@ -10,6 +10,30 @@ import (
 	"testing"
 )
 
+func TestShouldSkipPrecheck(t *testing.T) {
+	pc := config.PreCheckConfig{
+		ExcludePaths:      []string{"/health", "/api/public"},
+		ExcludeExtensions: []string{".jpg", "png", ".webp"},
+	}
+	pc = normalizePreCheckConfig(pc)
+
+	if !shouldSkipPrecheck("/health", pc) {
+		t.Fatal("expected /health skipped")
+	}
+	if !shouldSkipPrecheck("/api/public/foo", pc) {
+		t.Fatal("expected /api/public/foo skipped")
+	}
+	if !shouldSkipPrecheck("/static/a.jpg", pc) {
+		t.Fatal("expected .jpg skipped")
+	}
+	if !shouldSkipPrecheck("/static/a.PNG", pc) {
+		t.Fatal("expected .png skipped")
+	}
+	if shouldSkipPrecheck("/index.html", pc) {
+		t.Fatal("html should not be skipped")
+	}
+}
+
 func TestSanitizeReturnURL(t *testing.T) {
 	if got := sanitizeReturnURL("https://evil.com"); got != "/" {
 		t.Fatalf("got %q want /", got)

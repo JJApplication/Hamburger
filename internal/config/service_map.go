@@ -34,8 +34,9 @@ type PreCheckConfig struct {
 	TTLSeconds    int64    `yaml:"ttl_seconds" json:"ttl_seconds"`         // 通过后免检时长（秒）
 	CacheMaxMB    int      `yaml:"cache_max_mb" json:"cache_max_mb"`       // bigcache 最大内存（MB）
 	PathPrefix    string   `yaml:"path_prefix" json:"path_prefix"`         // challenge 路由前缀，如 /__precheck
-	ExcludePaths  []string `yaml:"exclude_paths" json:"exclude_paths"`     // 不走前置检查的路径前缀
-	VerifyTimeout int64    `yaml:"verify_timeout" json:"verify_timeout"`   // 校验流程超时（秒），用于页面提示/重试（可选）
+	ExcludePaths       []string `yaml:"exclude_paths" json:"exclude_paths"`             // 不走前置检查的路径前缀
+	ExcludeExtensions  []string `yaml:"exclude_extensions" json:"exclude_extensions"`   // 不走前置检查的文件后缀，如 .jpg .png
+	VerifyTimeout      int64    `yaml:"verify_timeout" json:"verify_timeout"`           // 校验流程超时（秒），用于页面提示/重试（可选）
 }
 
 type ServiceProxy struct {

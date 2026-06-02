@@ -86,7 +86,7 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if hasExcludedPrefix(req.URL.Path, pc.ExcludePaths) {
+	if shouldSkipPrecheck(req.URL.Path, pc) {
 		r.next.ServeHTTP(w, req)
 		return
 	}
@@ -239,7 +239,16 @@ func normalizePreCheckConfig(pc config.PreCheckConfig) config.PreCheckConfig {
 	if pc.ExcludePaths == nil {
 		pc.ExcludePaths = []string{}
 	}
+	if pc.ExcludeExtensions == nil {
+		pc.ExcludeExtensions = []string{}
+	}
+	pc.ExcludeExtensions = normalizeExcludeExtensions(pc.ExcludeExtensions)
 	return pc
+}
+
+func shouldSkipPrecheck(requestPath string, pc config.PreCheckConfig) bool {
+	return hasExcludedPrefix(requestPath, pc.ExcludePaths) ||
+		hasExcludedExtension(requestPath, pc.ExcludeExtensions)
 }
 
 func hasExcludedPrefix(path string, prefixes []string) bool {
@@ -252,6 +261,42 @@ func hasExcludedPrefix(path string, prefixes []string) bool {
 			p = "/" + p
 		}
 		if strings.HasPrefix(path, p) {
+			return true
+		}
+	}
+	return false
+}
+
+func normalizeExcludeExtensions(exts []string) []string {
+	out := make([]string, 0, len(exts))
+	seen := make(map[string]struct{}, len(exts))
+	for _, ext := range exts {
+		ext = strings.ToLower(strings.TrimSpace(ext))
+		if ext == "" {
+			continue
+		}
+		if !strings.HasPrefix(ext, ".") {
+			ext = "." + ext
+		}
+		if _, ok := seen[ext]; ok {
+			continue
+		}
+		seen[ext] = struct{}{}
+		out = append(out, ext)
+	}
+	return out
+}
+
+func hasExcludedExtension(requestPath string, exts []string) bool {
+	if len(exts) == 0 {
+		return false
+	}
+	ext := strings.ToLower(path.Ext(path.Base(requestPath)))
+	if ext == "" {
+		return false
+	}
+	for _, allowed := range exts {
+		if ext == allowed {
 			return true
 		}
 	}
