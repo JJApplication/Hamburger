@@ -116,3 +116,36 @@ func TestPrecheck_PageRendersWithIPFallback(t *testing.T) {
 		t.Fatalf("absolute return url should be sanitized")
 	}
 }
+
+func TestClientIdentityKey_StripsRemotePort(t *testing.T) {
+	req1 := httptest.NewRequest(http.MethodGet, "/", nil)
+	req1.RemoteAddr = "127.0.0.1:12345"
+	req2 := httptest.NewRequest(http.MethodGet, "/", nil)
+	req2.RemoteAddr = "127.0.0.1:54321"
+
+	key1 := clientIdentityKey(req1)
+	key2 := clientIdentityKey(req2)
+	if key1 != "127.0.0.1" {
+		t.Fatalf("key1=%q want 127.0.0.1", key1)
+	}
+	if key2 != "127.0.0.1" {
+		t.Fatalf("key2=%q want 127.0.0.1", key2)
+	}
+
+	id1 := makeRequestID("svc", key1)
+	id2 := makeRequestID("svc", key2)
+	if id1 != id2 {
+		t.Fatalf("request ids should match for same ip with different ports: %q vs %q", id1, id2)
+	}
+}
+
+func TestClientIdentityKey_PrefersForwardedHeaders(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-For", "203.0.113.10, 10.0.0.1")
+	req.Header.Set("X-Real-IP", "198.51.100.2")
+	req.RemoteAddr = "127.0.0.1:12345"
+
+	if got := clientIdentityKey(req); got != "203.0.113.10" {
+		t.Fatalf("got %q want 203.0.113.10", got)
+	}
+}

@@ -92,7 +92,7 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	remoteKey := normalizedRemoteKey(req.RemoteAddr)
+	remoteKey := clientIdentityKey(req)
 	requestID := makeRequestID(svc.ServiceName, remoteKey)
 
 	cache, cacheErr := r.cacheMgr.GetOrCreate(
@@ -128,7 +128,7 @@ func (r *Router) handlePrecheck(w http.ResponseWriter, req *http.Request, svc co
 func (r *Router) handlePrecheckPage(w http.ResponseWriter, req *http.Request, svc config.Service, pc config.PreCheckConfig) {
 	returnURL := sanitizeReturnURL(req.URL.Query().Get("u"))
 
-	remoteKey := normalizedRemoteKey(req.RemoteAddr)
+	remoteKey := clientIdentityKey(req)
 	requestID := makeRequestID(svc.ServiceName, remoteKey)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -157,7 +157,7 @@ func (r *Router) handleVerify(w http.ResponseWriter, req *http.Request, svc conf
 
 	returnURL := sanitizeReturnURL(strings.TrimSpace(req.FormValue("u")))
 
-	remoteKey := normalizedRemoteKey(req.RemoteAddr)
+	remoteKey := clientIdentityKey(req)
 	requestID := makeRequestID(svc.ServiceName, remoteKey)
 
 	cache, err := r.cacheMgr.GetOrCreate(
@@ -375,9 +375,9 @@ func hasExcludedExtension(requestPath string, exts []string) bool {
 
 func normalizedRemoteKey(remoteAddr string) string {
 	remoteAddr = strings.TrimSpace(remoteAddr)
-	host, port, err := net.SplitHostPort(remoteAddr)
-	if err == nil && host != "" && port != "" {
-		return host + ":" + port
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err == nil && host != "" {
+		return host
 	}
 	return remoteAddr
 }
@@ -385,4 +385,25 @@ func normalizedRemoteKey(remoteAddr string) string {
 func makeRequestID(serviceName, remoteKey string) string {
 	sum := sha256.Sum256([]byte(serviceName + "|" + remoteKey))
 	return hex.EncodeToString(sum[:16])
+}
+
+func clientIdentityKey(req *http.Request) string {
+	if req == nil {
+		return ""
+	}
+
+	if xff := strings.TrimSpace(req.Header.Get("X-Forwarded-For")); xff != "" {
+		parts := strings.Split(xff, ",")
+		if len(parts) > 0 {
+			if ip := strings.TrimSpace(parts[0]); ip != "" {
+				return ip
+			}
+		}
+	}
+
+	if xri := strings.TrimSpace(req.Header.Get("X-Real-IP")); xri != "" {
+		return xri
+	}
+
+	return normalizedRemoteKey(req.RemoteAddr)
 }
