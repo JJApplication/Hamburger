@@ -253,13 +253,21 @@ stat: {
   use_db: true,
   sync_duration: 720,      # 同步间隔 (秒)
   save_duration: 3600,     # 保存间隔 (秒)
-  enable_stat: true
+  enable_stat: true,
+  sequence: {
+    enabled: true,
+    interval: 60,
+    retention_days: 30,
+    flush_interval: 5,
+    cleanup_interval: 3600
+  }
 }
 ```
 
 **调优建议**
 - 增大 `sync_duration` 减少数据库写入
-- 高流量场景使用 `use_db: false` 仅内存统计
+- `sequence` 使用单写入队列和批量 UPSERT；高流量场景可适当增大 `flush_interval`
+- `use_db: false` 仍会保留历史统计写入；它只关闭旧累计 Stat/Geo/Domain 的 SQLite 持久化
 
 ## pprof 性能分析
 

@@ -235,8 +235,11 @@ func GetDefaultConfig() *AppConfig {
 		Stat: svr_config.StatConfig{
 			DBFile: "stat.db",
 			Sequence: svr_config.SequenceConfig{
-				Enabled:  true,
-				Interval: 3600,
+				Enabled:         true,
+				Interval:        60,
+				RetentionDays:   30,
+				FlushInterval:   5,
+				CleanupInterval: 3600,
 			},
 		},
 	}

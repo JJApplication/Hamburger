@@ -92,6 +92,10 @@ message StatServerConfigResponse {
     string geo_db = 8;
     bool sequence_enabled = 9;
     int32 sequence_interval = 10;
+	string db_file = 11;
+	int32 sequence_retention_days = 12;
+	int32 sequence_flush_interval = 13;
+	int32 sequence_cleanup_interval = 14;
 }
 
 message RuntimeResponse {

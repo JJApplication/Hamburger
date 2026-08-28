@@ -168,19 +168,19 @@ func HandleConn(connType string) func(conn net.Conn, state http.ConnState) {
 func GetGatewayConn() model.GatewayConnModel {
 	tmp := model.GatewayConnModel{}
 	if t, ok := GetManager().connStatGw.Get("new"); ok {
-		tmp.New = *t
+		tmp.New = atomic.LoadInt64(t)
 	}
-	if t, ok := GetManager().connStatFront.Get("active"); ok {
-		tmp.Active = *t
+	if t, ok := GetManager().connStatGw.Get("active"); ok {
+		tmp.Active = atomic.LoadInt64(t)
 	}
-	if t, ok := GetManager().connStatFront.Get("idle"); ok {
-		tmp.Idle = *t
+	if t, ok := GetManager().connStatGw.Get("idle"); ok {
+		tmp.Idle = atomic.LoadInt64(t)
 	}
-	if t, ok := GetManager().connStatFront.Get("hijacked"); ok {
-		tmp.Hijacked = *t
+	if t, ok := GetManager().connStatGw.Get("hijacked"); ok {
+		tmp.Hijacked = atomic.LoadInt64(t)
 	}
-	if t, ok := GetManager().connStatFront.Get("closed"); ok {
-		tmp.Closed = *t
+	if t, ok := GetManager().connStatGw.Get("closed"); ok {
+		tmp.Closed = atomic.LoadInt64(t)
 	}
 
 	return tmp
@@ -189,19 +189,19 @@ func GetGatewayConn() model.GatewayConnModel {
 func GetFrontConn() model.FrontConnModel {
 	tmp := model.FrontConnModel{}
 	if t, ok := GetManager().connStatFront.Get("new"); ok {
-		tmp.New = *t
+		tmp.New = atomic.LoadInt64(t)
 	}
 	if t, ok := GetManager().connStatFront.Get("active"); ok {
-		tmp.Active = *t
+		tmp.Active = atomic.LoadInt64(t)
 	}
 	if t, ok := GetManager().connStatFront.Get("idle"); ok {
-		tmp.Idle = *t
+		tmp.Idle = atomic.LoadInt64(t)
 	}
 	if t, ok := GetManager().connStatFront.Get("hijacked"); ok {
-		tmp.Hijacked = *t
+		tmp.Hijacked = atomic.LoadInt64(t)
 	}
 	if t, ok := GetManager().connStatFront.Get("closed"); ok {
-		tmp.Closed = *t
+		tmp.Closed = atomic.LoadInt64(t)
 	}
 
 	return tmp

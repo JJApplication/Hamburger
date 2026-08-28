@@ -49,9 +49,21 @@ func (r *Resolver) Parse(request *http.Request) (*url.URL, RuleResult) {
 	}
 
 	if result.ProxyToType == Frontend {
+		stat.MarkRoute(request, stat.RouteFrontend)
 		stat.Add(stat.Static)
 	} else if result.ProxyToType == Backend {
+		stat.MarkRoute(request, stat.RouteBackend)
 		stat.Add(stat.API)
+	} else if result.ProxyToType == Custom {
+		// Custom API rules are backend traffic; a custom service without an
+		// API path behaves like a frontend application.
+		if result.ProxyPath != "" {
+			stat.MarkRoute(request, stat.RouteBackend)
+			stat.Add(stat.API)
+		} else {
+			stat.MarkRoute(request, stat.RouteFrontend)
+			stat.Add(stat.Static)
+		}
 	}
 
 	request.URL.Scheme = result.ProxyScheme

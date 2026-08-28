@@ -140,6 +140,7 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 		if static_direct.IsEnabled() {
 			sd := static_direct.GetSvr()
 			if uri, ok := sd.IsStaticDirect(request); ok {
+				stat.MarkRoute(request, stat.RouteFrontend)
 				request.URL = uri
 				return
 			}
@@ -183,6 +184,9 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 		if cfg.Features.ProxyCache.Enabled {
 			cache, ok := proxy_cache.M().Get(request)
 			if ok {
+				// The cache only stores non-frontend resolver results in the
+				// existing flow, so a cache hit is a backend observation too.
+				stat.MarkRoute(request, stat.RouteBackend)
 				request.URL = cache.CacheToURL(request)
 			} else {
 				// 缓存未命中

@@ -20,6 +20,9 @@ type StatConfig struct {
 // SequenceConfig 时序统计配置结构体
 // 用于配置是否启用时序统计、数据库文件路径以及统计时间间隔
 type SequenceConfig struct {
-	Enabled  bool `yaml:"enabled" json:"enabled"`   // 是否启用时序统计
-	Interval int  `yaml:"interval" json:"interval"` // 时序间隔，例如"1h"表示每小时一个时序表
+	Enabled         bool `yaml:"enabled" json:"enabled"`                   // 是否启用分钟级历史统计
+	Interval        int  `yaml:"interval" json:"interval"`                 // 存储粒度，当前固定为60秒
+	RetentionDays   int  `yaml:"retention_days" json:"retention_days"`     // 历史数据保留天数
+	FlushInterval   int  `yaml:"flush_interval" json:"flush_interval"`     // 增量刷盘间隔（秒）
+	CleanupInterval int  `yaml:"cleanup_interval" json:"cleanup_interval"` // 过期数据清理间隔（秒）
 }

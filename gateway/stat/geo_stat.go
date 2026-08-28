@@ -2,6 +2,7 @@ package stat
 
 import (
 	"net"
+	"strings"
 	"sync/atomic"
 
 	geo2 "Hamburger/gateway/geo"
@@ -20,7 +21,7 @@ func (m *StatManager) syncGEOStat() {
 	geoDataMap := make(map[string]int64)
 
 	m.geoIp.Range(func(key string, value *int64) bool {
-		geoDataMap[key] = *value
+		geoDataMap[key] = atomic.LoadInt64(value)
 		return true
 	})
 
@@ -38,7 +39,7 @@ func AddGeo(addr string) {
 
 func (m *StatManager) AddGeo(addr string) {
 	go func() {
-		if addr == "" || addr == "127.0.0.1" {
+		if addr == "" || strings.HasPrefix(addr, "127.0.0.1:") || addr == "127.0.0.1" {
 			return
 		}
 		cfg := m.getCfg()
@@ -54,10 +55,14 @@ func (m *StatManager) AddGeo(addr string) {
 			return
 		}
 
-		// 原子操作geo指针时 只需要读锁
+		m.geoMu.Lock()
+		defer m.geoMu.Unlock()
 		geo, ok := m.geoIp.Get(isoCode)
 		if !ok {
-			m.geoIp.Put(isoCode, new(int64))
+			value := new(int64)
+			// 首次出现的国家也必须计入本次请求。
+			atomic.StoreInt64(value, 1)
+			m.geoIp.Put(isoCode, value)
 		} else {
 			atomic.AddInt64(geo, 1)
 		}
@@ -69,6 +74,7 @@ func GetGeoData() []byte {
 }
 
 func (m *StatManager) GetGeoData() []byte {
+	m.syncGEOStat()
 	data, err := m.C().Get(GeoSet)
 	if err != nil {
 		return nil

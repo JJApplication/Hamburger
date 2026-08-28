@@ -21,14 +21,18 @@ func (m *StatManager) AddDomainStat(domain string) {
 		if !cfg.Stat.EnableStat {
 			return
 		}
+		domain = NormalizeDomain(domain)
 		if domain == "" {
 			return
 		}
 
-		// 原子操作geo指针时 只需要读锁
+		m.domainMu.Lock()
+		defer m.domainMu.Unlock()
 		ds, ok := m.domainStat.Get(domain)
 		if !ok {
-			m.domainStat.Put(domain, new(int64))
+			value := new(int64)
+			atomic.StoreInt64(value, 1)
+			m.domainStat.Put(domain, value)
 		} else {
 			atomic.AddInt64(ds, 1)
 		}
@@ -40,6 +44,7 @@ func GetDomainStat() []byte {
 }
 
 func (m *StatManager) GetDomainStat() []byte {
+	m.syncDomainStat()
 	data, err := m.C().Get(DomainStat)
 	if err != nil {
 		return nil
@@ -51,7 +56,7 @@ func (m *StatManager) syncDomainStat() {
 	domainDataMap := make(map[string]int64)
 
 	m.domainStat.Range(func(key string, value *int64) bool {
-		domainDataMap[key] = *value
+		domainDataMap[key] = atomic.LoadInt64(value)
 		return true
 	})
 

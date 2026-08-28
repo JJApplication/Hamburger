@@ -6,10 +6,14 @@ import (
 )
 
 func (m *StatManager) initCacheFromFile() {
-	// 初始化数据库
-	db.GetDB().AutoMigrate(&model.StatModel{})
-	db.GetDB().AutoMigrate(&model.GeoModel{})
-	db.GetDB().AutoMigrate(&model.DomainModel{})
+	// 旧累计数据是否使用 SQLite 由 UseDB 独立控制。历史统计可能已经
+	// 打开了同一个 DB，但 UseDB=false 时这里必须继续走文件加载路径。
+	if cfg := m.getCfg(); cfg != nil && cfg.Stat.UseDB && db.GetDB() != nil {
+		// 初始化旧累计表；新的历史表由 NewHistoryStore 创建。
+		db.GetDB().AutoMigrate(&model.StatModel{})
+		db.GetDB().AutoMigrate(&model.GeoModel{})
+		db.GetDB().AutoMigrate(&model.DomainModel{})
+	}
 	statMap := m.LoadStat()
 	if statMap != nil {
 		m.setCounters(

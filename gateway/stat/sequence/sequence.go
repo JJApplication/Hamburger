@@ -35,8 +35,11 @@ type SequenceManger struct {
 var sequence *SequenceManger
 
 func InitSequenceManager(cfg *config.Config, db *gorm.DB) {
+	// Deprecated: historical statistics now use the fixed minute tables in
+	// gateway/stat. Keep this manager only so old callers compile; never create
+	// or migrate the legacy per-bucket tables.
 	sequence = &SequenceManger{
-		enable:   cfg.Stat.Sequence.Enabled,
+		enable:   false,
 		interval: time.Duration(cfg.Stat.Sequence.Interval) * time.Second,
 		mutex:    sync.Mutex{},
 		db:       db,
@@ -44,6 +47,9 @@ func InitSequenceManager(cfg *config.Config, db *gorm.DB) {
 }
 
 func SeqMgt() *SequenceManger {
+	if sequence == nil {
+		sequence = &SequenceManger{}
+	}
 	return sequence
 }
 

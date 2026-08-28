@@ -27,11 +27,21 @@ type StatManager struct {
 	geoIp *structure.Map[*int64]
 
 	domainStat *structure.Map[*int64]
+	geoMu      sync.Mutex
+	domainMu   sync.Mutex
 
 	connStatGw     *structure.Map[*int64]
 	connStatFront  *structure.Map[*int64]
 	domainConnStat *structure.Map[*structure.Map[*int64]]
 	connHostMap    *structure.Map[string]
+
+	history    *HistoryStore
+	sampler    *resourceSampler
+	syncCancel context.CancelFunc
+	syncWG     sync.WaitGroup
+	syncOnce   sync.Once
+	closeOnce  sync.Once
+	closeErr   error
 }
 
 var (

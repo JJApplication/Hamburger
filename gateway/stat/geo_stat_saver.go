@@ -2,6 +2,7 @@ package stat
 
 import (
 	"os"
+	"strings"
 
 	"Hamburger/gateway/stat/db"
 	"Hamburger/gateway/stat/model"
@@ -45,7 +46,16 @@ func (m *StatManager) geoFileLoader() *structure.Map[*int64] {
 		return geoStat
 	}
 	for k, v := range tmp {
-		geoStat.Put(k, &v)
+		iso := strings.ToUpper(strings.TrimSpace(k))
+		if iso == "" {
+			continue
+		}
+		if existing, ok := geoStat.Get(iso); ok {
+			*existing += v
+			continue
+		}
+		value := v
+		geoStat.Put(iso, &value)
 	}
 
 	return geoStat
@@ -53,11 +63,23 @@ func (m *StatManager) geoFileLoader() *structure.Map[*int64] {
 
 func (m *StatManager) geoDBLoader() *structure.Map[*int64] {
 	var geoStat = structure.NewMap[*int64]()
+	if db.GetDB() == nil {
+		return geoStat
+	}
 
 	var geoData []model.GeoModel
 	db.GetDB().Find(&geoData)
 	for _, geo := range geoData {
-		geoStat.Put(geo.ISOCode, &geo.Count)
+		iso := strings.ToUpper(strings.TrimSpace(geo.ISOCode))
+		if iso == "" {
+			continue
+		}
+		if existing, ok := geoStat.Get(iso); ok {
+			*existing += geo.Count
+			continue
+		}
+		count := geo.Count
+		geoStat.Put(iso, &count)
 	}
 
 	return geoStat
@@ -79,6 +101,9 @@ func (m *StatManager) geoFileSaver() {
 }
 
 func (m *StatManager) geoDBSaver() {
+	if db.GetDB() == nil {
+		return
+	}
 	var geoMap = make(map[string]int64)
 	geoStatByte, err := m.C().Get(GeoSet)
 	if err != nil {
@@ -109,6 +134,9 @@ func (m *StatManager) geoDBSaver() {
 
 func (m *StatManager) compatibleGeo() {
 	cfg := m.getCfg()
+	if db.GetDB() == nil || !cfg.Stat.UseDB {
+		return
+	}
 	// 加载文件内容到DB
 	data, err := os.ReadFile(cfg.Stat.GeoFile)
 	if err != nil {
@@ -122,12 +150,16 @@ func (m *StatManager) compatibleGeo() {
 
 	// 每次都是更新+增量相加
 	for k, v := range geoMap {
+		iso := strings.ToUpper(strings.TrimSpace(k))
+		if iso == "" {
+			continue
+		}
 		// 存在判断
 		var count int64
-		db.GetDB().Model(&model.GeoModel{}).Where("iso_code = ?", k).Count(&count)
+		db.GetDB().Model(&model.GeoModel{}).Where("iso_code = ?", iso).Count(&count)
 		if count <= 0 {
 			db.GetDB().Create(&model.GeoModel{
-				ISOCode: k,
+				ISOCode: iso,
 				Count:   v,
 			})
 		}

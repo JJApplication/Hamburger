@@ -2,6 +2,7 @@ package core
 
 import (
 	"Hamburger/gateway/runtime"
+	"Hamburger/gateway/stat"
 	"Hamburger/internal/structure"
 	"net/http"
 	"path/filepath"
@@ -22,6 +23,7 @@ func init() {
 func (p *Proxy) GlobalStaticAlias(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if f, ok := p.matchStaticAlias(r); ok {
+			stat.MarkRoute(r, stat.RouteFrontend)
 			http.ServeFile(w, r, f)
 			return
 		}

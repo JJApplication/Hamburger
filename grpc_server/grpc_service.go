@@ -208,16 +208,20 @@ func (s *AppService) GetStatServerConfig(ctx context.Context, _ *appgrpc.Empty) 
 	}
 	statCfg := cfg.Stat
 	return &appgrpc.StatServerConfigResponse{
-		Enabled:          statCfg.Enabled,
-		EnableStat:       statCfg.EnableStat,
-		SyncDuration:     int32(statCfg.SyncDuration),
-		SaveDuration:     int32(statCfg.SaveDuration),
-		SaveFile:         statCfg.SaveFile,
-		GeoFile:          statCfg.GeoFile,
-		DomainFile:       statCfg.DomainFile,
-		GeoDb:            statCfg.GeoDB,
-		SequenceEnabled:  statCfg.Sequence.Enabled,
-		SequenceInterval: int32(statCfg.Sequence.Interval),
+		Enabled:                 statCfg.Enabled,
+		EnableStat:              statCfg.EnableStat,
+		SyncDuration:            int32(statCfg.SyncDuration),
+		SaveDuration:            int32(statCfg.SaveDuration),
+		SaveFile:                statCfg.SaveFile,
+		GeoFile:                 statCfg.GeoFile,
+		DomainFile:              statCfg.DomainFile,
+		GeoDb:                   statCfg.GeoDB,
+		SequenceEnabled:         statCfg.Sequence.Enabled,
+		SequenceInterval:        int32(statCfg.Sequence.Interval),
+		DbFile:                  statCfg.DBFile,
+		SequenceRetentionDays:   int32(statCfg.Sequence.RetentionDays),
+		SequenceFlushInterval:   int32(statCfg.Sequence.FlushInterval),
+		SequenceCleanupInterval: int32(statCfg.Sequence.CleanupInterval),
 	}, nil
 }
 

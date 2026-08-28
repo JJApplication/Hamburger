@@ -42,7 +42,16 @@ func (m *StatManager) domainFileLoader() *structure.Map[*int64] {
 		return statMap
 	}
 	for k, v := range res {
-		statMap.Put(k, &v)
+		key := NormalizeDomain(k)
+		if key == "" {
+			continue
+		}
+		if existing, ok := statMap.Get(key); ok {
+			*existing += v
+			continue
+		}
+		value := v
+		statMap.Put(key, &value)
 	}
 
 	return statMap
@@ -65,16 +74,31 @@ func (m *StatManager) domainFileSaver() {
 
 func (m *StatManager) domainDBLoader() *structure.Map[*int64] {
 	statMap := structure.NewMap[*int64]()
+	if db.GetDB() == nil {
+		return statMap
+	}
 	var domains []model.DomainModel
 	db.GetDB().Model(&model.DomainModel{}).Find(&domains)
 	for _, domain := range domains {
-		statMap.Put(domain.Domain, &domain.Count)
+		key := NormalizeDomain(domain.Domain)
+		if key == "" {
+			continue
+		}
+		if existing, ok := statMap.Get(key); ok {
+			*existing += domain.Count
+			continue
+		}
+		value := domain.Count
+		statMap.Put(key, &value)
 	}
 
 	return statMap
 }
 
 func (m *StatManager) domainDBSaver() {
+	if db.GetDB() == nil {
+		return
+	}
 	var data map[string]int64
 	domainStatByte, err := m.C().Get(DomainStat)
 	if err != nil {
@@ -99,6 +123,9 @@ func (m *StatManager) domainDBSaver() {
 
 func (m *StatManager) compatibleDomain() {
 	cfg := m.getCfg()
+	if db.GetDB() == nil || !cfg.Stat.UseDB {
+		return
+	}
 	data, err := os.ReadFile(cfg.Stat.DomainFile)
 	if err != nil {
 		return
@@ -108,11 +135,15 @@ func (m *StatManager) compatibleDomain() {
 		return
 	}
 	for k, v := range res {
+		domain := NormalizeDomain(k)
+		if domain == "" {
+			continue
+		}
 		var count int64
-		db.GetDB().Model(&model.DomainModel{}).Where("domain = ?", k).Count(&count)
+		db.GetDB().Model(&model.DomainModel{}).Where("domain = ?", domain).Count(&count)
 		if count <= 0 {
 			db.GetDB().Model(&model.DomainModel{}).Create(&model.DomainModel{
-				Domain: k,
+				Domain: domain,
 				Count:  v,
 			})
 		}

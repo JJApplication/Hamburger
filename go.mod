@@ -21,6 +21,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/sagernet/sing v0.8.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/shirou/gopsutil/v4 v4.26.7
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.10.1

@@ -206,6 +206,7 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 			}, true
 		}
 		return RuleResult{
+			ProxyToType: Backend,
 			ProxyTo:     rule.Backend,
 			ProxyHost:   StaticHost,
 			ProxyPath:   targetPath,

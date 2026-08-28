@@ -187,15 +187,25 @@ database: {
 stat: {
   db_file: "data/stat.db",
   use_db: true,
+  compatible: true,
   enabled: true,
   enable_stat: true,
   sync_duration: 720,      # 秒
   save_duration: 3600,     # 秒
   save_file: "data/stat.json",
   geo_file: "data/geo.json",
-  domain_file: "data/domain.json"
+  domain_file: "data/domain.json",
+  sequence: {
+    enabled: true,
+    interval: 60,
+    retention_days: 30,
+    flush_interval: 5,
+    cleanup_interval: 3600
+  }
 }
 ```
+
+`use_db` 只控制旧的累计 Stat/Geo/Domain 数据；启用 `sequence` 后，即使 `use_db: false`，也会使用 `db_file` 初始化固定 SQLite 历史表。历史按分钟保存 30 天，并按小时清理。公开的 `/api/stat` 默认返回最近 1 小时，也支持 `5h`、`24h`、`7d` 和 `30d`；`/api/geo`、`/api/domain`、`/api/conn` 继续免鉴权。
 
 #### api_server_config - 管理 API
 ```hamburger

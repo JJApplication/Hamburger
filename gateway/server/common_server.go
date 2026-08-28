@@ -234,6 +234,10 @@ func CommonHttpServer(serverConfig core_config.ServerConfig, logger *zerolog.Log
 		httpServer.Handler = wrapHandlerWithAutoHttpsRedirect(httpServer.Handler, logger, serverConfig)
 	}
 	httpServer.Handler = wrapHandlerWithWebSocket(httpServer.Handler, logger, serverConfig)
+	// Keep request observation at the outermost HTTP layer so redirects,
+	// static aliases, resolver errors and streamed responses all contribute
+	// their final status and actual payload bytes.
+	httpServer.Handler = stat.WrapHTTPHandler(httpServer.Handler)
 
 	// 创建监听器
 	listener, err := net.Listen("tcp", addr)

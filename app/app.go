@@ -14,6 +14,7 @@ import (
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
+	"Hamburger/gateway/stat"
 	"Hamburger/grpc_server"
 	"Hamburger/initialize"
 	"Hamburger/internal/config"
@@ -275,6 +276,9 @@ func (app *HamburgerApp) LifeCycle() {
 		}
 		if app.GrpcServer != nil {
 			app.GrpcServer.Stop()
+		}
+		if err := stat.GetManager().Close(); err != nil {
+			app.logger.Error().Err(err).Msg("stat history shutdown failed")
 		}
 		app.removePidFile()
 		os.Exit(0)

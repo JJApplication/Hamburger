@@ -12,6 +12,10 @@ func (s *APIService) GetStatCounters() map[string]int64 {
 	}
 }
 
+func (s *APIService) GetStatData(rangeValue, domain string) (stat.StatResponse, error) {
+	return stat.GetManager().QueryStat(rangeValue, domain)
+}
+
 func (s *APIService) GetGeoData() []byte {
 	return stat.GetGeoData()
 }

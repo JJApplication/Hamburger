@@ -75,6 +75,9 @@ func (m *StatManager) fileLoader() *structure.Map[int64] {
 }
 
 func (m *StatManager) dbLoader() *structure.Map[int64] {
+	if db.GetDB() == nil {
+		return structure.NewMap[int64]()
+	}
 	var stat model.StatModel
 	if err := db.GetDB().First(&stat).Error; err != nil {
 		return nil
@@ -89,6 +92,9 @@ func (m *StatManager) dbLoader() *structure.Map[int64] {
 }
 
 func (m *StatManager) dbSaver() {
+	if db.GetDB() == nil {
+		return
+	}
 	var stat model.StatModel
 	if err := db.GetDB().First(&stat).Error; err != nil {
 		// 新建
@@ -110,6 +116,9 @@ func (m *StatManager) dbSaver() {
 
 func (m *StatManager) compatibleStat() {
 	cfg := m.getCfg()
+	if db.GetDB() == nil || !cfg.Stat.UseDB {
+		return
+	}
 	data, err := os.ReadFile(cfg.Stat.SaveFile)
 	if err != nil {
 		return

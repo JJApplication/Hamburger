@@ -38,6 +38,34 @@ Hamburger 使用结构化配置文件管理运行参数，推荐以主配置为�
 }
 ```
 
+## Stat 统计与历史监控
+
+生产环境可使用以下配置启用分钟级历史统计：
+
+```hamburger
+stat: {
+  db_file: "data/stat.db",
+  use_db: true,
+  compatible: true,
+  enabled: true,
+  enable_stat: true,
+  sync_duration: 720,
+  save_duration: 3600,
+  save_file: "data/stat.json",
+  geo_file: "data/geo.json",
+  domain_file: "data/domain.json",
+  sequence: {
+    enabled: true,
+    interval: 60,
+    retention_days: 30,
+    flush_interval: 5,
+    cleanup_interval: 3600
+  }
+}
+```
+
+`use_db` 仅控制旧的累计 Stat/Geo/Domain 数据是否写入 SQLite；`sequence.enabled` 开启后，历史数据始终根据 `db_file` 初始化固定表，即使 `use_db` 为 `false`。历史保留最近 30 天，按分钟存储并按小时清理。`GET /api/stat` 默认查询 `1h`，还支持 `5h`、`24h`、`7d` 和 `30d`；统计、GEO、域名和连接接口均不需要 JWT。独立前端位于 `gateway/api/stat_web`，通过 `VITE_API_BASE_URL` 指向 API，不由 Go 服务托管。
+
 ## 配置组织建议
 
 - 按职责拆分：入口配置、前端配置、服务映射、实验配置分离管理

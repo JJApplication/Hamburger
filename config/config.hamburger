@@ -261,8 +261,11 @@
     domain_file: "data/domain.json",
     geo_db: "",
     sequence: {
-      enabled: false,
-      interval: 3600
+      enabled: true,
+      interval: 60,
+      retention_days: 30,
+      flush_interval: 5,
+      cleanup_interval: 3600
     }
   },
 
