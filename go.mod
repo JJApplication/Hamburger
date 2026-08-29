@@ -21,8 +21,8 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/sagernet/sing v0.8.1
 	github.com/satori/go.uuid v1.2.0
-	github.com/shirou/gopsutil/v4 v4.26.7
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
+	github.com/shirou/gopsutil/v4 v4.26.7
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1 // indirect
@@ -107,6 +107,8 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/tklauser/go-sysconf v0.3.16 // indirect
+	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -119,7 +121,7 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
