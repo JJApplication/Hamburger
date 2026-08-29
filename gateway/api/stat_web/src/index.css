@@ -81,7 +81,7 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .kpi-card { min-height: 170px; padding: 17px 18px 10px; border-radius: 17px; overflow: hidden; }
 .kpi-heading { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; font-weight: 700; }
 .kpi-dot { width: 7px; height: 7px; border-radius: 50%; }
-.kpi-value { margin-top: 13px; font-size: clamp(23px, 2.8vw, 32px); font-weight: 800; letter-spacing: -0.05em; }
+.kpi-value { margin-top: 13px; font-size: clamp(23px, 2.8vw, 32px); font-weight: 800; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
 .kpi-hint { min-height: 18px; margin-top: 5px; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .kpi-chart { height: 53px; margin: 5px -8px -1px; }
 
@@ -115,15 +115,20 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .chart-tooltip-dot { width: 6px; height: 6px; border-radius: 50%; }
 
 .globe-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.7fr); gap: 18px; }
-.globe-map { position: relative; min-height: 420px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line)); border-radius: 15px; background: radial-gradient(circle at 50% 48%, rgba(55, 190, 146, 0.24), transparent 42%), #102a24; }
-.globe-map.is-static { background: radial-gradient(circle at 50% 48%, rgba(55, 190, 146, 0.2), transparent 44%), #15312a; }
-.globe-webgl, .globe-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.globe-webgl { opacity: 0.9; }
+.globe-map { position: relative; min-height: 420px; overflow: hidden; border: 1px solid color-mix(in srgb, #397faa 34%, var(--line)); border-radius: 15px; background: radial-gradient(circle at 50% 47%, rgba(64, 151, 205, 0.2), transparent 43%), #07131f; }
+.globe-map.is-static { background: radial-gradient(circle at 50% 48%, rgba(72, 158, 209, 0.22), transparent 45%), #091a29; }
+.globe-map.is-webgl { background: radial-gradient(circle at 50% 45%, rgba(73, 162, 218, 0.16), transparent 39%), #06111c; }
+.globe-canvas-shell, .globe-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.globe-canvas-shell { z-index: 1; cursor: grab; touch-action: none; }
+.globe-canvas-shell:active { cursor: grabbing; }
+.globe-canvas-shell > div, .globe-canvas-shell canvas { display: block; width: 100% !important; height: 100% !important; }
+.globe-canvas-shell canvas { outline: none; }
+.globe-loading { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; color: #b6ded0; font-size: 12px; }
 .globe-svg { z-index: 1; }
-.globe-outline { fill: rgba(18, 94, 76, 0.15); stroke: rgba(164, 255, 224, 0.37); stroke-width: 1; stroke-dasharray: 2 4; }
+.globe-outline { fill: #0d5f92; stroke: rgba(147, 211, 250, 0.55); stroke-width: 1; }
 .country-group polygon { cursor: pointer; transition: filter 160ms ease, stroke-width 160ms ease; }
 .country-group polygon:hover, .country-group.active polygon { filter: brightness(1.28); }
-.country-bar { stroke: #f9ffdb; stroke-width: 1.4; opacity: 0.73; }
+.country-bar { stroke: #b1f4d8; stroke-width: 1.2; opacity: 0.76; }
 .globe-tooltip { position: absolute; z-index: 3; display: flex; flex-direction: column; gap: 3px; min-width: 130px; transform: translateX(-50%); padding: 10px 12px; border: 1px solid rgba(182, 255, 230, 0.35); border-radius: 10px; background: rgba(8, 34, 29, 0.84); color: #f1fff7; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25); font-size: 11px; backdrop-filter: blur(8px); }
 .globe-tooltip strong { font-size: 13px; }
 .globe-tooltip span { color: #b6ded0; }

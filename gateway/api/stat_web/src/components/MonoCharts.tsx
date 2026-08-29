@@ -15,6 +15,7 @@ import {
 import type { TooltipProps } from "recharts";
 import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import type { ReactNode } from "react";
+import { AnimatedNumber } from "./AnimatedNumber";
 import { formatLocalTime } from "../lib/format";
 
 export interface ChartSeries {
@@ -130,11 +131,11 @@ export function MonoRoundedBarChart({ data, series, height = 240, valueFormatter
   );
 }
 
-export function MonoRoundedKpiCardChart({ label, value, hint, data = [], color = "var(--accent)" }: { label: string; value: string; hint?: string; data?: ChartDatum[]; color?: string }) {
+export function MonoRoundedKpiCardChart({ label, value, animatedValue, reducedMotion = false, hint, data = [], color = "var(--accent)" }: { label: string; value: string; animatedValue?: number; reducedMotion?: boolean; hint?: string; data?: ChartDatum[]; color?: string }) {
   return (
     <article className="kpi-card">
       <div className="kpi-heading"><span>{label}</span><span className="kpi-dot" style={{ background: color }} /></div>
-      <div className="kpi-value">{value}</div>
+      <div className="kpi-value">{animatedValue === undefined ? value : <AnimatedNumber value={animatedValue} reducedMotion={reducedMotion} />}</div>
       {hint && <div className="kpi-hint">{hint}</div>}
       {data.length > 1 && (
         <div className="kpi-chart">

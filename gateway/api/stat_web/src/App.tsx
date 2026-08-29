@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, AlertTriangle, ArrowDownUp, Gauge, HardDrive, Moon, Network, RefreshCw, Search, Sun, X } from "lucide-react";
 import { fetchGeo, fetchStat, USE_MOCK } from "./api";
-import { GlobeOverview } from "./components/GlobeOverview";
+import { AnimatedNumber } from "./components/AnimatedNumber";
 import { MonoRoundedAreaChart, MonoRoundedBarChart, MonoRoundedKpiCardChart, MonoRoundedLineChart } from "./components/MonoCharts";
 import { Panel, SectionMessage } from "./components/Panel";
 import { formatBytes, formatDateTime, formatMilliseconds, formatNumber, formatPercent, formatRate } from "./lib/format";
 import { filterDomains, RANGES } from "./lib/stat-utils";
 import type { ConnectionSnapshot, DomainSeriesPoint, GeoData, Range, StatResponse } from "./types/stat";
+
+const GlobeOverview = lazy(() => import("./components/GlobeOverview").then((module) => ({ default: module.GlobeOverview })));
 
 const colors = {
   accent: "#1d9d78",
@@ -187,15 +189,15 @@ export default function App() {
           <section className="legacy-stat-panel" aria-label="累计 Stat 数据库统计">
             <div className="legacy-stat-heading"><div><div className="eyebrow">LEGACY STAT DATABASE</div><h2>累计统计</h2></div><span className="panel-caption">原 Stat 数据库 · 不受当前时间窗口影响</span></div>
             <div className="legacy-stat-grid">
-              <LegacyStatCard label="总请求数" value={stat.total} color={colors.accent} />
-              <LegacyStatCard label="失败请求数" value={stat.fail} color={colors.errors} />
-              <LegacyStatCard label="前端请求数" value={stat.static} color={colors.frontend} />
-              <LegacyStatCard label="后端请求数" value={stat.api} color={colors.backend} />
+              <LegacyStatCard label="总请求数" value={stat.total} color={colors.accent} reducedMotion={reducedMotion} />
+              <LegacyStatCard label="失败请求数" value={stat.fail} color={colors.errors} reducedMotion={reducedMotion} />
+              <LegacyStatCard label="前端请求数" value={stat.static} color={colors.frontend} reducedMotion={reducedMotion} />
+              <LegacyStatCard label="后端请求数" value={stat.api} color={colors.backend} reducedMotion={reducedMotion} />
             </div>
           </section>
 
           <section className="kpi-grid" aria-label="当前窗口关键指标">
-            <MonoRoundedKpiCardChart label="总请求" value={formatNumber(summary?.total_requests ?? 0)} hint={`${formatNumber(summary?.frontend_requests ?? 0)} 前端 · ${formatNumber(summary?.backend_requests ?? 0)} 后端`} data={requestSeries.map((point) => ({ value: point.total }))} color={colors.accent} />
+            <MonoRoundedKpiCardChart label="总请求" value={formatNumber(summary?.total_requests ?? 0)} animatedValue={summary?.total_requests ?? 0} reducedMotion={reducedMotion} hint={`${formatNumber(summary?.frontend_requests ?? 0)} 前端 · ${formatNumber(summary?.backend_requests ?? 0)} 后端`} data={requestSeries.map((point) => ({ value: point.total }))} color={colors.accent} />
             <MonoRoundedKpiCardChart label="RPS" value={formatRate(summary?.rps ?? 0)} hint={`窗口 ${stat.meta.range}`} data={requestSeries.map((point) => ({ value: point.rps }))} color={colors.frontend} />
             <MonoRoundedKpiCardChart label="错误率" value={formatPercent(summary?.error_rate ?? 0)} hint={`${formatNumber(summary?.error_requests ?? 0)} 个 4xx / 5xx`} data={requestSeries.map((point) => ({ value: point.errors }))} color={colors.errors} />
             <MonoRoundedKpiCardChart label="P95 延迟" value={formatMilliseconds(summary?.latency.p95_ms ?? 0)} hint={`平均 ${formatMilliseconds(summary?.latency.avg_ms ?? 0)} · 最大 ${formatMilliseconds(summary?.latency.max_ms ?? 0)}`} data={requestSeries.map((point) => ({ value: point.p95_latency_ms }))} color={colors.amber} />
@@ -203,7 +205,11 @@ export default function App() {
           </section>
 
           <Panel title="全球请求来源" eyebrow="GEO · 累计总览" action={<span className="panel-live">{geoLoading ? "同步中" : "每 30 秒刷新"}</span>}>
-            {geoError ? <SectionMessage kind="error" title="GEO 数据加载失败" detail={geoError} /> : <GlobeOverview geo={geo} reducedMotion={reducedMotion} />}
+            {geoError ? <SectionMessage kind="error" title="GEO 数据加载失败" detail={geoError} /> : (
+              <Suspense fallback={<SectionMessage kind="loading" title="正在加载全球来源" detail="正在准备世界边界与地球纹理。" />}>
+                <GlobeOverview geo={geo} reducedMotion={reducedMotion} />
+              </Suspense>
+            )}
           </Panel>
 
           {!hasData && <div className="notice empty-notice"><Activity size={17} /><span>当前时间窗口还没有历史请求数据；结构化图表会在第一批请求刷盘后自动出现。</span></div>}
@@ -265,8 +271,8 @@ export default function App() {
   );
 }
 
-function LegacyStatCard({ label, value, color }: { label: string; value: number; color: string }) {
-  return <article className="legacy-stat-card"><div className="legacy-stat-card-heading"><span>{label}</span><span className="kpi-dot" style={{ background: color }} /></div><strong>{formatNumber(value)}</strong></article>;
+function LegacyStatCard({ label, value, color, reducedMotion }: { label: string; value: number; color: string; reducedMotion: boolean }) {
+  return <article className="legacy-stat-card"><div className="legacy-stat-card-heading"><span>{label}</span><span className="kpi-dot" style={{ background: color }} /></div><strong><AnimatedNumber value={value} reducedMotion={reducedMotion} /></strong></article>;
 }
 
 function ConnectionCard({ title, value }: { title: string; value: ConnectionSnapshot }) {

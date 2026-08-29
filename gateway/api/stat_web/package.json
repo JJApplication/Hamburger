@@ -13,13 +13,15 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.4.1",
     "@tailwindcss/vite": "^4.1.10",
+    "@vitejs/plugin-react": "^4.4.1",
     "lucide-react": "^0.468.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-globe.gl": "^2.38.0",
     "recharts": "^2.15.3",
     "tailwindcss": "^4.1.10",
+    "three": "^0.185.1",
     "vite": "^6.3.5"
   },
   "devDependencies": {
@@ -29,6 +31,7 @@
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@types/three": "^0.185.4",
     "eslint": "^9.28.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
