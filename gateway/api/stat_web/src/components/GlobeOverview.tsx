@@ -303,7 +303,7 @@ export function GlobeOverview({ geo, reducedMotion }: { geo: GeoData; reducedMot
         <div className="geo-ranking">
           {ranking.length ? ranking.map((item, index) => <button type="button" className={item.domain === selectedCode ? "geo-rank selected" : "geo-rank"} key={item.domain} onClick={() => setSelected(item.domain)}><span className="rank-number">{String(index + 1).padStart(2, "0")}</span><span className="rank-country"><strong>{countryName(item.domain)}</strong><small>{item.domain}</small></span><span className="rank-value">{formatCount(item.requests)}</span></button>) : <div className="geo-empty">等待累计请求数据</div>}
         </div>
-        <p className="geo-note">地球数据来自 <code>/api/geo</code>，不随时间窗口切换；WebGL 不可用或开启减弱动画时显示静态地图。</p>
+        <p className="geo-note">地图边界数据来源：<a href="https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_admin_0_countries.geojson" target="_blank" rel="noreferrer">natural-earth-vector</a></p>
       </aside>
     </div>
   );

@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Activity, AlertTriangle, ArrowDownUp, Gauge, HardDrive, Moon, Network, RefreshCw, Search, Sun, X } from "lucide-react";
 import { fetchGeo, fetchStat, USE_MOCK } from "./api";
 import { AnimatedNumber } from "./components/AnimatedNumber";
+import { MonoActivityBlue, MonoRoundedDonut, MonoRoundedSparkline, MonoRoundedStackedBar, type OverviewStats } from "./components/AmicroCharts";
 import { MonoRoundedAreaChart, MonoRoundedBarChart, MonoRoundedKpiCardChart, MonoRoundedLineChart } from "./components/MonoCharts";
 import { Panel, SectionMessage } from "./components/Panel";
 import { formatBytes, formatDateTime, formatMilliseconds, formatNumber, formatPercent, formatRate } from "./lib/format";
@@ -9,6 +10,7 @@ import { filterDomains, RANGES } from "./lib/stat-utils";
 import type { ConnectionSnapshot, DomainSeriesPoint, GeoData, Range, StatResponse } from "./types/stat";
 
 const GlobeOverview = lazy(() => import("./components/GlobeOverview").then((module) => ({ default: module.GlobeOverview })));
+const OVERVIEW_RANGES: Range[] = ["1h", "5h", "24h", "7d", "30d"];
 
 const colors = {
   accent: "#1d9d78",
@@ -50,6 +52,7 @@ function useTheme(): ["light" | "dark", () => void] {
 export default function App() {
   const [range, setRange] = useState<Range>("1h");
   const [stat, setStat] = useState<StatResponse | null>(null);
+  const [overviewStats, setOverviewStats] = useState<OverviewStats>({});
   const [geo, setGeo] = useState<GeoData>({});
   const [selectedDomain, setSelectedDomain] = useState("");
   const [domainQuery, setDomainQuery] = useState("");
@@ -64,6 +67,8 @@ export default function App() {
   const [theme, toggleTheme] = useTheme();
   const reducedMotion = usePrefersReducedMotion();
   const statController = useRef<AbortController | null>(null);
+  const overviewController = useRef<AbortController | null>(null);
+  const overviewRequestId = useRef(0);
   const geoController = useRef<AbortController | null>(null);
   const requestId = useRef(0);
 
@@ -88,6 +93,7 @@ export default function App() {
       }
       if (currentRequest !== requestId.current) return;
       setStat(main);
+      setOverviewStats((current) => ({ ...current, [nextRange]: main }));
       setDetailSeries(detail);
       setLastUpdated(new Date().toISOString());
     } catch (loadError) {
@@ -98,6 +104,26 @@ export default function App() {
         setLoading(false);
         setRefreshing(false);
       }
+    }
+  }, []);
+
+  const loadOverviewStats = useCallback(async (currentRange: Range) => {
+    overviewController.current?.abort();
+    const controller = new AbortController();
+    overviewController.current = controller;
+    const currentRequest = ++overviewRequestId.current;
+    const ranges = OVERVIEW_RANGES.filter((item) => item !== currentRange);
+    try {
+      const results = await Promise.all(ranges.map(async (item) => [item, await fetchStat(item, undefined, controller.signal)] as const));
+      if (controller.signal.aborted || currentRequest !== overviewRequestId.current) return;
+      setOverviewStats((current) => {
+        const next = { ...current };
+        for (const [rangeKey, response] of results) next[rangeKey] = response;
+        return next;
+      });
+    } catch (loadError) {
+      if (isAbortError(loadError)) return;
+      // The main range remains usable when a background overview window is unavailable.
     }
   }, []);
 
@@ -124,6 +150,12 @@ export default function App() {
   }, [loadStat, range, selectedDomain]);
 
   useEffect(() => {
+    void loadOverviewStats(range);
+    const timer = window.setInterval(() => void loadOverviewStats(range), 30_000);
+    return () => window.clearInterval(timer);
+  }, [loadOverviewStats, range]);
+
+  useEffect(() => {
     void loadGeo();
     const timer = window.setInterval(() => void loadGeo(), 30_000);
     return () => window.clearInterval(timer);
@@ -136,12 +168,13 @@ export default function App() {
       if (event.key.toLowerCase() === "r") {
         event.preventDefault();
         void loadStat(range, selectedDomain);
+        void loadOverviewStats(range);
       }
       if (event.key === "Escape" && selectedDomain) setSelectedDomain("");
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [loadStat, range, selectedDomain]);
+  }, [loadOverviewStats, loadStat, range, selectedDomain]);
 
   const filteredDomains = useMemo(() => filterDomains(stat?.domains ?? [], domainQuery), [domainQuery, stat?.domains]);
   const summary = stat?.summary;
@@ -175,25 +208,32 @@ export default function App() {
     <div className="stat-app">
       <header className="topbar">
         <div className="brand-lockup"><div className="brand-mark">H</div><div><strong>Hamburger Stat</strong><span>独立网关监控</span></div></div>
-        <div className="topbar-actions"><span className={`live-pill ${USE_MOCK ? "mock-pill" : ""}`}><i />{USE_MOCK ? "模拟数据" : "实时历史"}</span><button className="icon-button" type="button" onClick={toggleTheme} aria-label={theme === "light" ? "切换深色主题" : "切换浅色主题"}>{theme === "light" ? <Moon size={17} /> : <Sun size={17} />}</button><button className="refresh-button" type="button" onClick={() => { void loadStat(range, selectedDomain); void loadGeo(); }} disabled={loading || refreshing}><RefreshCw size={15} className={refreshing ? "spin" : ""} />刷新</button></div>
+        <div className="topbar-actions"><span className={`live-pill ${USE_MOCK ? "mock-pill" : ""}`}><i />{USE_MOCK ? "模拟数据" : "实时历史"}</span><button className="icon-button" type="button" onClick={toggleTheme} aria-label={theme === "light" ? "切换深色主题" : "切换浅色主题"}>{theme === "light" ? <Moon size={17} /> : <Sun size={17} />}</button><button className="refresh-button" type="button" onClick={() => { void loadStat(range, selectedDomain); void loadOverviewStats(range); void loadGeo(); }} disabled={loading || refreshing}><RefreshCw size={15} className={refreshing ? "spin" : ""} />刷新</button></div>
       </header>
 
       <main className="page-shell">
         <section className="hero-row">
-          <div><div className="eyebrow">GATEWAY OBSERVABILITY</div><h1>网关可观测性总览</h1><p>请求、资源、流量和全球来源，按同一条时间线持续更新。</p></div>
+          <div><div className="eyebrow">GATEWAY OBSERVABILITY</div><h1>网关可观测性总览</h1><p>Powered by <strong>Hamburger Observer</strong></p></div>
           <div className="range-controls" aria-label="统计时间窗口">{RANGES.map((item) => <button type="button" key={item} className={range === item ? "range-button active" : "range-button"} aria-pressed={range === item} onClick={() => setRange(item)}>{item}</button>)}</div>
         </section>
 
         {error && <div className="notice error-notice" role="alert"><AlertTriangle size={17} /><span>{error}</span><button type="button" onClick={() => setError("")} aria-label="关闭错误提示"><X size={15} /></button></div>}
         {loading && !stat ? <SectionMessage kind="loading" title="正在加载统计数据" detail="首次读取可能需要等待 SQLite 历史存储响应。" /> : stat ? <>
           <section className="legacy-stat-panel" aria-label="累计 Stat 数据库统计">
-            <div className="legacy-stat-heading"><div><div className="eyebrow">LEGACY STAT DATABASE</div><h2>累计统计</h2></div><span className="panel-caption">原 Stat 数据库 · 不受当前时间窗口影响</span></div>
+            <div className="legacy-stat-heading"><div><div className="eyebrow">LEGACY STAT DATABASE</div><h2>累计统计</h2></div><span className="panel-caption">总览时间窗</span></div>
             <div className="legacy-stat-grid">
               <LegacyStatCard label="总请求数" value={stat.total} color={colors.accent} reducedMotion={reducedMotion} />
               <LegacyStatCard label="失败请求数" value={stat.fail} color={colors.errors} reducedMotion={reducedMotion} />
               <LegacyStatCard label="前端请求数" value={stat.static} color={colors.frontend} reducedMotion={reducedMotion} />
               <LegacyStatCard label="后端请求数" value={stat.api} color={colors.backend} reducedMotion={reducedMotion} />
             </div>
+          </section>
+
+          <section className="amicro-overview-grid" aria-label="快速统计总览">
+            <MonoActivityBlue stat={overviewStats["7d"]} reducedMotion={reducedMotion} />
+            <MonoRoundedStackedBar stats={overviewStats} currentStat={stat} reducedMotion={reducedMotion} />
+            <MonoRoundedDonut stat={stat} reducedMotion={reducedMotion} />
+            <MonoRoundedSparkline stat={overviewStats["24h"]} reducedMotion={reducedMotion} />
           </section>
 
           <section className="kpi-grid" aria-label="当前窗口关键指标">

@@ -14,6 +14,8 @@
   --accent: #1d9d78;
   --accent-soft: #dff5e9;
   --danger: #d85e56;
+  --micro-stage: #f4f6f8;
+  --micro-stage-strong: #e9eef2;
   --shadow: 0 18px 50px rgba(31, 73, 52, 0.07);
 }
 
@@ -30,6 +32,8 @@
   --accent: #59d0a6;
   --accent-soft: #173c31;
   --danger: #f08a80;
+  --micro-stage: #131a20;
+  --micro-stage-strong: #1b2630;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
 }
 
@@ -93,6 +97,63 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .legacy-stat-card-heading { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 11px; font-weight: 700; }
 .legacy-stat-card > strong { display: block; margin-top: 10px; font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
 
+.amicro-overview-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.amicro-card { position: relative; display: flex; min-width: 0; min-height: 276px; flex-direction: column; overflow: hidden; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-solid); box-shadow: var(--shadow); transition: background-color 300ms ease, box-shadow 300ms ease; }
+.amicro-card:hover { box-shadow: 0 15px 38px rgba(31, 73, 52, 0.1); }
+.amicro-activity-card, .amicro-stacked-card { grid-column: span 6; }
+.amicro-donut-card { grid-column: span 4; }
+.amicro-sparkline-card { grid-column: span 8; }
+.amicro-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 48px; }
+.amicro-card-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.amicro-card-title { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 0.13em; }
+.amicro-card-badge { display: inline-flex; align-items: center; padding: 3px 7px; border: 1px solid transparent; border-radius: 999px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; line-height: 1.2; }
+.amicro-card-badge.blue { border-color: color-mix(in srgb, #3b82f6 30%, transparent); background: color-mix(in srgb, #3b82f6 13%, transparent); color: #2874d4; }
+.amicro-card-badge.purple { border-color: color-mix(in srgb, #9277e6 30%, transparent); background: color-mix(in srgb, #9277e6 13%, transparent); color: #7055c5; }
+.amicro-card-badge.coral { border-color: color-mix(in srgb, var(--danger) 30%, transparent); background: color-mix(in srgb, var(--danger) 13%, transparent); color: var(--danger); }
+.amicro-card-badge.green { border-color: color-mix(in srgb, #43a982 30%, transparent); background: color-mix(in srgb, #43a982 13%, transparent); color: #328462; }
+:root[data-theme="dark"] .amicro-card-badge.blue { color: #82b8ff; }
+:root[data-theme="dark"] .amicro-card-badge.purple { color: #b9a8ff; }
+:root[data-theme="dark"] .amicro-card-badge.green { color: #77d4aa; }
+.amicro-card-total { display: block; margin-top: 5px; color: var(--ink); font-size: 22px; font-weight: 800; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+.amicro-card-total small { color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: 0; }
+.amicro-card-caption { padding-top: 3px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.amicro-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; border-radius: 13px; background: var(--micro-stage); transition: background-color 300ms ease; }
+.amicro-activity-stage { display: flex; flex-direction: column; justify-content: center; padding: 13px 14px 10px; }
+.amicro-hour-labels { display: flex; justify-content: space-between; margin: 0 1px 8px 42px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; }
+.amicro-activity-grid-shell { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 7px; }
+.amicro-day-labels { display: grid; grid-template-rows: repeat(7, minmax(0, 1fr)); gap: 3px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8px; text-align: right; }
+.amicro-activity-grid { display: grid; grid-template-columns: repeat(24, minmax(7px, 1fr)); grid-auto-rows: minmax(7px, 1fr); gap: 3px; min-width: 0; }
+.amicro-activity-cell { width: 100%; aspect-ratio: 1; min-width: 0; min-height: 7px; padding: 0; border: 0; border-radius: 3px; background: var(--micro-blue, #3b82f6); transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), filter 180ms ease; }
+.amicro-activity-cell:hover, .amicro-activity-cell:focus-visible { z-index: 1; filter: saturate(1.2); transform: scale(1.35); }
+.amicro-activity-hint { margin-top: 10px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; text-align: center; }
+.amicro-chart-stage { display: flex; align-items: center; justify-content: center; padding: 6px 8px 2px; }
+.amicro-donut-stage { display: flex; align-items: center; justify-content: center; min-height: 178px; }
+.amicro-sparkline-stage { display: flex; flex-direction: column; justify-content: space-evenly; gap: 9px; padding: 13px 15px; }
+.amicro-spark-row { display: flex; align-items: center; gap: 15px; min-height: 51px; }
+.amicro-spark-label { display: flex; width: 74px; flex: 0 0 74px; flex-direction: column; gap: 4px; }
+.amicro-spark-label strong { color: var(--ink); font-size: 11px; }
+.amicro-spark-label span { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; }
+.amicro-spark-chart { height: 51px; min-width: 0; flex: 1; }
+.amicro-donut-center { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; transform: translateY(1px); }
+.amicro-donut-center strong { color: var(--ink); font-size: 17px; font-variant-numeric: tabular-nums; }
+.amicro-donut-center span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.amicro-donut-legend { display: grid; gap: 5px; margin-top: 10px; }
+.amicro-donut-legend > div { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; color: var(--muted); font-size: 10px; }
+.amicro-donut-legend > div > span { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.amicro-donut-legend i, .amicro-legend-footer i { display: inline-block; width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; }
+.amicro-donut-legend strong { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; }
+.amicro-donut-legend small { width: 36px; color: var(--muted); font-size: 9px; text-align: right; }
+.amicro-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 7px; border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; }
+.amicro-legend-footer { justify-content: flex-start; gap: 15px; }
+.amicro-legend-footer span { display: inline-flex; align-items: center; gap: 5px; }
+.amicro-empty { display: grid; place-items: center; width: 100%; height: 100%; min-height: 120px; color: var(--muted); font-size: 11px; }
+.amicro-tooltip { min-width: 132px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-solid); box-shadow: var(--shadow); color: var(--ink); font-size: 10px; }
+.amicro-tooltip-label { margin-bottom: 7px; color: var(--muted); }
+.amicro-tooltip-row { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+.amicro-tooltip-row strong { margin-left: auto; font-variant-numeric: tabular-nums; }
+.amicro-tooltip-dot { width: 6px; height: 6px; border-radius: 50%; }
+.amicro-card.is-reduced-motion, .amicro-card.is-reduced-motion * { transition: none !important; }
+
 .panel { margin-bottom: 18px; padding: 19px; border-radius: 18px; }
 .panel-heading { justify-content: space-between; gap: 15px; margin-bottom: 16px; }
 .panel-heading h2, .panel-section-heading h2 { margin-top: 5px; font-size: 17px; letter-spacing: -0.035em; }
@@ -152,6 +213,7 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .rank-value { color: var(--accent); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .geo-empty, .geo-note { color: var(--muted); font-size: 11px; }
 .geo-note { margin-top: 17px; line-height: 1.65; }
+.geo-note a { color: var(--accent); overflow-wrap: anywhere; text-underline-offset: 2px; }
 .geo-note code, .domain-detail-empty code { padding: 2px 4px; border-radius: 4px; background: var(--surface-muted); color: var(--accent); font-size: 10px; }
 
 .panel-section-heading { display: flex; justify-content: space-between; align-items: end; margin: 35px 0 15px; }
@@ -203,7 +265,7 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
-@media (max-width: 1180px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .legacy-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .legacy-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .amicro-donut-card { grid-column: span 6; } .amicro-sparkline-card { grid-column: span 6; } }
 @media (max-width: 900px) { .globe-layout, .domain-layout { grid-template-columns: 1fr; } .globe-map { min-height: 390px; } }
 @media (max-width: 720px) {
   .topbar { min-height: 64px; padding: 0 16px; }
@@ -214,6 +276,8 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
   .range-controls { width: 100%; margin-top: 23px; }
   .range-button { flex: 1; }
   .kpi-grid, .two-column-grid, .connection-grid { grid-template-columns: 1fr; }
+  .amicro-overview-grid { grid-template-columns: 1fr; }
+  .amicro-activity-card, .amicro-stacked-card, .amicro-donut-card, .amicro-sparkline-card { grid-column: auto; }
   .legacy-stat-heading { display: block; }
   .legacy-stat-heading .panel-caption { display: block; margin-top: 7px; }
   .legacy-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
