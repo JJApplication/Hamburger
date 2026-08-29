@@ -178,7 +178,7 @@ export default function App() {
 
       <main className="page-shell">
         <section className="hero-row">
-          <div><div className="eyebrow">GATEWAY OBSERVABILITY</div><h1>运行状态，一眼看清。</h1><p>请求、资源、流量和全球来源，按同一条时间线持续更新。</p></div>
+          <div><div className="eyebrow">GATEWAY OBSERVABILITY</div><h1>网关可观测性总览</h1><p>请求、资源、流量和全球来源，按同一条时间线持续更新。</p></div>
           <div className="range-controls" aria-label="统计时间窗口">{RANGES.map((item) => <button type="button" key={item} className={range === item ? "range-button active" : "range-button"} aria-pressed={range === item} onClick={() => setRange(item)}>{item}</button>)}</div>
         </section>
 
