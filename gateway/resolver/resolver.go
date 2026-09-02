@@ -15,6 +15,7 @@ import (
 
 var once = sync.Once{}
 var resolver Resolver
+var resolverMu sync.RWMutex
 
 type Resolver struct {
 	cfg    *config.Config
@@ -24,6 +25,8 @@ type Resolver struct {
 
 func OneResolver(cfg *config.Config, logger *zerolog.Logger) *Resolver {
 	once.Do(func() {
+		resolverMu.Lock()
+		defer resolverMu.Unlock()
 		resolver = Resolver{
 			cfg:    cfg,
 			logger: logger,
@@ -32,6 +35,18 @@ func OneResolver(cfg *config.Config, logger *zerolog.Logger) *Resolver {
 	})
 
 	return &resolver
+}
+
+// RefreshFrontendRules updates the initialized resolver after an in-place
+// configuration reload. If the singleton has not been initialized yet, its
+// first construction will read the already-reloaded configuration directly.
+func RefreshFrontendRules(cfg *config.Config) {
+	resolverMu.RLock()
+	ruler := resolver.ruler
+	resolverMu.RUnlock()
+	if ruler != nil {
+		ruler.Refresh(cfg)
+	}
 }
 
 func (r *Resolver) FastCheckFront(request *http.Request) bool {

@@ -38,6 +38,11 @@
     enable: true,
     dir: "/renj.io/cache",
     expire: 0,
+    memory_enable: true,
+    memory_max_mb: 256,
+    memory_max_file_mb: 8,
+    memory_max_entries: 4096,
+    memory_revalidate_seconds: 60,
     matcher: [
       "*.html",
       "*.css",

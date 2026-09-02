@@ -21,6 +21,7 @@ import (
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
 	"Hamburger/gateway/prehandler"
+	"Hamburger/gateway/resolver"
 	gwRuntime "Hamburger/gateway/runtime"
 	"Hamburger/internal/constant"
 
@@ -275,6 +276,11 @@ func (s *AppService) ReloadConfig(ctx context.Context, req *appgrpc.ReloadConfig
 	if err := reloadConfigInPlace(file); err != nil {
 		return &appgrpc.ReloadConfigResponse{Success: false, Error: err.Error()}, nil
 	}
+	if s.getFrontServer != nil {
+		if frontServer := s.getFrontServer(); frontServer != nil {
+			frontServer.RefreshConfig()
+		}
+	}
 	return &appgrpc.ReloadConfigResponse{Success: true}, nil
 }
 
@@ -289,6 +295,7 @@ func (s *AppService) ReStartFrontServer(ctx context.Context, _ *appgrpc.Empty) (
 	if err := reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
+	frontServer.RefreshConfig()
 	frontServer.Shutdown()
 	go func() {
 		_ = frontServer.Start()
@@ -507,9 +514,11 @@ func reloadConfigInPlace(file string) error {
 	currentCfg := loader.Get()
 	if currentCfg == nil {
 		loader.Set(mergedCfg)
+		resolver.RefreshFrontendRules(mergedCfg)
 		return nil
 	}
 	*currentCfg = *mergedCfg
 	loader.Set(currentCfg)
+	resolver.RefreshFrontendRules(currentCfg)
 	return nil
 }

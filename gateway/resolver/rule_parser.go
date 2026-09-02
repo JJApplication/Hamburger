@@ -30,10 +30,16 @@ var (
 )
 
 type Ruler struct {
-	cfg      *config.Config
-	logger   *zerolog.Logger
-	apiRules map[string][]Rule // 记录域名和对应的API服务转发映射
-	rwLock   sync.RWMutex
+	logger      *zerolog.Logger
+	apiRules    map[string][]Rule // 记录服务名和对应的API服务转发映射
+	frontConfig frontendRouteConfig
+	rwLock      sync.RWMutex
+}
+
+type frontendRouteConfig struct {
+	InternalFlag string
+	Host         string
+	Port         int
 }
 
 type Rule struct {
@@ -47,19 +53,18 @@ type Rule struct {
 	}
 }
 
-func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
+func buildFrontendRules(cfg *config.Config) (map[string][]Rule, frontendRouteConfig) {
+	if cfg == nil {
+		return map[string][]Rule{}, frontendRouteConfig{}
+	}
 	apiServers := cfg.PxyFrontend.Servers
 	rules := make(map[string][]Rule)
-	// 转换为域名的规则映射
+	// 按服务名建立规则索引。域名到服务的解析由 runtime 完成后，
+	// 请求路径无需再次遍历所有域名规则。
 	for _, server := range apiServers {
-		// domain为字符串匹配或正则匹配
-		domain, ok := runtime.DomainsRuntimeMap.DomainFrontMap.Get(server.Name)
-		if !ok {
-			continue
-		}
-		rules[domain] = make([]Rule, 0)
+		rules[server.Name] = make([]Rule, 0, len(server.Backends))
 		for _, backend := range server.Backends {
-			rules[domain] = append(rules[domain], Rule{
+			rules[server.Name] = append(rules[server.Name], Rule{
 				API:        backend.API,
 				Rewrite:    backend.Rewrite,
 				UseRewrite: backend.UseRewrite,
@@ -71,12 +76,33 @@ func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
 			})
 		}
 	}
+	frontConfig := frontendRouteConfig{
+		InternalFlag: cfg.PxyFrontend.InternalFlag,
+		Host:         cfg.PxyFrontend.Host,
+		Port:         cfg.PxyFrontend.Port,
+	}
+	return rules, frontConfig
+}
+
+func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
+	rules, frontConfig := buildFrontendRules(cfg)
 
 	return &Ruler{
-		cfg:      cfg,
-		logger:   logger,
-		apiRules: rules,
+		logger:      logger,
+		apiRules:    rules,
+		frontConfig: frontConfig,
 	}
+}
+
+// Refresh atomically replaces all frontend API rules and the scalar routing
+// configuration used by Parse. Existing requests keep their immutable
+// snapshot while subsequent requests observe the new configuration.
+func (r *Ruler) Refresh(cfg *config.Config) {
+	rules, frontConfig := buildFrontendRules(cfg)
+	r.rwLock.Lock()
+	r.apiRules = rules
+	r.frontConfig = frontConfig
+	r.rwLock.Unlock()
 }
 
 func (r *Ruler) Parse(req *http.Request) RuleResult {
@@ -100,16 +126,11 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		}
 		var rules []Rule
 		r.rwLock.RLock()
-		// 判断域名是否匹配正则
-		for pattern, rs := range r.apiRules {
-			if utils.MatchDomainByRegex(pattern, host) {
-				rules = rs
-			}
-		}
-
+		rules = r.apiRules[serviceMap.ServiceName]
+		frontConfig := r.frontConfig
 		r.rwLock.RUnlock()
 
-		serviceType, _ := runtime.DomainsRuntimeMap.ServiceMap.Get(serviceMap.ServiceName)
+		serviceType, _ := runtime.GetService(serviceMap.ServiceName)
 		// 根据请求和域名判断转发到的真实服务
 		switch serviceType.ServiceType {
 		case constant.FrontendType:
@@ -118,12 +139,12 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			if result, ok := r.MatchAPIRule(req, rules); ok {
 				return result
 			}
-			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.ServiceName)
+			req.Header.Set(frontConfig.InternalFlag, serviceMap.ServiceName)
 			return RuleResult{
 				ProxyToType: Frontend,
 				ProxyTo:     serviceMap.ServiceName,
-				ProxyHost:   r.cfg.PxyFrontend.Host,
-				ProxyPort:   r.cfg.PxyFrontend.Port,
+				ProxyHost:   frontConfig.Host,
+				ProxyPort:   frontConfig.Port,
 				ProxyScheme: StaticSchema,
 			}
 		case constant.BackendType:
@@ -146,7 +167,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 				return result
 			}
 
-			req.Header.Set(r.cfg.PxyFrontend.InternalFlag, serviceMap.ServiceName)
+			req.Header.Set(frontConfig.InternalFlag, serviceMap.ServiceName)
 			return RuleResult{
 				ProxyToType: Custom,
 				ProxyTo:     serviceMap.ServiceName,
@@ -254,7 +275,7 @@ func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProx
 
 		// 转发到后端服务
 		// 转发到后端自定义服务
-		service, ok := runtime.DomainsRuntimeMap.ServiceMap.Get(rule.Service)
+		service, ok := runtime.GetService(rule.Service)
 		if !ok {
 			return RuleResult{
 				ProxyError: errDomainsMapEmpty,

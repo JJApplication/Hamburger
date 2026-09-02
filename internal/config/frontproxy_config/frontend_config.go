@@ -11,10 +11,15 @@ import (
 
 // FrontCacheConfig 缓存配置
 type FrontCacheConfig struct {
-	Enable  bool     `json:"enable" toml:"enable"`
-	Dir     string   `json:"dir" toml:"dir"`
-	Expire  int      `json:"expire" toml:"expire"`
-	Matcher []string `json:"matcher" toml:"matcher"`
+	Enable                  bool     `json:"enable" toml:"enable"`
+	Dir                     string   `json:"dir" toml:"dir"`
+	Expire                  int      `json:"expire" toml:"expire"`
+	Matcher                 []string `json:"matcher" toml:"matcher"`
+	MemoryEnable            *bool    `json:"memory_enable" toml:"memory_enable"`
+	MemoryMaxMB             int      `json:"memory_max_mb" toml:"memory_max_mb"`
+	MemoryMaxFileMB         int      `json:"memory_max_file_mb" toml:"memory_max_file_mb"`
+	MemoryMaxEntries        int      `json:"memory_max_entries" toml:"memory_max_entries"`
+	MemoryRevalidateSeconds int      `json:"memory_revalidate_seconds" toml:"memory_revalidate_seconds"`
 }
 
 type FrontHttp2Config struct {

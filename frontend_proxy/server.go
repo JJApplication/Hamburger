@@ -25,11 +25,13 @@ import (
 
 // HeliosServer 服务器结构体
 type HeliosServer struct {
-	config       *frontproxy_config.PxyFrontConfig
-	logger       *zerolog.Logger
-	gin          *gin.Engine
-	cacheManager *CacheManager
-	clientPool   *sync.Pool
+	config        *frontproxy_config.PxyFrontConfig
+	logger        *zerolog.Logger
+	gin           *gin.Engine
+	cacheManager  *CacheManager
+	clientPool    *sync.Pool
+	serverIndexMu sync.RWMutex
+	serverIndex   map[string]frontproxy_config.FrontServerConfig
 }
 
 // NewFrontServer 创建新的服务器实例
@@ -63,8 +65,47 @@ func NewFrontServer(cfg *config.Config, logger *zerolog.Logger) (*HeliosServer, 
 		clientPool:   clientPool,
 	}
 
+	server.refreshIndexes()
 	server.setupGin()
 	return server, nil
+}
+
+// refreshIndexes rebuilds the read-mostly indexes after configuration changes.
+// Values are copied instead of storing pointers into the configuration slice so
+// a later config replacement cannot leave a dangling slice-element pointer.
+func (s *HeliosServer) refreshIndexes() {
+	index := make(map[string]frontproxy_config.FrontServerConfig, len(s.config.Servers))
+	for _, server := range s.config.Servers {
+		if server.Name == "" {
+			continue
+		}
+		// Keep the first-match behavior of the previous linear lookup if a
+		// malformed configuration contains duplicate names.
+		if _, exists := index[server.Name]; exists {
+			continue
+		}
+		index[server.Name] = server
+	}
+
+	s.serverIndexMu.Lock()
+	s.serverIndex = index
+	s.serverIndexMu.Unlock()
+	if s.cacheManager != nil {
+		s.cacheManager.Reset()
+	}
+}
+
+// RefreshConfig refreshes indexes and invalidates cached content after an
+// in-place configuration reload.
+func (s *HeliosServer) RefreshConfig() {
+	s.refreshIndexes()
+}
+
+func (s *HeliosServer) lookupServer(name string) (frontproxy_config.FrontServerConfig, bool) {
+	s.serverIndexMu.RLock()
+	server, ok := s.serverIndex[name]
+	s.serverIndexMu.RUnlock()
+	return server, ok
 }
 
 // GetHTTPClient 从池中获取HTTP客户端
@@ -83,7 +124,7 @@ func (s *HeliosServer) setupGin() {
 	s.gin = gin.New()
 
 	// 添加中间件
-	s.gin.Use(LoggingMiddleware(s.logger, s.config))
+	s.gin.Use(LoggingMiddleware(s))
 	s.gin.Use(CustomHeadersMiddleware(s.config))
 	// 后端代理中间件，优先级高于静态文件路由
 	s.gin.Use(BackendProxyMiddleware(s))
@@ -122,12 +163,9 @@ func (s *HeliosServer) HandleStaticFile(c *gin.Context, serverConfig *frontproxy
 	// 获取internal_flag
 	internalFlag := c.GetHeader(s.config.InternalFlag)
 
-	// 先检查缓存是否存在
-	cachedFile := s.cacheManager.GetCachedFile(internalFlag, requestPath)
-	if cachedFile != "" {
-		// 缓存命中，添加响应头标识
-		c.Header(s.config.CacheHeader, "True")
-		c.File(cachedFile)
+	// 先查内存缓存，再回落到磁盘缓存。内存命中在验证窗口内不触发
+	// 文件系统调用；缓存层未命中时继续走下面的源文件和 try_file 逻辑。
+	if s.cacheManager.ServeCached(c, internalFlag, requestPath, filePath) {
 		return
 	}
 
@@ -298,6 +336,9 @@ func (s *HeliosServer) HandleError(c *gin.Context, statusCode int, message strin
 
 // Start 启动服务器
 func (s *HeliosServer) Start() error {
+	// The control API reloads the shared config in place. Rebuild the indexes
+	// before a restarted listener begins serving requests.
+	s.refreshIndexes()
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	if s.config.ExpFastConnect.Http3.Enabled {
 		return s.http3Server(addr)

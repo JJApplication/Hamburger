@@ -19,23 +19,14 @@ func BackendProxyMiddleware(server *HeliosServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取内部标志头
 		internalFlag := c.GetHeader(server.config.InternalFlag)
-		server.logger.Info().Str("internal_flag", internalFlag).Msg("received request")
+		server.logger.Debug().Str("internal_flag", internalFlag).Msg("received request")
 		if internalFlag == "" {
 			c.Next()
 			return
 		}
 
-		// 查找对应的服务器配置
-		var serverConfig *frontproxy_config.FrontServerConfig
-
-		for _, srv := range server.config.Servers {
-			if srv.Name == internalFlag {
-				serverConfig = &srv
-				break
-			}
-		}
-
-		if serverConfig == nil {
+		serverConfig, ok := server.lookupServer(internalFlag)
+		if !ok {
 			c.Next()
 			return
 		}
@@ -170,7 +161,7 @@ func proxyToBackend(server *HeliosServer, c *gin.Context, backend *frontproxy_co
 	}
 
 	// 记录代理日志
-	server.logger.Info().
+	server.logger.Debug().
 		Str("original_path", c.Request.URL.Path).
 		Str("target_url", targetURL.String()).
 		Str("backend_service", backend.Service).

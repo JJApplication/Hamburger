@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"net"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -17,10 +18,18 @@ var (
 	DomainsRuntimeMap struct {
 		Domains        []string
 		DomainsMap     *structure.Map[config.Service] // 动态匹配域名 -> 服务
+		RegexDomains   []RegexDomainService           // 仅正则域名，保持配置顺序
 		DomainFrontMap *structure.Map[string]         // front -> domain
 		ServiceMap     *structure.Map[config.Service] // 所有服务列表
 	}
 )
+
+// RegexDomainService is a precompiled regular-expression domain rule.
+type RegexDomainService struct {
+	Pattern string
+	Service config.Service
+	Matcher *regexp.Regexp
+}
 
 func InitRuntimeDomains(cfg *config.AppConfig) {
 	loadRuntimeDomains(cfg)
@@ -47,9 +56,10 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 		// validate 失败应该退出程序后检查
 	}
 
-	// 域名 -> 服务映射初始为空
+	// 普通域名在加载时直接建立索引；只有正则域名保留到请求时遍历。
 	m := structure.NewMap[config.Service]()
 	var md []string
+	var regexDomains []RegexDomainService
 
 	sm := structure.NewMap[config.Service]()
 	for _, service := range dmap.Sevices {
@@ -57,6 +67,20 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 		// 添加域名正则表达式
 		if service.ServiceDomain != "" {
 			md = append(md, service.ServiceDomain)
+			if utils.IsDomainRegex(service.ServiceDomain) {
+				pattern := strings.TrimSpace(service.ServiceDomain)
+				pattern = strings.TrimSpace(pattern[1 : len(pattern)-1])
+				matcher, err := regexp.Compile(pattern)
+				if err == nil {
+					regexDomains = append(regexDomains, RegexDomainService{
+						Pattern: service.ServiceDomain,
+						Service: service,
+						Matcher: matcher,
+					})
+				}
+				continue
+			}
+			m.Put(strings.ToLower(NormalizeRequestHost(service.ServiceDomain)), service)
 		}
 	}
 
@@ -73,18 +97,22 @@ func loadRuntimeDomains(cfg *config.AppConfig) {
 	DomainsRuntimeMap = struct {
 		Domains        []string
 		DomainsMap     *structure.Map[config.Service]
+		RegexDomains   []RegexDomainService
 		DomainFrontMap *structure.Map[string]
 		ServiceMap     *structure.Map[config.Service]
-	}{Domains: md, DomainsMap: m, DomainFrontMap: fm, ServiceMap: sm}
+	}{Domains: md, DomainsMap: m, RegexDomains: regexDomains, DomainFrontMap: fm, ServiceMap: sm}
 
 	logger.L().Info().Int("count", DomainsRuntimeMap.DomainsMap.Size()).Msg("[runtime] domains rules")
 	logger.L().Info().Int("count", DomainsRuntimeMap.ServiceMap.Size()).Msg("[runtime] services")
 }
 
 func loadDefaultDomainsMap() {
+	DomainLock.Lock()
+	defer DomainLock.Unlock()
 	DomainsRuntimeMap = struct {
 		Domains        []string
 		DomainsMap     *structure.Map[config.Service]
+		RegexDomains   []RegexDomainService
 		DomainFrontMap *structure.Map[string]
 		ServiceMap     *structure.Map[config.Service]
 	}{
@@ -124,24 +152,42 @@ func GetDomainsSnapshot() ([]string, map[string]string, map[string]string) {
 }
 
 func GetDomain2Service(host string) (config.Service, bool) {
-	host = NormalizeRequestHost(host)
-	if DomainsRuntimeMap.DomainsMap == nil || DomainsRuntimeMap.ServiceMap == nil {
+	normalizedHost := NormalizeRequestHost(host)
+	hostKey := strings.ToLower(normalizedHost)
+	DomainLock.RLock()
+	domainsMap := DomainsRuntimeMap.DomainsMap
+	// Runtime reload replaces the whole snapshot and never mutates this slice
+	// in place, so retaining the immutable slice header avoids an allocation on
+	// every exact-domain request.
+	regexDomains := DomainsRuntimeMap.RegexDomains
+	DomainLock.RUnlock()
+	if domainsMap == nil {
 		return config.Service{}, false
 	}
-	if domainMap, ok := DomainsRuntimeMap.DomainsMap.Get(host); ok {
+	if domainMap, ok := domainsMap.Get(hostKey); ok {
 		return domainMap, true
 	}
-	// 基于domain的正则解析
-	for _, service := range DomainsRuntimeMap.ServiceMap.Values() {
-		if service.ServiceDomain != "" {
-			if utils.MatchDomainByRegex(service.ServiceDomain, host) {
-				DomainsRuntimeMap.DomainsMap.Put(host, service)
-				return service, true
-			}
+	// 只有正则域名才进入请求路径遍历。
+	for _, domain := range regexDomains {
+		if domain.Matcher != nil && domain.Matcher.MatchString(normalizedHost) {
+			domainsMap.Put(hostKey, domain.Service)
+			return domain.Service, true
 		}
 	}
 
 	return config.Service{}, false
+}
+
+// GetService returns a service from the current runtime snapshot without
+// exposing the snapshot's mutable pointer to callers.
+func GetService(name string) (config.Service, bool) {
+	DomainLock.RLock()
+	serviceMap := DomainsRuntimeMap.ServiceMap
+	DomainLock.RUnlock()
+	if serviceMap == nil {
+		return config.Service{}, false
+	}
+	return serviceMap.Get(name)
 }
 
 // NormalizeRequestHost 去掉 Host 头中的端口，便于与 service_domain 匹配。

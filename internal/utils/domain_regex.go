@@ -52,6 +52,14 @@ func MatchDomainByRegex(pattern, domain string) bool {
 	return re.MatchString(domain)
 }
 
+// IsDomainRegex reports whether a domain rule uses the /pattern/ syntax.
+// Keeping this classification in one place prevents callers from repeatedly
+// treating ordinary domains as regular expressions on the request path.
+func IsDomainRegex(pattern string) bool {
+	_, ok := unwrapRegexPattern(pattern)
+	return ok
+}
+
 // IsRegexListMutuallyExclusive 判断规则数组是否互斥且无包含关系，并返回有问题的规则。
 func IsRegexListMutuallyExclusive(patterns []string) (bool, []string) {
 	if len(patterns) <= 1 {

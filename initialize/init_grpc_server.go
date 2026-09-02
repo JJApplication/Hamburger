@@ -10,6 +10,7 @@ import (
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
 	"Hamburger/gateway/modifier"
+	"Hamburger/gateway/resolver"
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
 	"Hamburger/internal/config/loader"
@@ -114,6 +115,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if err := reloadConfigInPlace(i.cfg); err != nil {
 				return err
 			}
+			i.FrontServer.RefreshConfig()
 			i.FrontServer.Shutdown()
 			go func() {
 				_ = i.FrontServer.Start()
@@ -204,9 +206,11 @@ func reloadConfigInPlace(currentCfg *config.Config) error {
 	mergedCfg := loader.Merge(appCfg)
 	if currentCfg == nil {
 		loader.Set(mergedCfg)
+		resolver.RefreshFrontendRules(mergedCfg)
 		return nil
 	}
 	*currentCfg = *mergedCfg
 	loader.Set(currentCfg)
+	resolver.RefreshFrontendRules(currentCfg)
 	return nil
 }

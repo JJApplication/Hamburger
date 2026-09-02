@@ -8,12 +8,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// LoggingMiddleware 日志中间件
-func LoggingMiddleware(logger *zerolog.Logger, config *frontproxy_config.PxyFrontConfig) gin.HandlerFunc {
+// LoggingMiddleware logs detailed access records only for explicitly enabled
+// sites. Sites with access logging disabled do not emit a request-level Info
+// record; the lightweight request trace is available at Debug level instead.
+func LoggingMiddleware(server *HeliosServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
 		latency := time.Since(start)
+		logger := server.logger
+		config := server.config
 
 		// 获取请求体大小
 		bodySize := c.Request.ContentLength
@@ -25,13 +29,8 @@ func LoggingMiddleware(logger *zerolog.Logger, config *frontproxy_config.PxyFron
 		internalFlag := c.GetHeader(config.InternalFlag)
 
 		// 检查是否需要记录详细访问日志
-		var shouldLogAccess bool
-		for _, srv := range config.Servers {
-			if srv.Name == internalFlag && srv.Access {
-				shouldLogAccess = true
-				break
-			}
-		}
+		serverConfig, found := server.lookupServer(internalFlag)
+		shouldLogAccess := found && serverConfig.Access
 
 		if shouldLogAccess {
 			// 详细访问日志
@@ -44,9 +43,10 @@ func LoggingMiddleware(logger *zerolog.Logger, config *frontproxy_config.PxyFron
 				Dur("response_time", latency).
 				Int("status_code", c.Writer.Status()).
 				Str("ip", c.ClientIP()).Msg("access log")
-		} else {
-			// 简单请求日志
-			logger.Info().
+		} else if logger.GetLevel() <= zerolog.DebugLevel {
+			// Keep the low-detail trace available without imposing an Info-level
+			// logging cost on every request when access logging is disabled.
+			logger.Debug().
 				Str("method", c.Request.Method).
 				Str("path", c.Request.URL.Path).
 				Int("status", c.Writer.Status()).
@@ -77,22 +77,13 @@ func RoutingMiddleware(server *HeliosServer) gin.HandlerFunc {
 			return
 		}
 
-		// 查找对应的服务器配置
-		var serverConfig *frontproxy_config.FrontServerConfig
-
-		for _, srv := range server.config.Servers {
-			if srv.Name == internalFlag {
-				serverConfig = &srv
-				break
-			}
-		}
-
-		if serverConfig == nil {
+		serverConfig, ok := server.lookupServer(internalFlag)
+		if !ok {
 			server.HandleError(c, 404, "Server not found for internal flag: "+internalFlag)
 			return
 		}
 
 		// 处理静态文件请求
-		server.HandleStaticFile(c, serverConfig)
+		server.HandleStaticFile(c, &serverConfig)
 	}
 }
