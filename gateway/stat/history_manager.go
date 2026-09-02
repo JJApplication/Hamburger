@@ -19,6 +19,7 @@ func (m *StatManager) HistoryCapabilities() map[string]bool {
 		"process_cpu":     false,
 		"process_memory":  false,
 		"process_disk_io": false,
+		"runtime_gc":      false,
 		"program_traffic": false,
 	}
 	if m == nil || m.history == nil {

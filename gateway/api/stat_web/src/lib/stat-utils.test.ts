@@ -12,6 +12,16 @@ describe("stat response mapping", () => {
     expect(result.domains[0].domain).toBe("api.example");
   });
 
+  it("normalizes GC summary and pause series", () => {
+    const result = normalizeStatResponse({
+      summary: { gc: { cycles: 8, forced_cycles: 1, pressure_percent: 3.5, pause_p95_ms: 1.25 } },
+      series: { gc: [{ timestamp: "2026-08-28T12:00:00Z", cycles: 2, pause_avg_ms: 0.4 }] },
+    });
+    expect(result.summary.gc.cycles).toBe(8);
+    expect(result.summary.gc.pressure_percent).toBe(3.5);
+    expect(result.series.gc[0]).toMatchObject({ cycles: 2, pause_avg_ms: 0.4, pause_p95_ms: 0 });
+  });
+
   it("normalizes geo ISO codes and ignores invalid values", () => {
     const geo = normalizeGeoData({ cn: 10, " us ": 5, XX: -1, bad: "not-a-number" });
     expect(geo).toEqual({ CN: 10, US: 5, BAD: 0 });

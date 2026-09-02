@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Activity, AlertTriangle, ArrowDownUp, Gauge, HardDrive, Moon, Network, RefreshCw, Search, Sun, X } from "lucide-react";
 import { fetchGeo, fetchStat, USE_MOCK } from "./api";
 import { AnimatedNumber } from "./components/AnimatedNumber";
-import { MonoActivityBlue, MonoRoundedDonut, MonoRoundedSparkline, MonoRoundedStackedBar, type OverviewStats } from "./components/AmicroCharts";
+import { MonoActivityBlue, MonoGCCycles, MonoGCPause, MonoRoundedDonut, MonoRoundedSparkline, MonoRoundedStackedBar, type OverviewStats } from "./components/AmicroCharts";
 import { MonoRoundedAreaChart, MonoRoundedBarChart, MonoRoundedKpiCardChart, MonoRoundedLineChart } from "./components/MonoCharts";
 import { Panel, SectionMessage } from "./components/Panel";
 import { formatBytes, formatDateTime, formatMilliseconds, formatNumber, formatPercent, formatRate } from "./lib/format";
@@ -187,7 +187,7 @@ export default function App() {
     if (!stat) return [];
     const names: Record<string, string> = {
       system_cpu: "系统 CPU", system_memory: "系统内存", system_network: "系统网络",
-      system_disk_io: "系统磁盘 IO", process_cpu: "进程 CPU", process_memory: "进程内存", process_disk_io: "进程磁盘 IO",
+      system_disk_io: "系统磁盘 IO", process_cpu: "进程 CPU", process_memory: "进程内存", process_disk_io: "进程磁盘 IO", runtime_gc: "Go GC",
     };
     return Object.entries(names).filter(([key]) => stat.meta.capabilities[key] === false).map(([, name]) => name);
   }, [stat]);
@@ -234,6 +234,8 @@ export default function App() {
             <MonoRoundedStackedBar stats={overviewStats} currentStat={stat} reducedMotion={reducedMotion} />
             <MonoRoundedDonut stat={stat} reducedMotion={reducedMotion} />
             <MonoRoundedSparkline stat={overviewStats["24h"]} reducedMotion={reducedMotion} />
+            <MonoGCCycles stats={overviewStats} currentStat={stat} reducedMotion={reducedMotion} />
+            <MonoGCPause stat={stat} reducedMotion={reducedMotion} />
           </section>
 
           <section className="kpi-grid" aria-label="当前窗口关键指标">

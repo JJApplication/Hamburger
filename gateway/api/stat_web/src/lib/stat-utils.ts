@@ -2,6 +2,7 @@ import type {
 	Capabilities,
 	DomainSummary,
 	GeoData,
+	GCSeriesPoint,
 	ProcessSeriesPoint,
 	Range,
 	RequestSeriesPoint,
@@ -17,10 +18,11 @@ const emptyCapabilities: Capabilities = {
   system_memory: false,
   system_network: false,
   system_disk_io: false,
-  process_cpu: false,
-  process_memory: false,
-  process_disk_io: false,
-  program_traffic: false,
+	process_cpu: false,
+	process_memory: false,
+	process_disk_io: false,
+	runtime_gc: false,
+	program_traffic: false,
 };
 
 function finiteNumber(value: unknown, fallback = 0): number {
@@ -41,6 +43,7 @@ export function normalizeStatResponse(input: unknown): StatResponse {
   const summary = value.summary ?? {} as StatResponse["summary"];
   const status = summary.status ?? {} as StatResponse["summary"]["status"];
   const latency = summary.latency ?? {} as StatResponse["summary"]["latency"];
+  const gc = summary.gc ?? {} as StatResponse["summary"]["gc"];
   const traffic = summary.total_traffic ?? {} as StatResponse["summary"]["total_traffic"];
   const series = value.series ?? {} as StatResponse["series"];
   const connections = value.connections ?? {} as StatResponse["connections"];
@@ -80,6 +83,7 @@ export function normalizeStatResponse(input: unknown): StatResponse {
         p95_ms: finiteNumber(latency.p95_ms),
         max_ms: finiteNumber(latency.max_ms),
       },
+      gc: normalizeGC(gc),
       frontend_traffic: normalizeTraffic(summary.frontend_traffic),
       backend_traffic: normalizeTraffic(summary.backend_traffic),
       total_traffic: normalizeTraffic(traffic),
@@ -87,6 +91,16 @@ export function normalizeStatResponse(input: unknown): StatResponse {
 	    series: {
 	      requests: arrayOf<RequestSeriesPoint>(series.requests),
 	      traffic: arrayOf<TrafficSeriesPoint>(series.traffic),
+	      gc: arrayOf<GCSeriesPoint>(series.gc).map((point) => ({
+        timestamp: typeof point.timestamp === "string" ? point.timestamp : "",
+        cycles: finiteNumber(point.cycles),
+        forced_cycles: finiteNumber(point.forced_cycles),
+        pressure_percent: finiteNumber(point.pressure_percent),
+        pause_total_ms: finiteNumber(point.pause_total_ms),
+        pause_avg_ms: finiteNumber(point.pause_avg_ms),
+        pause_p95_ms: finiteNumber(point.pause_p95_ms),
+        pause_max_ms: finiteNumber(point.pause_max_ms),
+      })),
 	      system: arrayOf<SystemSeriesPoint>(series.system).map((point) => ({
         ...point,
         cpu_percent: nullableNumber(point.cpu_percent),
@@ -131,6 +145,19 @@ function normalizeTraffic(value: unknown) {
     request_bytes: finiteNumber(traffic.request_bytes),
     response_bytes: finiteNumber(traffic.response_bytes),
     total_bytes: finiteNumber(traffic.total_bytes),
+  };
+}
+
+function normalizeGC(value: unknown) {
+  const gc = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return {
+    cycles: finiteNumber(gc.cycles),
+    forced_cycles: finiteNumber(gc.forced_cycles),
+    pressure_percent: finiteNumber(gc.pressure_percent),
+    pause_total_ms: finiteNumber(gc.pause_total_ms),
+    pause_avg_ms: finiteNumber(gc.pause_avg_ms),
+    pause_p95_ms: finiteNumber(gc.pause_p95_ms),
+    pause_max_ms: finiteNumber(gc.pause_max_ms),
   };
 }
 

@@ -62,8 +62,8 @@ func TestLatencyHistogramAndResampling(t *testing.T) {
 	if got := approximateP95(histogram); got != 100 {
 		t.Fatalf("approximateP95() = %vms, want 100ms", got)
 	}
-	if got := outputBucketStart(359, 5*time.Minute); got != 0 {
-		t.Fatalf("outputBucketStart() = %d, want 0", got)
+	if got := outputBucketStart(359, 5*time.Minute); got != 300 {
+		t.Fatalf("outputBucketStart() = %d, want 300", got)
 	}
 	if got := outputBucketStart(301, 5*time.Minute); got != 300 {
 		t.Fatalf("outputBucketStart() = %d, want 300", got)

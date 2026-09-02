@@ -47,6 +47,8 @@ describe("Stat Web page", () => {
     expect(screen.getByText("失败请求数")).toBeInTheDocument();
     expect(screen.getByText("前端请求数")).toBeInTheDocument();
     expect(screen.getByText("后端请求数")).toBeInTheDocument();
+    expect(screen.getByLabelText("不同时间段内的 GC 次数")).toBeInTheDocument();
+    expect(screen.getByLabelText("GC 压力延迟")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "24h" }));
     await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([input]) => String(input).includes("range=24h"))).toBe(true));
     expect(screen.getByText("全球请求来源")).toBeInTheDocument();

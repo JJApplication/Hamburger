@@ -4,6 +4,8 @@ import (
 	"context"
 	"math"
 	"os"
+	"runtime"
+	runtimeMetrics "runtime/metrics"
 	"sync"
 	"time"
 
@@ -32,6 +34,13 @@ type ResourceReading struct {
 	SystemDiskWriteBytes  *int64
 	ProcessDiskReadBytes  *int64
 	ProcessDiskWriteBytes *int64
+
+	GCCycles          *int64
+	GCForcedCycles    *int64
+	GCPauseTotalNS    *int64
+	GCPauseMaxNS      *int64
+	GCPauseBuckets    [requestHistogramSize]int64
+	GCPressurePercent *float64
 }
 
 type resourceCapabilities struct {
@@ -42,6 +51,7 @@ type resourceCapabilities struct {
 	ProcessCPU    bool
 	ProcessMemory bool
 	ProcessDiskIO bool
+	RuntimeGC     bool
 }
 
 func (c resourceCapabilities) mapValue() map[string]bool {
@@ -53,6 +63,7 @@ func (c resourceCapabilities) mapValue() map[string]bool {
 		"process_cpu":     c.ProcessCPU,
 		"process_memory":  c.ProcessMemory,
 		"process_disk_io": c.ProcessDiskIO,
+		"runtime_gc":      c.RuntimeGC,
 		"program_traffic": true,
 	}
 }
@@ -71,12 +82,17 @@ type resourceSampler struct {
 	lastProcRead  uint64
 	lastProcWrite uint64
 	procIOReady   bool
+	lastGC        runtime.MemStats
+	gcReady       bool
+	lastGCCPU     float64
+	lastTotalCPU  float64
+	gcCPUReady    bool
 	caps          resourceCapabilities
 }
 
 func newResourceSampler() *resourceSampler {
 	p, _ := process.NewProcess(int32(os.Getpid()))
-	return &resourceSampler{process: p}
+	return &resourceSampler{process: p, caps: resourceCapabilities{RuntimeGC: true}}
 }
 
 func (s *resourceSampler) capabilities() resourceCapabilities {
@@ -95,6 +111,39 @@ func (s *resourceSampler) sample(ctx context.Context, now time.Time) ResourceRea
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	reading := ResourceReading{Timestamp: now.UTC()}
+
+	var gcStats runtime.MemStats
+	runtime.ReadMemStats(&gcStats)
+	reading.GCCycles = int64Ptr(0)
+	reading.GCForcedCycles = int64Ptr(0)
+	reading.GCPauseTotalNS = int64Ptr(0)
+	reading.GCPauseMaxNS = int64Ptr(0)
+	gcCPU, totalCPU, metricsOK := readRuntimeGCMetrics()
+	if metricsOK {
+		if s.gcCPUReady {
+			if pressure, ok := gcPressurePercent(s.lastGCCPU, gcCPU, s.lastTotalCPU, totalCPU); ok {
+				reading.GCPressurePercent = float64Ptr(pressure)
+			}
+		}
+		s.lastGCCPU = gcCPU
+		s.lastTotalCPU = totalCPU
+		s.gcCPUReady = true
+	} else {
+		// Keep a compatibility fallback for runtimes that do not expose the
+		// runtime/metrics CPU classes.
+		reading.GCPressurePercent = float64Ptr(clampPercent(gcStats.GCCPUFraction * 100))
+	}
+	s.caps.RuntimeGC = true
+	if s.gcReady {
+		cycles, forced, pauseTotal, pauseMax, pauseBuckets := gcDelta(s.lastGC, gcStats)
+		reading.GCCycles = int64Ptr(cycles)
+		reading.GCForcedCycles = int64Ptr(forced)
+		reading.GCPauseTotalNS = int64Ptr(safeUint64ToInt64(pauseTotal))
+		reading.GCPauseMaxNS = int64Ptr(safeUint64ToInt64(pauseMax))
+		reading.GCPauseBuckets = pauseBuckets
+	}
+	s.lastGC = gcStats
+	s.gcReady = true
 
 	if times, err := cpu.TimesWithContext(ctx, false); err == nil && len(times) > 0 {
 		current := times[0]
@@ -167,6 +216,58 @@ func (s *resourceSampler) sample(ctx context.Context, now time.Time) ResourceRea
 	}
 	s.lastWall = now
 	return reading
+}
+
+func gcDelta(previous, current runtime.MemStats) (int64, int64, uint64, uint64, [requestHistogramSize]int64) {
+	var buckets [requestHistogramSize]int64
+	if current.NumGC < previous.NumGC || current.NumForcedGC < previous.NumForcedGC || current.PauseTotalNs < previous.PauseTotalNs {
+		return 0, 0, 0, 0, buckets
+	}
+
+	cycles := current.NumGC - previous.NumGC
+	forced := current.NumForcedGC - previous.NumForcedGC
+	pauseTotal := current.PauseTotalNs - previous.PauseTotalNs
+	var pauseMax uint64
+	start := previous.NumGC + 1
+	if cycles > uint32(len(current.PauseNs)) {
+		start = current.NumGC - uint32(len(current.PauseNs)) + 1
+	}
+	for cycle := start; cycle <= current.NumGC; cycle++ {
+		pause := current.PauseNs[(cycle+255)%uint32(len(current.PauseNs))]
+		if pause > pauseMax {
+			pauseMax = pause
+		}
+		microseconds := pause / uint64(time.Microsecond)
+		if pause > 0 && microseconds == 0 {
+			microseconds = 1
+		}
+		if microseconds > uint64(^uint64(0)>>1) {
+			microseconds = uint64(^uint64(0) >> 1)
+		}
+		buckets[latencyHistogramIndex(int64(microseconds))]++
+	}
+	return int64(cycles), int64(forced), pauseTotal, pauseMax, buckets
+}
+
+func readRuntimeGCMetrics() (float64, float64, bool) {
+	samples := []runtimeMetrics.Sample{
+		{Name: "/cpu/classes/gc/total:cpu-seconds"},
+		{Name: "/cpu/classes/total:cpu-seconds"},
+	}
+	runtimeMetrics.Read(samples)
+	if samples[0].Value.Kind() != runtimeMetrics.KindFloat64 || samples[1].Value.Kind() != runtimeMetrics.KindFloat64 {
+		return 0, 0, false
+	}
+	return samples[0].Value.Float64(), samples[1].Value.Float64(), true
+}
+
+func gcPressurePercent(previousGC, currentGC, previousTotal, currentTotal float64) (float64, bool) {
+	gcDelta := currentGC - previousGC
+	totalDelta := currentTotal - previousTotal
+	if math.IsNaN(gcDelta) || math.IsInf(gcDelta, 0) || math.IsNaN(totalDelta) || math.IsInf(totalDelta, 0) || gcDelta < 0 || totalDelta <= 0 {
+		return 0, false
+	}
+	return clampPercent(gcDelta / totalDelta * 100), true
 }
 
 func (s *resourceSampler) lastNetworkValue(read func(*net.IOCountersStat) uint64) uint64 {

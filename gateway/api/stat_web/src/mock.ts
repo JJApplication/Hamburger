@@ -1,6 +1,7 @@
 import type {
   DomainSeriesPoint,
   DomainSummary,
+  GCSeriesPoint,
   GeoData,
   ProcessSeriesPoint,
   Range,
@@ -128,6 +129,24 @@ function makeProcessSeries(requests: RequestSeriesPoint[]): ProcessSeriesPoint[]
   }));
 }
 
+function makeGCSeries(requests: RequestSeriesPoint[]): GCSeriesPoint[] {
+  return requests.map((point, index) => {
+    const cycles = Math.max(0, Math.round(point.total / 260 + (index % 9 === 0 ? 1 : 0)));
+    const pauseAvg = cycles ? 0.45 + Math.sin(index / 8) * 0.08 : 0;
+    const pauseP95 = cycles ? pauseAvg * 2.2 : 0;
+    return {
+      timestamp: point.timestamp,
+      cycles,
+      forced_cycles: cycles > 0 && index % 37 === 0 ? 1 : 0,
+      pressure_percent: 1.2 + Math.sin(index / 10) * 0.35 + point.total / 2_000,
+      pause_total_ms: cycles * pauseAvg,
+      pause_avg_ms: pauseAvg,
+      pause_p95_ms: pauseP95,
+      pause_max_ms: cycles ? pauseP95 * 1.7 : 0,
+    };
+  });
+}
+
 function makeDomains(totalRequests: number): DomainSummary[] {
   return mockDomainSeed.map(({ domain, share, errors }) => {
     const requests = Math.round(totalRequests * share);
@@ -161,12 +180,16 @@ export function createMockStat(range: Range, domain = ""): StatResponse {
   const traffic = makeTrafficSeries(requests);
   const system = makeSystemSeries(requests);
   const process = makeProcessSeries(requests);
+  const gc = makeGCSeries(requests);
   const totalRequests = sum(requests.map((point) => point.total));
   const frontendRequests = sum(requests.map((point) => point.frontend));
   const backendRequests = sum(requests.map((point) => point.backend));
   const errors = sum(requests.map((point) => point.errors));
   const requestBytes = sum(traffic.map((point) => point.request_bytes));
   const responseBytes = sum(traffic.map((point) => point.response_bytes));
+  const gcCycles = sum(gc.map((point) => point.cycles));
+  const gcPauseTotal = sum(gc.map((point) => point.pause_total_ms));
+  const gcPressure = gc.length ? sum(gc.map((point) => point.pressure_percent)) / gc.length : 0;
   const startTime = requests[0]?.timestamp ?? new Date().toISOString();
   const endTime = requests.at(-1)?.timestamp ?? new Date().toISOString();
   const bucketSeconds = rangeConfig[range].bucketMinutes * 60;
@@ -193,6 +216,7 @@ export function createMockStat(range: Range, domain = ""): StatResponse {
         process_cpu: true,
         process_memory: true,
         process_disk_io: true,
+        runtime_gc: true,
         program_traffic: true,
       },
     },
@@ -212,6 +236,15 @@ export function createMockStat(range: Range, domain = ""): StatResponse {
         "5xx": sum(requests.map((point) => point.status_5xx)),
       },
       latency: { avg_ms: 22, p95_ms: 62, max_ms: 132 },
+      gc: {
+        cycles: gcCycles,
+        forced_cycles: sum(gc.map((point) => point.forced_cycles)),
+        pressure_percent: gcPressure,
+        pause_total_ms: gcPauseTotal,
+        pause_avg_ms: gcCycles ? gcPauseTotal / gcCycles : 0,
+        pause_p95_ms: gc.length ? Math.max(...gc.map((point) => point.pause_p95_ms)) : 0,
+        pause_max_ms: gc.length ? Math.max(...gc.map((point) => point.pause_max_ms)) : 0,
+      },
       frontend_traffic: {
         request_bytes: sum(traffic.map((point) => point.frontend_request_bytes)),
         response_bytes: sum(traffic.map((point) => point.frontend_response_bytes)),
@@ -224,7 +257,7 @@ export function createMockStat(range: Range, domain = ""): StatResponse {
       },
       total_traffic: { request_bytes: requestBytes, response_bytes: responseBytes, total_bytes: requestBytes + responseBytes },
     },
-    series: { requests, traffic, system, process },
+    series: { requests, traffic, gc, system, process },
     connections: {
       gateway: { new: 128, active: 42, idle: 86, hijacked: 3, closed: 2_418 },
       front: { new: 96, active: 31, idle: 65, hijacked: 1, closed: 1_932 },

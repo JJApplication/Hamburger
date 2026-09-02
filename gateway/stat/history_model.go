@@ -139,6 +139,17 @@ type domainBucket struct {
 	ResponseBytes int64
 }
 
+type gcBucket struct {
+	GCCycles        int64
+	GCForcedCycles  int64
+	GCPauseTotalNS  int64
+	GCPauseMaxNS    int64
+	GCPauseBuckets  [requestHistogramSize]int64
+	GCPressureSum   float64
+	GCPressureCount int64
+	GCPressurePeak  float64
+}
+
 type resourceBucket struct {
 	SampleCount int64
 
@@ -174,6 +185,8 @@ type resourceBucket struct {
 	ProcessDiskWrite      int64
 	ProcessDiskReadAvail  bool
 	ProcessDiskWriteAvail bool
+
+	gcBucket
 }
 
 type historyBatch struct {
@@ -310,6 +323,16 @@ func (b *historyBatch) subtract(other *historyBatch) {
 		current.SystemDiskWrite -= value.SystemDiskWrite
 		current.ProcessDiskRead -= value.ProcessDiskRead
 		current.ProcessDiskWrite -= value.ProcessDiskWrite
+		current.GCCycles -= value.GCCycles
+		current.GCForcedCycles -= value.GCForcedCycles
+		current.GCPauseTotalNS -= value.GCPauseTotalNS
+		current.GCPauseMaxNS = 0
+		for index := range current.GCPauseBuckets {
+			current.GCPauseBuckets[index] -= value.GCPauseBuckets[index]
+		}
+		current.GCPressureSum -= value.GCPressureSum
+		current.GCPressureCount -= value.GCPressureCount
+		current.GCPressurePeak = 0
 		if current.SampleCount <= 0 {
 			delete(b.Resources, key)
 			continue

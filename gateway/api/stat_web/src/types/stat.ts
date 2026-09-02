@@ -8,6 +8,7 @@ export interface Capabilities {
   process_cpu: boolean;
   process_memory: boolean;
   process_disk_io: boolean;
+  runtime_gc: boolean;
   program_traffic: boolean;
   [key: string]: boolean;
 }
@@ -42,6 +43,16 @@ export interface TrafficSummary {
   total_bytes: number;
 }
 
+export interface GCSummary {
+  cycles: number;
+  forced_cycles: number;
+  pressure_percent: number;
+  pause_total_ms: number;
+  pause_avg_ms: number;
+  pause_p95_ms: number;
+  pause_max_ms: number;
+}
+
 export interface StatSummary {
   total_requests: number;
   frontend_requests: number;
@@ -52,6 +63,7 @@ export interface StatSummary {
   error_rate: number;
   status: StatusSummary;
   latency: LatencySummary;
+  gc: GCSummary;
   frontend_traffic: TrafficSummary;
   backend_traffic: TrafficSummary;
   total_traffic: TrafficSummary;
@@ -85,6 +97,17 @@ export interface TrafficSeriesPoint {
   response_bytes: number;
 }
 
+export interface GCSeriesPoint {
+  timestamp: string;
+  cycles: number;
+  forced_cycles: number;
+  pressure_percent: number;
+  pause_total_ms: number;
+  pause_avg_ms: number;
+  pause_p95_ms: number;
+  pause_max_ms: number;
+}
+
 export interface SystemSeriesPoint {
   timestamp: string;
   cpu_percent: number | null;
@@ -112,6 +135,7 @@ export interface ProcessSeriesPoint {
 export interface StatSeries {
   requests: RequestSeriesPoint[];
   traffic: TrafficSeriesPoint[];
+  gc: GCSeriesPoint[];
   system: SystemSeriesPoint[];
   process: ProcessSeriesPoint[];
 }

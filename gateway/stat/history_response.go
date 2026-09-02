@@ -37,6 +37,16 @@ type TrafficSummary struct {
 	TotalBytes    int64 `json:"total_bytes"`
 }
 
+type GCSummary struct {
+	Cycles          int64   `json:"cycles"`
+	ForcedCycles    int64   `json:"forced_cycles"`
+	PressurePercent float64 `json:"pressure_percent"`
+	PauseTotalMS    float64 `json:"pause_total_ms"`
+	PauseAvgMS      float64 `json:"pause_avg_ms"`
+	PauseP95MS      float64 `json:"pause_p95_ms"`
+	PauseMaxMS      float64 `json:"pause_max_ms"`
+}
+
 type StatSummary struct {
 	TotalRequests    int64          `json:"total_requests"`
 	FrontendRequests int64          `json:"frontend_requests"`
@@ -47,6 +57,7 @@ type StatSummary struct {
 	ErrorRate        float64        `json:"error_rate"`
 	Status           StatusSummary  `json:"status"`
 	Latency          LatencySummary `json:"latency"`
+	GC               GCSummary      `json:"gc"`
 	FrontendTraffic  TrafficSummary `json:"frontend_traffic"`
 	BackendTraffic   TrafficSummary `json:"backend_traffic"`
 	TotalTraffic     TrafficSummary `json:"total_traffic"`
@@ -80,6 +91,17 @@ type TrafficSeriesPoint struct {
 	ResponseBytes         int64  `json:"response_bytes"`
 }
 
+type GCSeriesPoint struct {
+	Timestamp       string  `json:"timestamp"`
+	Cycles          int64   `json:"cycles"`
+	ForcedCycles    int64   `json:"forced_cycles"`
+	PressurePercent float64 `json:"pressure_percent"`
+	PauseTotalMS    float64 `json:"pause_total_ms"`
+	PauseAvgMS      float64 `json:"pause_avg_ms"`
+	PauseP95MS      float64 `json:"pause_p95_ms"`
+	PauseMaxMS      float64 `json:"pause_max_ms"`
+}
+
 type SystemSeriesPoint struct {
 	Timestamp         string   `json:"timestamp"`
 	CPUPercent        *float64 `json:"cpu_percent"`
@@ -107,6 +129,7 @@ type ProcessSeriesPoint struct {
 type StatSeries struct {
 	Requests []RequestSeriesPoint `json:"requests"`
 	Traffic  []TrafficSeriesPoint `json:"traffic"`
+	GC       []GCSeriesPoint      `json:"gc"`
 	System   []SystemSeriesPoint  `json:"system"`
 	Process  []ProcessSeriesPoint `json:"process"`
 }
@@ -187,6 +210,7 @@ func newStatResponse(spec RangeSpec, now time.Time, m *StatManager) StatResponse
 		},
 		Series: StatSeries{
 			Requests: make([]RequestSeriesPoint, 0), Traffic: make([]TrafficSeriesPoint, 0),
+			GC:     make([]GCSeriesPoint, 0),
 			System: make([]SystemSeriesPoint, 0), Process: make([]ProcessSeriesPoint, 0),
 		},
 		Connections: map[string]interface{}{
@@ -299,18 +323,29 @@ func (m *StatManager) QueryStat(rangeValue, domain string) (StatResponse, error)
 	}
 
 	resourceBuckets := make(map[int64]*resourceBucket)
+	gcBuckets := make(map[int64]*gcBucket)
+	var totalGC gcBucket
 	for _, row := range rows.Resources {
 		outputBucket := outputBucketStart(row.BucketStart, spec.BucketWidth)
 		value := row.bucket()
+		mergeGCBucket(&totalGC, value.gcBucket)
 		if current := resourceBuckets[outputBucket]; current != nil {
 			mergeResourceBucket(current, value)
 		} else {
 			copyValue := value
 			resourceBuckets[outputBucket] = &copyValue
 		}
+		gcValue := gcBuckets[outputBucket]
+		if gcValue == nil {
+			gcValue = &gcBucket{}
+			gcBuckets[outputBucket] = gcValue
+		}
+		mergeGCBucket(gcValue, value.gcBucket)
 	}
+	response.Summary.GC = buildGCSummary(totalGC)
 	if len(rows.Resources) > 0 {
 		response.Series.System, response.Series.Process = buildResourceSeries(resourceBuckets, spec, start, now)
+		response.Series.GC = buildGCSeries(gcBuckets, spec, start, now)
 	}
 	return response, nil
 }
@@ -354,6 +389,23 @@ func latencySummary(value requestBucket) LatencySummary {
 	}
 	result.P95MS = approximateP95(value.LatencyBuckets)
 	result.MaxMS = float64(value.LatencyMaxUS) / 1000
+	return result
+}
+
+func buildGCSummary(value gcBucket) GCSummary {
+	result := GCSummary{
+		Cycles:       value.GCCycles,
+		ForcedCycles: value.GCForcedCycles,
+		PauseTotalMS: float64(value.GCPauseTotalNS) / float64(time.Millisecond),
+		PauseMaxMS:   float64(value.GCPauseMaxNS) / float64(time.Millisecond),
+	}
+	if value.GCCycles > 0 {
+		result.PauseAvgMS = float64(value.GCPauseTotalNS) / float64(value.GCCycles) / float64(time.Millisecond)
+	}
+	result.PauseP95MS = approximateP95(value.GCPauseBuckets)
+	if value.GCPressureCount > 0 {
+		result.PressurePercent = value.GCPressureSum / float64(value.GCPressureCount)
+	}
 	return result
 }
 
@@ -403,6 +455,24 @@ func buildTrafficSeries(values map[int64]*requestAggregate, spec RangeSpec, star
 			FrontendRequestBytes: value.FrontendRequestBytes, FrontendResponseBytes: value.FrontendResponseBytes,
 			BackendRequestBytes: value.BackendRequestBytes, BackendResponseBytes: value.BackendResponseBytes,
 			RequestBytes: value.RequestBytes, ResponseBytes: value.ResponseBytes,
+		})
+	}
+	return result
+}
+
+func buildGCSeries(values map[int64]*gcBucket, spec RangeSpec, start, now time.Time) []GCSeriesPoint {
+	keys := sortedOutputBuckets(values, spec, start, now)
+	result := make([]GCSeriesPoint, 0, len(keys))
+	for _, key := range keys {
+		value := values[key]
+		if value == nil {
+			value = &gcBucket{}
+		}
+		metrics := buildGCSummary(*value)
+		result = append(result, GCSeriesPoint{
+			Timestamp: time.Unix(key, 0).UTC().Format(time.RFC3339), Cycles: metrics.Cycles, ForcedCycles: metrics.ForcedCycles,
+			PressurePercent: metrics.PressurePercent, PauseTotalMS: metrics.PauseTotalMS, PauseAvgMS: metrics.PauseAvgMS,
+			PauseP95MS: metrics.PauseP95MS, PauseMaxMS: metrics.PauseMaxMS,
 		})
 	}
 	return result

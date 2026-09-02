@@ -117,6 +117,78 @@ func TestHistoryStoreConcurrentRecordingAndIncrementalUpsert(t *testing.T) {
 	}
 }
 
+func TestHistoryStoreRecordsGCResource(t *testing.T) {
+	store, _, _ := newTestHistoryStore(t)
+	now := time.Date(2026, time.August, 28, 12, 34, 17, 0, time.UTC)
+	var pauseBuckets [requestHistogramSize]int64
+	pauseBuckets[2] = 2
+	pauseBuckets[5] = 1
+	store.RecordResource(ResourceReading{
+		Timestamp:         now,
+		GCCycles:          int64Ptr(3),
+		GCForcedCycles:    int64Ptr(1),
+		GCPauseTotalNS:    int64Ptr(int64(9 * time.Millisecond)),
+		GCPauseMaxNS:      int64Ptr(int64(5 * time.Millisecond)),
+		GCPauseBuckets:    pauseBuckets,
+		GCPressurePercent: float64Ptr(4.5),
+	})
+
+	rows, err := store.QueryRows(now.Add(-time.Minute), now.Add(time.Minute), "")
+	if err != nil {
+		t.Fatalf("query GC overlay: %v", err)
+	}
+	if len(rows.Resources) != 1 {
+		t.Fatalf("GC resource rows = %d, want 1", len(rows.Resources))
+	}
+	row := rows.Resources[0]
+	if row.GCCycles != 3 || row.GCForcedCycles != 1 || row.GCPauseTotalNS != int64(9*time.Millisecond) || row.GCPauseMaxNS != int64(5*time.Millisecond) {
+		t.Fatalf("GC counters = %+v", row)
+	}
+	gcValue := row.bucket().gcBucket
+	if gcValue.GCPauseBuckets[2] != 2 || gcValue.GCPauseBuckets[5] != 1 || row.GCPressureCount != 1 || row.GCPressureSum != 4.5 || row.GCPressurePeak != 4.5 {
+		t.Fatalf("GC histogram/pressure = %+v", row)
+	}
+
+	if err := store.Flush(); err != nil {
+		t.Fatalf("flush GC resource: %v", err)
+	}
+	rows, err = store.QueryRows(now.Add(-time.Minute), now.Add(time.Minute), "")
+	if err != nil {
+		t.Fatalf("query flushed GC resource: %v", err)
+	}
+	if len(rows.Resources) != 1 || rows.Resources[0].GCCycles != 3 || rows.Resources[0].GCPressureCount != 1 {
+		t.Fatalf("flushed GC resource rows = %+v", rows.Resources)
+	}
+}
+
+func TestQueryStatExposesGCResource(t *testing.T) {
+	store, _, _ := newTestHistoryStore(t)
+	manager := NewStatManager(nil)
+	manager.history = store
+	now := time.Now().UTC()
+	var pauseBuckets [requestHistogramSize]int64
+	pauseBuckets[2] = 4
+	store.RecordResource(ResourceReading{
+		Timestamp:         now,
+		GCCycles:          int64Ptr(4),
+		GCPauseTotalNS:    int64Ptr(int64(12 * time.Millisecond)),
+		GCPauseMaxNS:      int64Ptr(int64(6 * time.Millisecond)),
+		GCPauseBuckets:    pauseBuckets,
+		GCPressurePercent: float64Ptr(2.5),
+	})
+
+	response, err := manager.QueryStat("1h", "")
+	if err != nil {
+		t.Fatalf("query stat with GC resource: %v", err)
+	}
+	if response.Summary.GC.Cycles != 4 || response.Summary.GC.PauseAvgMS != 3 || response.Summary.GC.PauseP95MS != 10 || response.Summary.GC.PauseMaxMS != 6 || response.Summary.GC.PressurePercent != 2.5 {
+		t.Fatalf("GC summary = %+v", response.Summary.GC)
+	}
+	if len(response.Series.GC) == 0 {
+		t.Fatal("GC series is empty")
+	}
+}
+
 func TestHistoryStoreRestartRecovery(t *testing.T) {
 	databasePath := filepath.Join(t.TempDir(), "stat.db")
 	database, err := gorm.Open(sqlite.Open(databasePath), &gorm.Config{})

@@ -101,6 +101,7 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .amicro-card { position: relative; display: flex; min-width: 0; min-height: 276px; flex-direction: column; overflow: hidden; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-solid); box-shadow: var(--shadow); transition: background-color 300ms ease, box-shadow 300ms ease; }
 .amicro-card:hover { box-shadow: 0 15px 38px rgba(31, 73, 52, 0.1); }
 .amicro-activity-card, .amicro-stacked-card { grid-column: span 6; }
+.amicro-gc-card { grid-column: span 6; }
 .amicro-donut-card { grid-column: span 4; }
 .amicro-sparkline-card { grid-column: span 8; }
 .amicro-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 48px; }
@@ -129,6 +130,9 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .amicro-chart-stage { display: flex; align-items: center; justify-content: center; padding: 6px 8px 2px; }
 .amicro-donut-stage { display: flex; align-items: center; justify-content: center; min-height: 178px; }
 .amicro-sparkline-stage { display: flex; flex-direction: column; justify-content: space-evenly; gap: 9px; padding: 13px 15px; }
+.amicro-gc-metrics { display: flex; flex-wrap: wrap; gap: 8px 15px; min-height: 26px; margin: 2px 0 8px; color: var(--muted); font-size: 10px; }
+.amicro-gc-metrics span { white-space: nowrap; }
+.amicro-gc-metrics strong { margin-left: 4px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .amicro-spark-row { display: flex; align-items: center; gap: 15px; min-height: 51px; }
 .amicro-spark-label { display: flex; width: 74px; flex: 0 0 74px; flex-direction: column; gap: 4px; }
 .amicro-spark-label strong { color: var(--ink); font-size: 11px; }
@@ -277,7 +281,7 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
   .range-button { flex: 1; }
   .kpi-grid, .two-column-grid, .connection-grid { grid-template-columns: 1fr; }
   .amicro-overview-grid { grid-template-columns: 1fr; }
-  .amicro-activity-card, .amicro-stacked-card, .amicro-donut-card, .amicro-sparkline-card { grid-column: auto; }
+  .amicro-activity-card, .amicro-stacked-card, .amicro-donut-card, .amicro-sparkline-card, .amicro-gc-card { grid-column: auto; }
   .legacy-stat-heading { display: block; }
   .legacy-stat-heading .panel-caption { display: block; margin-top: 7px; }
   .legacy-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

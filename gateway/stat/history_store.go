@@ -93,7 +93,25 @@ CREATE TABLE IF NOT EXISTS stat_resource_samples (
     process_disk_read_bytes INTEGER NOT NULL DEFAULT 0,
     process_disk_write_bytes INTEGER NOT NULL DEFAULT 0,
     process_disk_read_available INTEGER NOT NULL DEFAULT 0,
-    process_disk_write_available INTEGER NOT NULL DEFAULT 0
+    process_disk_write_available INTEGER NOT NULL DEFAULT 0,
+    gc_cycles INTEGER NOT NULL DEFAULT 0,
+    gc_forced_cycles INTEGER NOT NULL DEFAULT 0,
+    gc_pause_total_ns INTEGER NOT NULL DEFAULT 0,
+    gc_pause_max_ns INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_0 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_1 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_2 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_3 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_4 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_5 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_6 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_7 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_8 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_9 INTEGER NOT NULL DEFAULT 0,
+    gc_pause_bucket_10 INTEGER NOT NULL DEFAULT 0,
+    gc_pressure_sum REAL NOT NULL DEFAULT 0,
+    gc_pressure_count INTEGER NOT NULL DEFAULT 0,
+    gc_pressure_peak REAL NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_stat_resource_samples_time
     ON stat_resource_samples(bucket_start);
@@ -159,6 +177,52 @@ func ensureHistorySchema(database *gorm.DB) error {
 	for _, statement := range splitSchemaStatements(historySchema) {
 		if err := database.Exec(statement).Error; err != nil {
 			return fmt.Errorf("create history schema: %w", err)
+		}
+	}
+	if err := ensureResourceGCSchema(database); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ensureResourceGCSchema(database *gorm.DB) error {
+	type columnInfo struct {
+		Name string `gorm:"column:name"`
+	}
+	var columns []columnInfo
+	if err := database.Raw("PRAGMA table_info(stat_resource_samples)").Scan(&columns).Error; err != nil {
+		return fmt.Errorf("inspect resource history schema: %w", err)
+	}
+	existing := make(map[string]struct{}, len(columns))
+	for _, column := range columns {
+		existing[column.Name] = struct{}{}
+	}
+	definitions := map[string]string{
+		"gc_cycles":          "INTEGER NOT NULL DEFAULT 0",
+		"gc_forced_cycles":   "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_total_ns":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_max_ns":    "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_0":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_1":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_2":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_3":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_4":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_5":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_6":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_7":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_8":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_9":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pause_bucket_10": "INTEGER NOT NULL DEFAULT 0",
+		"gc_pressure_sum":    "REAL NOT NULL DEFAULT 0",
+		"gc_pressure_count":  "INTEGER NOT NULL DEFAULT 0",
+		"gc_pressure_peak":   "REAL NOT NULL DEFAULT 0",
+	}
+	for name, definition := range definitions {
+		if _, ok := existing[name]; ok {
+			continue
+		}
+		if err := database.Exec(fmt.Sprintf("ALTER TABLE stat_resource_samples ADD COLUMN %s %s", name, definition)).Error; err != nil {
+			return fmt.Errorf("add resource history column %s: %w", name, err)
 		}
 	}
 	return nil
@@ -321,8 +385,12 @@ INSERT INTO stat_resource_samples (
   system_network_rx_available, system_network_tx_available, system_disk_read_bytes,
   system_disk_write_bytes, system_disk_read_available, system_disk_write_available,
   process_disk_read_bytes, process_disk_write_bytes, process_disk_read_available,
-  process_disk_write_available
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  process_disk_write_available, gc_cycles, gc_forced_cycles, gc_pause_total_ns,
+  gc_pause_max_ns, gc_pause_bucket_0, gc_pause_bucket_1, gc_pause_bucket_2,
+  gc_pause_bucket_3, gc_pause_bucket_4, gc_pause_bucket_5, gc_pause_bucket_6,
+  gc_pause_bucket_7, gc_pause_bucket_8, gc_pause_bucket_9, gc_pause_bucket_10,
+  gc_pressure_sum, gc_pressure_count, gc_pressure_peak
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(bucket_start) DO UPDATE SET
   sample_count = stat_resource_samples.sample_count + excluded.sample_count,
   system_cpu_sum = stat_resource_samples.system_cpu_sum + excluded.system_cpu_sum,
@@ -351,7 +419,25 @@ ON CONFLICT(bucket_start) DO UPDATE SET
   process_disk_read_bytes = stat_resource_samples.process_disk_read_bytes + excluded.process_disk_read_bytes,
   process_disk_write_bytes = stat_resource_samples.process_disk_write_bytes + excluded.process_disk_write_bytes,
   process_disk_read_available = MAX(stat_resource_samples.process_disk_read_available, excluded.process_disk_read_available),
-  process_disk_write_available = MAX(stat_resource_samples.process_disk_write_available, excluded.process_disk_write_available)`,
+  process_disk_write_available = MAX(stat_resource_samples.process_disk_write_available, excluded.process_disk_write_available),
+  gc_cycles = stat_resource_samples.gc_cycles + excluded.gc_cycles,
+  gc_forced_cycles = stat_resource_samples.gc_forced_cycles + excluded.gc_forced_cycles,
+  gc_pause_total_ns = stat_resource_samples.gc_pause_total_ns + excluded.gc_pause_total_ns,
+  gc_pause_max_ns = MAX(stat_resource_samples.gc_pause_max_ns, excluded.gc_pause_max_ns),
+  gc_pause_bucket_0 = stat_resource_samples.gc_pause_bucket_0 + excluded.gc_pause_bucket_0,
+  gc_pause_bucket_1 = stat_resource_samples.gc_pause_bucket_1 + excluded.gc_pause_bucket_1,
+  gc_pause_bucket_2 = stat_resource_samples.gc_pause_bucket_2 + excluded.gc_pause_bucket_2,
+  gc_pause_bucket_3 = stat_resource_samples.gc_pause_bucket_3 + excluded.gc_pause_bucket_3,
+  gc_pause_bucket_4 = stat_resource_samples.gc_pause_bucket_4 + excluded.gc_pause_bucket_4,
+  gc_pause_bucket_5 = stat_resource_samples.gc_pause_bucket_5 + excluded.gc_pause_bucket_5,
+  gc_pause_bucket_6 = stat_resource_samples.gc_pause_bucket_6 + excluded.gc_pause_bucket_6,
+  gc_pause_bucket_7 = stat_resource_samples.gc_pause_bucket_7 + excluded.gc_pause_bucket_7,
+  gc_pause_bucket_8 = stat_resource_samples.gc_pause_bucket_8 + excluded.gc_pause_bucket_8,
+  gc_pause_bucket_9 = stat_resource_samples.gc_pause_bucket_9 + excluded.gc_pause_bucket_9,
+  gc_pause_bucket_10 = stat_resource_samples.gc_pause_bucket_10 + excluded.gc_pause_bucket_10,
+  gc_pressure_sum = stat_resource_samples.gc_pressure_sum + excluded.gc_pressure_sum,
+  gc_pressure_count = stat_resource_samples.gc_pressure_count + excluded.gc_pressure_count,
+  gc_pressure_peak = MAX(stat_resource_samples.gc_pressure_peak, excluded.gc_pressure_peak)`,
 				bucket, value.SampleCount, value.SystemCPUSum, value.SystemCPUCount, value.SystemCPUPeak,
 				value.SystemMemorySum, value.SystemMemoryCount, value.SystemMemoryPeak,
 				value.ProcessCPUSum, value.ProcessCPUCount, value.ProcessCPUPeak,
@@ -359,7 +445,11 @@ ON CONFLICT(bucket_start) DO UPDATE SET
 				value.ProcessMemoryPercentSum, value.ProcessMemoryPercentCount, value.ProcessMemoryPercentPeak,
 				value.SystemNetworkRX, value.SystemNetworkTX, boolInt(value.SystemNetworkRXAvail), boolInt(value.SystemNetworkTXAvail),
 				value.SystemDiskRead, value.SystemDiskWrite, boolInt(value.SystemDiskReadAvail), boolInt(value.SystemDiskWriteAvail),
-				value.ProcessDiskRead, value.ProcessDiskWrite, boolInt(value.ProcessDiskReadAvail), boolInt(value.ProcessDiskWriteAvail)).Error; err != nil {
+				value.ProcessDiskRead, value.ProcessDiskWrite, boolInt(value.ProcessDiskReadAvail), boolInt(value.ProcessDiskWriteAvail),
+				value.GCCycles, value.GCForcedCycles, value.GCPauseTotalNS, value.GCPauseMaxNS,
+				value.GCPauseBuckets[0], value.GCPauseBuckets[1], value.GCPauseBuckets[2], value.GCPauseBuckets[3], value.GCPauseBuckets[4],
+				value.GCPauseBuckets[5], value.GCPauseBuckets[6], value.GCPauseBuckets[7], value.GCPauseBuckets[8], value.GCPauseBuckets[9], value.GCPauseBuckets[10],
+				value.GCPressureSum, value.GCPressureCount, value.GCPressurePeak).Error; err != nil {
 				return err
 			}
 		}
@@ -532,6 +622,30 @@ func (s *HistoryStore) RecordResource(reading ResourceReading) {
 		sample.ProcessDiskWriteAvail = true
 		sample.ProcessDiskWrite = maxInt64(*reading.ProcessDiskWriteBytes, 0)
 	}
+	if reading.GCCycles != nil {
+		sample.GCCycles = maxInt64(*reading.GCCycles, 0)
+	}
+	if reading.GCForcedCycles != nil {
+		sample.GCForcedCycles = maxInt64(*reading.GCForcedCycles, 0)
+	}
+	if reading.GCPauseTotalNS != nil {
+		sample.GCPauseTotalNS = maxInt64(*reading.GCPauseTotalNS, 0)
+	}
+	if reading.GCPauseMaxNS != nil {
+		sample.GCPauseMaxNS = maxInt64(*reading.GCPauseMaxNS, 0)
+	}
+	if reading.GCCycles != nil || reading.GCPauseTotalNS != nil || reading.GCPauseMaxNS != nil {
+		copy(sample.GCPauseBuckets[:], reading.GCPauseBuckets[:])
+	}
+	if reading.GCPressurePercent != nil {
+		pressure := *reading.GCPressurePercent
+		if pressure < 0 {
+			pressure = 0
+		}
+		sample.GCPressureSum = pressure
+		sample.GCPressureCount = 1
+		sample.GCPressurePeak = pressure
+	}
 
 	s.overlayMu.Lock()
 	if s.closed.Load() {
@@ -584,6 +698,24 @@ func mergeResourceBucket(dst *resourceBucket, src resourceBucket) {
 	dst.ProcessDiskWrite += src.ProcessDiskWrite
 	dst.ProcessDiskReadAvail = dst.ProcessDiskReadAvail || src.ProcessDiskReadAvail
 	dst.ProcessDiskWriteAvail = dst.ProcessDiskWriteAvail || src.ProcessDiskWriteAvail
+	mergeGCBucket(&dst.gcBucket, src.gcBucket)
+}
+
+func mergeGCBucket(dst *gcBucket, src gcBucket) {
+	dst.GCCycles += src.GCCycles
+	dst.GCForcedCycles += src.GCForcedCycles
+	dst.GCPauseTotalNS += src.GCPauseTotalNS
+	if src.GCPauseMaxNS > dst.GCPauseMaxNS {
+		dst.GCPauseMaxNS = src.GCPauseMaxNS
+	}
+	for index := range dst.GCPauseBuckets {
+		dst.GCPauseBuckets[index] += src.GCPauseBuckets[index]
+	}
+	dst.GCPressureSum += src.GCPressureSum
+	dst.GCPressureCount += src.GCPressureCount
+	if src.GCPressurePeak > dst.GCPressurePeak {
+		dst.GCPressurePeak = src.GCPressurePeak
+	}
 }
 
 // Flush synchronously commits the current overlay through the single writer.
@@ -739,6 +871,24 @@ type resourceBucketRow struct {
 	ProcessDiskWrite          int64   `gorm:"column:process_disk_write_bytes"`
 	ProcessDiskReadAvailable  int64   `gorm:"column:process_disk_read_available"`
 	ProcessDiskWriteAvailable int64   `gorm:"column:process_disk_write_available"`
+	GCCycles                  int64   `gorm:"column:gc_cycles"`
+	GCForcedCycles            int64   `gorm:"column:gc_forced_cycles"`
+	GCPauseTotalNS            int64   `gorm:"column:gc_pause_total_ns"`
+	GCPauseMaxNS              int64   `gorm:"column:gc_pause_max_ns"`
+	GCPauseBucket0            int64   `gorm:"column:gc_pause_bucket_0"`
+	GCPauseBucket1            int64   `gorm:"column:gc_pause_bucket_1"`
+	GCPauseBucket2            int64   `gorm:"column:gc_pause_bucket_2"`
+	GCPauseBucket3            int64   `gorm:"column:gc_pause_bucket_3"`
+	GCPauseBucket4            int64   `gorm:"column:gc_pause_bucket_4"`
+	GCPauseBucket5            int64   `gorm:"column:gc_pause_bucket_5"`
+	GCPauseBucket6            int64   `gorm:"column:gc_pause_bucket_6"`
+	GCPauseBucket7            int64   `gorm:"column:gc_pause_bucket_7"`
+	GCPauseBucket8            int64   `gorm:"column:gc_pause_bucket_8"`
+	GCPauseBucket9            int64   `gorm:"column:gc_pause_bucket_9"`
+	GCPauseBucket10           int64   `gorm:"column:gc_pause_bucket_10"`
+	GCPressureSum             float64 `gorm:"column:gc_pressure_sum"`
+	GCPressureCount           int64   `gorm:"column:gc_pressure_count"`
+	GCPressurePeak            float64 `gorm:"column:gc_pressure_peak"`
 }
 
 func (r resourceBucketRow) bucket() resourceBucket {
@@ -755,6 +905,14 @@ func (r resourceBucketRow) bucket() resourceBucket {
 		SystemDiskReadAvail: r.SystemDiskReadAvailable > 0, SystemDiskWriteAvail: r.SystemDiskWriteAvailable > 0,
 		ProcessDiskRead: r.ProcessDiskRead, ProcessDiskWrite: r.ProcessDiskWrite,
 		ProcessDiskReadAvail: r.ProcessDiskReadAvailable > 0, ProcessDiskWriteAvail: r.ProcessDiskWriteAvailable > 0,
+		gcBucket: gcBucket{
+			GCCycles: r.GCCycles, GCForcedCycles: r.GCForcedCycles, GCPauseTotalNS: r.GCPauseTotalNS, GCPauseMaxNS: r.GCPauseMaxNS,
+			GCPauseBuckets: [requestHistogramSize]int64{
+				r.GCPauseBucket0, r.GCPauseBucket1, r.GCPauseBucket2, r.GCPauseBucket3, r.GCPauseBucket4, r.GCPauseBucket5,
+				r.GCPauseBucket6, r.GCPauseBucket7, r.GCPauseBucket8, r.GCPauseBucket9, r.GCPauseBucket10,
+			},
+			GCPressureSum: r.GCPressureSum, GCPressureCount: r.GCPressureCount, GCPressurePeak: r.GCPressurePeak,
+		},
 	}
 }
 
@@ -845,6 +1003,11 @@ func resourceBucketRowFromOverlay(bucket int64, value resourceBucket) resourceBu
 		SystemNetworkRX: value.SystemNetworkRX, SystemNetworkTX: value.SystemNetworkTX, SystemNetworkRXAvailable: boolInt(value.SystemNetworkRXAvail), SystemNetworkTXAvailable: boolInt(value.SystemNetworkTXAvail),
 		SystemDiskRead: value.SystemDiskRead, SystemDiskWrite: value.SystemDiskWrite, SystemDiskReadAvailable: boolInt(value.SystemDiskReadAvail), SystemDiskWriteAvailable: boolInt(value.SystemDiskWriteAvail),
 		ProcessDiskRead: value.ProcessDiskRead, ProcessDiskWrite: value.ProcessDiskWrite, ProcessDiskReadAvailable: boolInt(value.ProcessDiskReadAvail), ProcessDiskWriteAvailable: boolInt(value.ProcessDiskWriteAvail),
+		GCCycles: value.GCCycles, GCForcedCycles: value.GCForcedCycles, GCPauseTotalNS: value.GCPauseTotalNS, GCPauseMaxNS: value.GCPauseMaxNS,
+		GCPauseBucket0: value.GCPauseBuckets[0], GCPauseBucket1: value.GCPauseBuckets[1], GCPauseBucket2: value.GCPauseBuckets[2], GCPauseBucket3: value.GCPauseBuckets[3],
+		GCPauseBucket4: value.GCPauseBuckets[4], GCPauseBucket5: value.GCPauseBuckets[5], GCPauseBucket6: value.GCPauseBuckets[6], GCPauseBucket7: value.GCPauseBuckets[7],
+		GCPauseBucket8: value.GCPauseBuckets[8], GCPauseBucket9: value.GCPauseBuckets[9], GCPauseBucket10: value.GCPauseBuckets[10],
+		GCPressureSum: value.GCPressureSum, GCPressureCount: value.GCPressureCount, GCPressurePeak: value.GCPressurePeak,
 	}
 }
 
