@@ -4,12 +4,18 @@ import (
 	"Hamburger/internal/config"
 	"Hamburger/internal/config/backproxy_config"
 	"Hamburger/internal/config/frontproxy_config"
+	"strings"
 )
 
 // Merge 合并配置 配置文件中的配置优先级更好
 func Merge(appConfig *config.AppConfig) *config.Config {
 	if appConfig == nil {
 		return nil
+	}
+
+	connectProtocol := appConfig.ConnectProtocol
+	if strings.TrimSpace(connectProtocol.BaseRoute) == "" {
+		connectProtocol.BaseRoute = config.DefaultConnectProtocolBaseRoute
 	}
 
 	conf := &config.Config{
@@ -19,6 +25,7 @@ func Merge(appConfig *config.AppConfig) *config.Config {
 		Middleware:      appConfig.Middleware,
 		Features:        appConfig.Features,
 		GRPC:            appConfig.GRPC,
+		ConnectProtocol: connectProtocol,
 		ApiServerConfig: appConfig.ApiServerConfig,
 		Database:        appConfig.Database,
 		Security:        appConfig.Security,

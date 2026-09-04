@@ -35,7 +35,8 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger,
 	getLatencyServer func() *latency.LatencyServer,
 	getVpnServer func() *vpn_proxy.VpnServer,
 	getTrojanServer func() *trojan.TrojanServer,
-	getAnyTLSServer func() *any_tls.AnyTLSServer) (*AppServiceServer, error) {
+	getAnyTLSServer func() *any_tls.AnyTLSServer,
+	reloadHooks ...func(*config.Config) error) (*AppServiceServer, error) {
 	svr := grpc.NewServer()
 
 	grpcAddr := ""
@@ -50,7 +51,11 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger,
 	if err != nil {
 		return nil, err
 	}
-	appgrpc.RegisterAppServiceServer(svr, NewAppService(getManager, getFrontServer, getModifierManager, getAPIServer, getBackendServer, getLatencyServer, getVpnServer, getTrojanServer, getAnyTLSServer))
+	var reloadHook func(*config.Config) error
+	if len(reloadHooks) > 0 {
+		reloadHook = reloadHooks[0]
+	}
+	appgrpc.RegisterAppServiceServer(svr, NewAppService(getManager, getFrontServer, getModifierManager, getAPIServer, getBackendServer, getLatencyServer, getVpnServer, getTrojanServer, getAnyTLSServer, reloadHook))
 
 	return &AppServiceServer{
 		listener:   listener,

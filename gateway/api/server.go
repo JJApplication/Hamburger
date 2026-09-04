@@ -5,12 +5,14 @@ import (
 	"Hamburger/gateway/api/route"
 	"Hamburger/gateway/api/service"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/loader"
 	"Hamburger/internal/config/svr_config"
 	"Hamburger/internal/utils"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +21,9 @@ import (
 )
 
 type Server struct {
+	mu  sync.Mutex
+	cfg *config.Config
+
 	enabled bool
 	addr    string
 	port    int
@@ -31,57 +36,80 @@ type Server struct {
 	http2   svr_config.APIHTTP2Config
 }
 
-func NewAPIServer(cfg *config.Config, logger *zerolog.Logger) *Server {
+// NewAPIServer constructs the standalone API listener. A shared service may
+// be supplied by the initializer so the gateway Connect handler and this
+// listener use the same store and business logic.
+func NewAPIServer(cfg *config.Config, logger *zerolog.Logger, shared ...*service.APIService) *Server {
 	apiCfg := cfg.ApiServerConfig
-	if !apiCfg.Enabled {
-		return new(Server)
+	var apiService *service.APIService
+	if len(shared) > 0 {
+		apiService = shared[0]
+	}
+	if apiService == nil && apiCfg.Enabled {
+		apiService = service.NewAPIService(apiCfg)
 	}
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	s := &Server{
+		cfg:     cfg,
 		enabled: apiCfg.Enabled,
 		addr:    apiCfg.Host,
 		port:    apiCfg.Port,
 		logger:  logger,
 		engine:  engine,
-		service: service.NewAPIService(apiCfg),
+		service: apiService,
 		jwtCfg:  apiCfg.JWT,
 		http2:   apiCfg.HTTP2,
-	}
-	middleware.Register(s.engine)
-	route.Register(s.engine, s.service, middleware.JWT(s.jwtCfg))
-	s.server = &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", apiCfg.Host, apiCfg.Port),
-		Handler: engine,
 	}
 	return s
 }
 
 func (s *Server) Start() error {
-	if !s.enabled || s.server == nil {
+	s.mu.Lock()
+	if cfg := loader.SnapshotOf(s.cfg); cfg != nil {
+		s.applyConfigLocked(cfg.ApiServerConfig)
+	}
+	if !s.enabled {
+		s.mu.Unlock()
 		return nil
 	}
-	s.logger.Info().Str("address", s.addr).Int("port", s.port).Msg("start api server")
-	if s.http2.Enabled && s.http2.Insecure {
-		return s.startInsecureHTTP2()
+	if s.server != nil {
+		s.mu.Unlock()
+		return nil
+	}
+	server, err := s.newHTTPServerLocked()
+	if err != nil {
+		s.mu.Unlock()
+		return err
+	}
+	s.server = server
+	addr, port := s.addr, s.port
+	s.mu.Unlock()
+
+	if s.logger != nil {
+		s.logger.Info().Str("address", addr).Int("port", port).Msg("start api server")
 	}
 	go func() {
-		err := s.server.ListenAndServe()
+		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.logger.Error().Err(err).Msg("api server listen err")
+			if s.logger != nil {
+				s.logger.Error().Err(err).Msg("api server listen err")
+			}
 		}
 	}()
 	return nil
 }
 
 func (s *Server) Stop() error {
-	if !s.enabled || s.server == nil {
+	s.mu.Lock()
+	server := s.server
+	s.server = nil
+	enabled := s.enabled
+	s.mu.Unlock()
+	if !enabled || server == nil {
 		return nil
 	}
-	if err := s.service.CloseDB(); err != nil {
-		return err
-	}
-	return s.server.Shutdown(context.Background())
+	return server.Shutdown(context.Background())
 }
 
 func (s *Server) SetServerControl(stopFn map[string]func() error, restartFn map[string]func() error) {
@@ -91,15 +119,39 @@ func (s *Server) SetServerControl(stopFn map[string]func() error, restartFn map[
 	s.service.SetServerControl(stopFn, restartFn)
 }
 
-func (s *Server) startInsecureHTTP2() error {
+func (s *Server) applyConfigLocked(apiCfg svr_config.ApiServerConfig) {
+	s.enabled = apiCfg.Enabled
+	s.addr = apiCfg.Host
+	s.port = apiCfg.Port
+	s.jwtCfg = apiCfg.JWT
+	s.http2 = apiCfg.HTTP2
+}
+
+func (s *Server) newHTTPServerLocked() (*http.Server, error) {
+	engine := gin.New()
+	middleware.Register(engine)
+	route.Register(engine, s.service, middleware.JWT(s.jwtCfg))
+	s.engine = engine
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf("%s:%d", s.addr, s.port),
+		Handler: engine,
+	}
+	if s.http2.Enabled && s.http2.Insecure {
+		return s.newInsecureHTTP2ServerLocked(server)
+	}
+	return server, nil
+}
+
+func (s *Server) newInsecureHTTP2ServerLocked(server *http.Server) (*http.Server, error) {
 	proto := &http.Protocols{}
 	proto.SetHTTP1(true)
 	proto.SetHTTP2(true)
 	proto.SetUnencryptedHTTP2(true)
 	h2 := s.http2
 	httpServer := &http.Server{
-		Addr:              s.server.Addr,
-		Handler:           s.server.Handler,
+		Addr:              server.Addr,
+		Handler:           server.Handler,
 		ReadTimeout:       time.Second * time.Duration(utils.DefaultInt64(h2.ReadTimeout, 30)),
 		WriteTimeout:      time.Second * time.Duration(utils.DefaultInt64(h2.WriteTimeout, 30)),
 		IdleTimeout:       time.Second * time.Duration(utils.DefaultInt64(h2.IdleTimeout, 60)),
@@ -115,14 +167,7 @@ func (s *Server) startInsecureHTTP2() error {
 		h2Server.MaxConcurrentStreams = uint32(h2.MaxConcurrentStreams)
 	}
 	if err := http2.ConfigureServer(httpServer, h2Server); err != nil {
-		return err
+		return nil, err
 	}
-	s.server = httpServer
-	go func() {
-		err := s.server.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.logger.Error().Err(err).Msg("api server http2 listen err")
-		}
-	}()
-	return nil
+	return httpServer, nil
 }

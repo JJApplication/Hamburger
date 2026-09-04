@@ -14,7 +14,9 @@ import (
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
 	"Hamburger/internal/config/loader"
+	"Hamburger/internal/connectprotocol"
 	"errors"
+	"fmt"
 )
 
 func (i *Initializer) InitGRPCServer() Runner {
@@ -31,7 +33,8 @@ func (i *Initializer) InitGRPCServer() Runner {
 				func() *latency.LatencyServer { return i.LatencyServer },
 				func() *vpn_proxy.VpnServer { return i.VpnServer },
 				func() *trojan.TrojanServer { return i.TrojanServer },
-				func() *any_tls.AnyTLSServer { return i.AnyTLSServer })
+				func() *any_tls.AnyTLSServer { return i.AnyTLSServer },
+				func(cfg *config.Config) error { return i.commitConnectConfig(cfg) })
 			if err != nil {
 				return err
 			}
@@ -103,7 +106,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.Manager == nil {
 				return errors.New("gateway manager unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			return i.Manager.Restart()
@@ -112,7 +115,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.FrontServer == nil {
 				return errors.New("front server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			i.FrontServer.RefreshConfig()
@@ -126,7 +129,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.APIServer == nil {
 				return errors.New("api server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			go func() {
@@ -139,7 +142,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.BackendServer == nil {
 				return errors.New("backend server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			i.BackendServer.Stop()
@@ -150,7 +153,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.LatencyServer == nil {
 				return errors.New("latency server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			if err := i.LatencyServer.Stop(); err != nil {
@@ -162,7 +165,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.VpnServer == nil {
 				return errors.New("vpn server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			if err := i.VpnServer.Stop(); err != nil {
@@ -174,7 +177,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.TrojanServer == nil {
 				return errors.New("trojan server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			if err := i.TrojanServer.Stop(); err != nil {
@@ -186,7 +189,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if i.AnyTLSServer == nil {
 				return errors.New("anytls server unavailable")
 			}
-			if err := reloadConfigInPlace(i.cfg); err != nil {
+			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
 			if err := i.AnyTLSServer.Stop(); err != nil {
@@ -198,19 +201,36 @@ func (i *Initializer) bindAPIServerControl() {
 	i.APIServer.SetServerControl(stopFn, restartFn)
 }
 
-func reloadConfigInPlace(currentCfg *config.Config) error {
+func (i *Initializer) reloadConfigInPlace() error {
+	if i == nil || i.cfg == nil {
+		return errors.New("configuration unavailable")
+	}
+	i.reloadMu.Lock()
+	defer i.reloadMu.Unlock()
+	return loader.WithReloadLock(func() error {
+		return i.reloadConfigInPlaceLocked()
+	})
+}
+
+func (i *Initializer) reloadConfigInPlaceLocked() error {
 	appCfg, err := loader.LoadConfig("config/config.json")
 	if err != nil {
 		return err
 	}
 	mergedCfg := loader.Merge(appCfg)
-	if currentCfg == nil {
-		loader.Set(mergedCfg)
-		resolver.RefreshFrontendRules(mergedCfg)
-		return nil
+	if mergedCfg == nil {
+		return errors.New("configuration unavailable")
 	}
-	*currentCfg = *mergedCfg
-	loader.Set(currentCfg)
-	resolver.RefreshFrontendRules(currentCfg)
+	if _, err := connectprotocol.BaseRoute(mergedCfg.ConnectProtocol.BaseRoute); err != nil {
+		return fmt.Errorf("invalid ConnectProtocol configuration: %w", err)
+	}
+	// Store the immutable Connect snapshot before publishing the rest of the
+	// in-place configuration. A failed validation leaves the active handler
+	// and all existing settings untouched.
+	if err := i.commitConnectConfig(mergedCfg); err != nil {
+		return fmt.Errorf("invalid ConnectProtocol configuration: %w", err)
+	}
+	loader.ReplaceInPlace(i.cfg, mergedCfg)
+	resolver.RefreshFrontendRules(mergedCfg)
 	return nil
 }

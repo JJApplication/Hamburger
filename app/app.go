@@ -10,6 +10,7 @@ import (
 	exp_webdav "Hamburger/exp/webdav"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/api"
+	api_service "Hamburger/gateway/api/service"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
@@ -46,6 +47,7 @@ type HamburgerApp struct {
 	GrpcProxy       *grpc_proxy.GrpcProxy
 	ModifierManager *modifier.ModifierManager
 	APIServer       *api.Server
+	APIService      *api_service.APIService
 	LatencyServer   *latency.LatencyServer
 	StaticDirectSvr *static_direct.StaticDirectServer
 	VpnServer       *vpn_proxy.VpnServer
@@ -100,6 +102,7 @@ func (app *HamburgerApp) InitApp() error {
 	app.registerServerCount(func() int { app.GrpcProxy = i.GrpcProxy; return 0 })
 	app.registerServerCount(func() int { app.ModifierManager = i.ModifierManager; return 0 })
 	app.registerServerCount(func() int { app.APIServer = i.APIServer; return 1 })
+	app.APIService = i.APIService
 	app.registerServerCount(func() int { app.LatencyServer = i.LatencyServer; return 1 })
 	app.registerServerCount(func() int { app.StaticDirectSvr = i.StaticDirectSvr; return 1 })
 	app.registerServerCount(func() int { app.VpnServer = i.VpnServer; return 1 })
@@ -252,6 +255,11 @@ func (app *HamburgerApp) LifeCycle() {
 		}
 		if err := app.APIServer.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("api server shutdown failed")
+		}
+		if app.APIService != nil {
+			if err := app.APIService.CloseDB(); err != nil {
+				app.logger.Error().Err(err).Msg("api service store shutdown failed")
+			}
 		}
 		if err := app.LatencyServer.Stop(); err != nil {
 			app.logger.Error().Err(err).Msg("latency server shutdown failed")

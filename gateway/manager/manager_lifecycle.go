@@ -55,6 +55,18 @@ func (m *Manager) Start() error {
 	if len(enabledServers) == 0 {
 		return fmt.Errorf("no enabled server configuration")
 	}
+	if m.config.ConnectProtocol.Enabled && m.config.ConnectProtocol.EnableBidiStream {
+		hasHTTP2 := false
+		for _, serverConfig := range enabledServers {
+			if serverConfig.Protocol != "http3" && serverConfig.UseHttp2 {
+				hasHTTP2 = true
+				break
+			}
+		}
+		if !hasHTTP2 {
+			m.logger.Warn().Msg("ConnectProtocol bidirectional streams require an HTTP/2-enabled gateway listener")
+		}
+	}
 
 	m.logger.Info().Msgf("[Gateway] starting %d server instances", len(enabledServers))
 

@@ -3,6 +3,7 @@ module Hamburger
 go 1.24.5
 
 require (
+	connectrpc.com/connect v1.19.2
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JJApplication/octopus_meta v1.0.8

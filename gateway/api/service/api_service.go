@@ -71,31 +71,54 @@ func (s *APIService) SetServerControl(stopFn map[string]func() error, restartFn 
 }
 
 func (s *APIService) StopServer(name string) error {
-	key := strings.TrimSpace(strings.ToLower(name))
-	if key == "" {
-		return fmt.Errorf("server is empty")
-	}
-	if s.stopFn == nil {
-		return fmt.Errorf("server control unavailable")
-	}
-	fn, ok := s.stopFn[key]
-	if !ok || fn == nil {
-		return fmt.Errorf("unsupported server: %s", key)
+	fn, err := s.serverControl(s.stopFn, name)
+	if err != nil {
+		return err
 	}
 	return fn()
 }
 
 func (s *APIService) RestartServer(name string) error {
-	key := strings.TrimSpace(strings.ToLower(name))
-	if key == "" {
-		return fmt.Errorf("server is empty")
-	}
-	if s.restartFn == nil {
-		return fmt.Errorf("server control unavailable")
-	}
-	fn, ok := s.restartFn[key]
-	if !ok || fn == nil {
-		return fmt.Errorf("unsupported server: %s", key)
+	fn, err := s.serverControl(s.restartFn, name)
+	if err != nil {
+		return err
 	}
 	return fn()
+}
+
+// StopServerAsync starts a server stop after the current request has returned.
+// It is used by Connect's gateway control method because waiting for a gateway
+// shutdown from a request served by that gateway would wait on itself.
+func (s *APIService) StopServerAsync(name string) error {
+	fn, err := s.serverControl(s.stopFn, name)
+	if err != nil {
+		return err
+	}
+	go func() { _ = fn() }()
+	return nil
+}
+
+// RestartServerAsync is the non blocking counterpart of RestartServer.
+func (s *APIService) RestartServerAsync(name string) error {
+	fn, err := s.serverControl(s.restartFn, name)
+	if err != nil {
+		return err
+	}
+	go func() { _ = fn() }()
+	return nil
+}
+
+func (s *APIService) serverControl(controls map[string]func() error, name string) (func() error, error) {
+	key := strings.TrimSpace(strings.ToLower(name))
+	if key == "" {
+		return nil, fmt.Errorf("server is empty")
+	}
+	if controls == nil {
+		return nil, fmt.Errorf("server control unavailable")
+	}
+	fn, ok := controls[key]
+	if !ok || fn == nil {
+		return nil, fmt.Errorf("unsupported server: %s", key)
+	}
+	return fn, nil
 }

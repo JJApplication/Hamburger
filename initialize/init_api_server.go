@@ -6,7 +6,7 @@ func (i *Initializer) InitAPIServer() Runner {
 	return Runner{
 		Priority: PriorityLow,
 		fn: func() error {
-			i.APIServer = api.NewAPIServer(i.cfg, i.logger)
+			i.APIServer = api.NewAPIServer(i.cfg, i.logger, i.APIService)
 			return nil
 		}}
 }

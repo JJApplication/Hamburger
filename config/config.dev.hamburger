@@ -55,6 +55,13 @@
     },
   ],
 
+  # 网关 Connect Protocol（复用 servers 的监听端口）
+  connect_protocol: {
+    enabled: false,
+    base_route: "/hamburger.service",
+    enable_bidi_stream: false
+  },
+
   # 中间件
   middleware: {
     cors: {

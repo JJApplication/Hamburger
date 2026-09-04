@@ -10,6 +10,7 @@ import (
 	exp_webdav "Hamburger/exp/webdav"
 	"Hamburger/frontend_proxy"
 	"Hamburger/gateway/api"
+	api_service "Hamburger/gateway/api/service"
 	"Hamburger/gateway/core"
 	"Hamburger/gateway/latency"
 	"Hamburger/gateway/manager"
@@ -18,19 +19,22 @@ import (
 	"Hamburger/gateway/stat"
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
+	"Hamburger/internal/connectprotocol"
 	grpc_proxy "Hamburger/internal/grpc"
 	"Hamburger/internal/logger"
 	"Hamburger/static_direct"
 	"slices"
+	"sync"
 
 	"github.com/rs/zerolog"
 )
 
 type Initializer struct {
-	appConf *config.AppConfig
-	cfg     *config.Config
-	logger  *zerolog.Logger
-	runners []Runner
+	appConf  *config.AppConfig
+	cfg      *config.Config
+	logger   *zerolog.Logger
+	runners  []Runner
+	reloadMu sync.Mutex
 
 	FrontServer     *frontend_proxy.HeliosServer
 	BackendServer   *backend_proxy.BackendProxy
@@ -40,6 +44,9 @@ type Initializer struct {
 	ModifierManager *modifier.ModifierManager
 	StatManager     *stat.StatManager
 	APIServer       *api.Server
+	APIService      *api_service.APIService
+	ConnectProtocol *connectprotocol.Handler
+	ConnectConfig   *connectprotocol.ConfigState
 	LatencyServer   *latency.LatencyServer
 	Notifier        *notifier.Service
 	StaticDirectSvr *static_direct.StaticDirectServer
@@ -84,6 +91,7 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 	i.Register(i.InitPreHandlerManager())
 	i.Register(i.InitNotifier())
 	i.Register(i.InitStatManager())
+	i.Register(i.InitAPIService())
 	i.Register(i.InitAPIServer())
 	i.Register(i.InitLatencyServer())
 	i.Register(i.InitStaticDirect())
@@ -109,6 +117,15 @@ func Initialize(appConf *config.AppConfig, cfg *config.Config) (*Initializer, er
 		}
 	}
 	return i, *err
+}
+
+// commitConnectConfig applies a validated configuration snapshot to the
+// facade without making request handlers read the mutable process config.
+func (i *Initializer) commitConnectConfig(cfg *config.Config) error {
+	if cfg == nil || i.ConnectConfig == nil {
+		return nil
+	}
+	return i.ConnectConfig.Store(cfg.ConnectProtocol)
 }
 
 func (i *Initializer) Register(runner Runner) {

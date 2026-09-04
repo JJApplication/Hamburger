@@ -17,6 +17,7 @@ type Config struct {
 	Middleware         core_config.MiddlewareConfig      `yaml:"middleware" json:"middleware"`               // 中间件配置列表
 	Features           core_config.FeatureConfig         `yaml:"features" json:"features"`                   // 功能特性配置
 	GRPC               GRPCConfig                        `yaml:"grpc" json:"grpc"`                           // gRPC服务配置
+	ConnectProtocol    ConnectProtocolConfig             `yaml:"connect_protocol" json:"connect_protocol"`   // 网关 Connect 协议
 	ApiServerConfig    svr_config.ApiServerConfig        `yaml:"api_server_config" json:"api_server_config"` // 内置API服务
 	Database           core_config.DatabaseConfig        `yaml:"database" json:"database"`                   // 数据库配置
 	Security           core_config.SecurityConfig        `yaml:"security" json:"security"`                   // 安全配置
@@ -26,7 +27,7 @@ type Config struct {
 	Stat               svr_config.StatConfig             `yaml:"stat" json:"stat"`                           // 状态统计配置
 	Latency            svr_config.LatencyConfig          `yaml:"latency" json:"latency"`                     // 延迟统计配置
 	CustomHeader       map[string]string                 `yaml:"custom_header" json:"custom_header"`         // 自定义Header
-	GlobalPreCheck     PreCheckConfig                    `yaml:"pre_check" json:"pre_check"`                // 全局前置检查配置（服务级可继承）
+	GlobalPreCheck     PreCheckConfig                    `yaml:"pre_check" json:"pre_check"`                 // 全局前置检查配置（服务级可继承）
 	Plugin             PluginConfig                      `yaml:"plugin" json:"plugin"`                       // 插件配置
 	Lua                svr_config.LuaConfig              `yaml:"lua" json:"lua"`                             // Lua脚本配置
 	Syncer             Syncer                            `yaml:"syncer" json:"syncer"`                       // 定时器时间
@@ -40,6 +41,17 @@ type Config struct {
 	ExpConfig          exp_config.ExpConfig              `yaml:"exp_config" json:"exp_config"`
 	PreAuthConfig      svr_config.PreAuthConfig          `yaml:"pre_auth_config" json:"pre_auth_config"`
 	NotifyConfig       svr_config.NotifyConfig           `yaml:"notify_config" json:"notify_config"` // 通知系统配置
+}
+
+// DefaultConnectProtocolBaseRoute is the default gateway mount for Connect.
+const DefaultConnectProtocolBaseRoute = "/hamburger.service"
+
+// ConnectProtocolConfig controls the Connect RPC facade mounted on gateway
+// listeners. It is independent from the standalone API listener.
+type ConnectProtocolConfig struct {
+	Enabled          bool   `yaml:"enabled" json:"enabled"`
+	BaseRoute        string `yaml:"base_route" json:"base_route"`
+	EnableBidiStream bool   `yaml:"enable_bidi_stream" json:"enable_bidi_stream"`
 }
 
 // GRPCConfig gRPC服务配置结构体

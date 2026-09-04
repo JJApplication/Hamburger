@@ -20,6 +20,17 @@ import (
 
 var globalConfig *config.Config
 var globalConfigLock sync.RWMutex
+var configReloadLock sync.Mutex
+
+// WithReloadLock serializes configuration mutations performed by the
+// management API and server control callbacks. Connect keeps its own atomic
+// snapshot, while the rest of the application continues to use the shared
+// in-place configuration pointer.
+func WithReloadLock(fn func() error) error {
+	configReloadLock.Lock()
+	defer configReloadLock.Unlock()
+	return fn()
+}
 
 func LoadConfig(file string) (*config.AppConfig, error) {
 	if err := env.LoadFromConfigFile(file); err != nil {
@@ -53,7 +64,59 @@ func Set(cfg *config.Config) {
 	globalConfig = cfg
 }
 
-// Get 获取全局唯一的配置
+// Get returns the legacy shared configuration pointer. The pointer lock does
+// not protect later field reads; concurrent request handlers must use Snapshot
+// or a dedicated accessor such as IsDevMode instead.
 func Get() *config.Config {
+	globalConfigLock.RLock()
+	defer globalConfigLock.RUnlock()
 	return globalConfig
+}
+
+// Snapshot copies the current configuration while reload writers are excluded.
+// Nested maps and slices are read-only: reload replaces them instead of mutating
+// their contents. Do not use the returned pointer as an in-place reload target.
+func Snapshot() *config.Config {
+	globalConfigLock.RLock()
+	defer globalConfigLock.RUnlock()
+	return copyConfig(globalConfig)
+}
+
+// SnapshotOf reads a retained configuration pointer under the same lock used
+// by ReplaceInPlace, for components constructed with a specific configuration.
+func SnapshotOf(cfg *config.Config) *config.Config {
+	globalConfigLock.RLock()
+	defer globalConfigLock.RUnlock()
+	return copyConfig(cfg)
+}
+
+func copyConfig(cfg *config.Config) *config.Config {
+	if cfg == nil {
+		return nil
+	}
+	snapshot := *cfg
+	return &snapshot
+}
+
+// ReplaceInPlace preserves the pointer retained by existing components while
+// synchronizing the entire struct assignment with snapshot readers. A nil
+// target selects the current global configuration (or initializes it).
+func ReplaceInPlace(target, next *config.Config) {
+	globalConfigLock.Lock()
+	defer globalConfigLock.Unlock()
+	if target == nil {
+		target = globalConfig
+	}
+	if target == nil {
+		target = new(config.Config)
+	}
+	*target = *next
+	globalConfig = target
+}
+
+// IsDevMode avoids exposing a mutable configuration pointer to authentication.
+func IsDevMode() bool {
+	globalConfigLock.RLock()
+	defer globalConfigLock.RUnlock()
+	return globalConfig != nil && globalConfig.DevMode
 }

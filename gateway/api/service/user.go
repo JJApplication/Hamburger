@@ -2,6 +2,8 @@ package service
 
 import (
 	"Hamburger/gateway/api/model"
+	"Hamburger/internal/config/loader"
+	"Hamburger/internal/constant"
 	"Hamburger/internal/json"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -145,6 +147,31 @@ func (s *APIService) TokenFromRequest(req *http.Request) (string, error) {
 		return "", errInvalidToken
 	}
 	return value, nil
+}
+
+// AuthorizeHeaders applies the same JWT and development-mode rules used by
+// the Gin API middleware. Connect handlers receive headers and peer metadata
+// directly instead of an *http.Request, so this small adapter keeps the
+// authentication policy in the shared API service.
+func (s *APIService) AuthorizeHeaders(headers http.Header, host string) bool {
+	if s == nil || !s.jwtCfg.Enabled {
+		return true
+	}
+	if loader.IsDevMode() {
+		return true
+	}
+	if headers.Get("X-Hamburger-Token") == constant.AppName {
+		if strings.EqualFold(strings.TrimSpace(host), "127.0.0.1") || strings.HasPrefix(strings.TrimSpace(host), "127.0.0.1:") {
+			return true
+		}
+	}
+	req := &http.Request{Header: headers}
+	token, err := s.TokenFromRequest(req)
+	if err != nil {
+		return false
+	}
+	_, err = s.validateToken(token)
+	return err == nil
 }
 
 func (s *APIService) initDefaultUser() error {

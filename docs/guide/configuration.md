@@ -66,6 +66,46 @@ stat: {
 
 `use_db` 仅控制旧的累计 Stat/Geo/Domain 数据是否写入 SQLite；`sequence.enabled` 开启后，历史数据始终根据 `db_file` 初始化固定表，即使 `use_db` 为 `false`。历史保留最近 30 天，按分钟存储并按小时清理。`GET /api/stat` 默认查询 `1h`，还支持 `5h`、`24h`、`7d` 和 `30d`；统计、GEO、域名和连接接口均不需要 JWT。独立前端位于 `gateway/api/stat_web`，通过 `VITE_API_BASE_URL` 指向 API，不由 Go 服务托管。
 
+## Connect Protocol
+
+Connect 可复用已启用网关监听器的端口，不会创建新的 API 监听器。默认配置如下：
+
+```hamburger
+connect_protocol: {
+  enabled: false,
+  base_route: "/hamburger.service",
+  enable_bidi_stream: false
+}
+```
+
+开启后，内置 API 会以 Protobuf Connect RPC 暴露。例如统计接口使用 `POST /hamburger.service/stat`，请求体为 `{"range":"1h","domain":""}`；现有 `/api/*` REST 路由保持不变。`base_route` 可以改为任意合法的绝对路径，客户端应使用生成代码中的 `NewServiceClientAtBaseRoute`。配置为自定义路径时只挂载该路径，默认的 `/hamburger.service/*` 不会再作为 Connect 别名提供。
+
+`enable_bidi_stream` 开启后会额外提供 `statStream`、`geoStream` 等流式方法；一条流中的每个请求按顺序产生一个响应。双向流必须使用 HTTP/2，普通一元调用支持 HTTP/1.1、HTTP/2 和 HTTP/3。受保护方法仍使用 `api_server_config.jwt` 的令牌规则。
+
+一元 Connect 调用可以直接使用 protobuf-JSON（默认监听器为 `http://127.0.0.1:80`）：
+
+```bash
+curl -X POST http://127.0.0.1/hamburger.service/stat \
+  -H 'Content-Type: application/json' \
+  -d '{"range":"1h","domain":""}'
+```
+
+生成的 Go 客户端仍直接使用 protobuf 消息；定制路由通过配置感知的构造器访问：
+
+```go
+client, err := connect.NewServiceClientAtBaseRoute(http.DefaultClient,
+    "https://gateway.example", "/rpc")
+if err != nil { log.Fatal(err) }
+stream := client.StatStream(context.Background())
+defer stream.CloseRequest()
+_ = stream.Send(&connect.StatRequest{Range: "1h"})
+response, err := stream.Receive()
+```
+
+流式示例要求网关监听器启用 HTTP/2，并将 `enable_bidi_stream` 设为 `true`。
+
+若需重新生成绑定，安装 `protoc`、`protoc-gen-go` 和 `protoc-gen-connect-go` 后执行 `go generate ./app/connect`。
+
 ## 配置组织建议
 
 - 按职责拆分：入口配置、前端配置、服务映射、实验配置分离管理

@@ -25,6 +25,7 @@ type AppConfig struct {
 	Middleware      core_config.MiddlewareConfig `yaml:"middleware" json:"middleware"` // 中间件配置列表
 	Features        core_config.FeatureConfig    `yaml:"features" json:"features"`     // 功能特性配置
 	GRPC            GRPCConfig                   `yaml:"grpc" json:"grpc"`             // gRPC服务配置
+	ConnectProtocol ConnectProtocolConfig        `yaml:"connect_protocol" json:"connect_protocol"`
 	ApiServerConfig svr_config.ApiServerConfig   `yaml:"api_server_config" json:"api_server_config"`
 	Database        core_config.DatabaseConfig   `yaml:"database" json:"database"`           // 数据库配置
 	Security        core_config.SecurityConfig   `yaml:"security" json:"security"`           // 安全配置
@@ -132,6 +133,11 @@ func GetDefaultConfig() *AppConfig {
 		GRPC: GRPCConfig{
 			Enabled: false,
 			Address: "",
+		},
+		ConnectProtocol: ConnectProtocolConfig{
+			Enabled:          false,
+			BaseRoute:        DefaultConnectProtocolBaseRoute,
+			EnableBidiStream: false,
 		},
 		ApiServerConfig: svr_config.ApiServerConfig{
 			Enabled: false,

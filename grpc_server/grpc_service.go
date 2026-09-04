@@ -8,6 +8,7 @@ import (
 	"os"
 	stdRuntime "runtime"
 	"strings"
+	"sync"
 	"time"
 
 	appgrpc "Hamburger/app/grpc"
@@ -23,6 +24,8 @@ import (
 	"Hamburger/gateway/prehandler"
 	"Hamburger/gateway/resolver"
 	gwRuntime "Hamburger/gateway/runtime"
+	"Hamburger/internal/config"
+	"Hamburger/internal/connectprotocol"
 	"Hamburger/internal/constant"
 
 	"google.golang.org/grpc/codes"
@@ -39,10 +42,16 @@ type AppService struct {
 	getVPNServer       func() *vpn_proxy.VpnServer
 	getTrojanServer    func() *trojan.TrojanServer
 	getAnyTLSServer    func() *any_tls.AnyTLSServer
+	reloadHook         func(*config.Config) error
+	reloadMu           sync.Mutex
 	appgrpc.UnimplementedAppServiceServer
 }
 
-func NewAppService(getManager func() *manager.Manager, getFrontServer func() *frontend_proxy.HeliosServer, getModifierManager func() *modifier.ModifierManager, getAPIServer func() *api.Server, getBackendServer func() *backend_proxy.BackendProxy, getLatencyServer func() *latency.LatencyServer, getVPNServer func() *vpn_proxy.VpnServer, getTrojanServer func() *trojan.TrojanServer, getAnyTLSServer func() *any_tls.AnyTLSServer) *AppService {
+func NewAppService(getManager func() *manager.Manager, getFrontServer func() *frontend_proxy.HeliosServer, getModifierManager func() *modifier.ModifierManager, getAPIServer func() *api.Server, getBackendServer func() *backend_proxy.BackendProxy, getLatencyServer func() *latency.LatencyServer, getVPNServer func() *vpn_proxy.VpnServer, getTrojanServer func() *trojan.TrojanServer, getAnyTLSServer func() *any_tls.AnyTLSServer, reloadHooks ...func(*config.Config) error) *AppService {
+	var reloadHook func(*config.Config) error
+	if len(reloadHooks) > 0 {
+		reloadHook = reloadHooks[0]
+	}
 	return &AppService{
 		getManager:         getManager,
 		getFrontServer:     getFrontServer,
@@ -53,6 +62,7 @@ func NewAppService(getManager func() *manager.Manager, getFrontServer func() *fr
 		getVPNServer:       getVPNServer,
 		getTrojanServer:    getTrojanServer,
 		getAnyTLSServer:    getAnyTLSServer,
+		reloadHook:         reloadHook,
 	}
 }
 
@@ -64,7 +74,7 @@ func (s *AppService) GetGatewayStatus(ctx context.Context, _ *appgrpc.Empty) (*a
 	if managerInstance == nil {
 		return nil, status.Error(codes.Unavailable, "gateway manager unavailable")
 	}
-	cfg := loader.Get()
+	cfg := loader.Snapshot()
 	resp := &appgrpc.GatewayStatusResponse{}
 	gwStatus := managerInstance.GetServerStatus()
 	for _, instance := range gwStatus {
@@ -133,7 +143,7 @@ func (s *AppService) GetGatewayStatus(ctx context.Context, _ *appgrpc.Empty) (*a
 }
 
 func (s *AppService) GetFrontProxyStatus(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.FrontProxyStatusResponse, error) {
-	cfg := loader.Get()
+	cfg := loader.Snapshot()
 	if cfg == nil {
 		return nil, status.Error(codes.Unavailable, "config unavailable")
 	}
@@ -203,7 +213,7 @@ func (s *AppService) GetModifierManagerInfo(ctx context.Context, _ *appgrpc.Empt
 }
 
 func (s *AppService) GetStatServerConfig(ctx context.Context, _ *appgrpc.Empty) (*appgrpc.StatServerConfigResponse, error) {
-	cfg := loader.Get()
+	cfg := loader.Snapshot()
 	if cfg == nil {
 		return nil, status.Error(codes.Unavailable, "config unavailable")
 	}
@@ -230,7 +240,7 @@ func (s *AppService) GetRuntime(ctx context.Context, _ *appgrpc.Empty) (*appgrpc
 	var mem stdRuntime.MemStats
 	stdRuntime.ReadMemStats(&mem)
 	netIoBlock := false
-	cfg := loader.Get()
+	cfg := loader.Snapshot()
 	if cfg != nil {
 		netIoBlock = strings.EqualFold(cfg.CoreProxy.NetIO, constant.NetIO_NET)
 	}
@@ -273,7 +283,7 @@ func (s *AppService) GetDomainPorts(ctx context.Context, _ *appgrpc.Empty) (*app
 
 func (s *AppService) ReloadConfig(ctx context.Context, req *appgrpc.ReloadConfigRequest) (*appgrpc.ReloadConfigResponse, error) {
 	file := strings.TrimSpace(req.GetFile())
-	if err := reloadConfigInPlace(file); err != nil {
+	if err := s.reloadConfigInPlace(file); err != nil {
 		return &appgrpc.ReloadConfigResponse{Success: false, Error: err.Error()}, nil
 	}
 	if s.getFrontServer != nil {
@@ -292,7 +302,7 @@ func (s *AppService) ReStartFrontServer(ctx context.Context, _ *appgrpc.Empty) (
 	if frontServer == nil {
 		return nil, status.Error(codes.Unavailable, "front server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	frontServer.RefreshConfig()
@@ -311,7 +321,7 @@ func (s *AppService) ReStartGateway(ctx context.Context, _ *appgrpc.Empty) (*app
 	if managerInstance == nil {
 		return nil, status.Error(codes.Unavailable, "gateway manager unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := managerInstance.Restart(); err != nil {
@@ -328,7 +338,7 @@ func (s *AppService) ReStartAPIServer(ctx context.Context, _ *appgrpc.Empty) (*a
 	if apiServer == nil {
 		return nil, status.Error(codes.Unavailable, "api server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := apiServer.Stop(); err != nil {
@@ -348,7 +358,7 @@ func (s *AppService) ReStartBackendServer(ctx context.Context, _ *appgrpc.Empty)
 	if backendServer == nil {
 		return nil, status.Error(codes.Unavailable, "backend server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	backendServer.Stop()
@@ -364,7 +374,7 @@ func (s *AppService) ReStartLatencyServer(ctx context.Context, _ *appgrpc.Empty)
 	if latencyServer == nil {
 		return nil, status.Error(codes.Unavailable, "latency server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := latencyServer.Stop(); err != nil {
@@ -384,7 +394,7 @@ func (s *AppService) ReStartVPNServer(ctx context.Context, _ *appgrpc.Empty) (*a
 	if vpnServer == nil {
 		return nil, status.Error(codes.Unavailable, "vpn server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := vpnServer.Stop(); err != nil {
@@ -404,7 +414,7 @@ func (s *AppService) ReStartTrojanServer(ctx context.Context, _ *appgrpc.Empty) 
 	if trojanServer == nil {
 		return nil, status.Error(codes.Unavailable, "trojan server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := trojanServer.Stop(); err != nil {
@@ -424,7 +434,7 @@ func (s *AppService) ReStartAnyTLSServer(ctx context.Context, _ *appgrpc.Empty) 
 	if anyTLSServer == nil {
 		return nil, status.Error(codes.Unavailable, "anytls server unavailable")
 	}
-	if err := reloadConfigInPlace(""); err != nil {
+	if err := s.reloadConfigInPlace(""); err != nil {
 		return &appgrpc.ActionResponse{Success: false, Message: err.Error()}, nil
 	}
 	if err := anyTLSServer.Stop(); err != nil {
@@ -470,7 +480,7 @@ func (s *AppService) DumpRuntime(ctx context.Context, req *appgrpc.DumpRuntimeRe
 		"goroutines":   stdRuntime.NumGoroutine(),
 		"memory_bytes": mem.Alloc,
 		"rss_bytes":    mem.Sys,
-		"config":       loader.Get(),
+		"config":       loader.Snapshot(),
 	}
 	data, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
@@ -501,7 +511,15 @@ func toInt32Slice(values []int) []int32 {
 	return result
 }
 
-func reloadConfigInPlace(file string) error {
+func (s *AppService) reloadConfigInPlace(file string) error {
+	s.reloadMu.Lock()
+	defer s.reloadMu.Unlock()
+	return loader.WithReloadLock(func() error {
+		return reloadConfigInPlace(file, s.reloadHook)
+	})
+}
+
+func reloadConfigInPlace(file string, hooks ...func(*config.Config) error) error {
 	path := strings.TrimSpace(file)
 	if path == "" {
 		path = "config/config.json"
@@ -511,14 +529,22 @@ func reloadConfigInPlace(file string) error {
 		return err
 	}
 	mergedCfg := loader.Merge(appCfg)
-	currentCfg := loader.Get()
-	if currentCfg == nil {
-		loader.Set(mergedCfg)
-		resolver.RefreshFrontendRules(mergedCfg)
-		return nil
+	if mergedCfg == nil {
+		return fmt.Errorf("configuration unavailable")
 	}
-	*currentCfg = *mergedCfg
-	loader.Set(currentCfg)
-	resolver.RefreshFrontendRules(currentCfg)
+	if _, err := connectprotocol.BaseRoute(mergedCfg.ConnectProtocol.BaseRoute); err != nil {
+		return fmt.Errorf("invalid ConnectProtocol configuration: %w", err)
+	}
+	var hook func(*config.Config) error
+	if len(hooks) > 0 {
+		hook = hooks[0]
+	}
+	if hook != nil {
+		if err := hook(mergedCfg); err != nil {
+			return err
+		}
+	}
+	loader.ReplaceInPlace(nil, mergedCfg)
+	resolver.RefreshFrontendRules(mergedCfg)
 	return nil
 }

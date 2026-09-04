@@ -25,7 +25,7 @@ func JWT(cfg svr_config.JWTConfig) gin.HandlerFunc {
 			return
 		}
 		// 开发模式
-		if loader.Get().DevMode {
+		if loader.IsDevMode() {
 			c.Next()
 			return
 		}

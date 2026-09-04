@@ -1,0 +1,281 @@
+syntax = "proto3";
+
+package hamburger;
+
+option go_package = "Hamburger/app/connect;connect";
+
+// The service name and method names intentionally mirror the public
+// Connect route. The server may mount the service below a configured base
+// route while keeping these messages stable for generated clients.
+service service {
+  rpc stat(StatRequest) returns (StatResponse);
+  rpc geo(Empty) returns (GeoResponse);
+  rpc domain(Empty) returns (DomainResponse);
+  rpc conn(Empty) returns (ConnResponse);
+  rpc health(Empty) returns (HealthResponse);
+  rpc login(LoginRequest) returns (LoginResponse);
+  rpc logout(Empty) returns (ActionResponse);
+  rpc userGet(Empty) returns (UserResponse);
+  rpc userUpdate(UserUpdateRequest) returns (UserResponse);
+  rpc userCreate(UserCreateRequest) returns (UserResponse);
+  rpc userDelete(UserDeleteRequest) returns (ActionResponse);
+  rpc serviceStart(DomainServiceRequest) returns (ActionResponse);
+  rpc serviceStop(DomainServiceRequest) returns (ActionResponse);
+  rpc serverRestart(ServerRequest) returns (ActionResponse);
+  rpc serverStop(ServerRequest) returns (ActionResponse);
+
+  rpc statStream(stream StatRequest) returns (stream StatResponse);
+  rpc geoStream(stream Empty) returns (stream GeoResponse);
+  rpc domainStream(stream Empty) returns (stream DomainResponse);
+  rpc connStream(stream Empty) returns (stream ConnResponse);
+  rpc healthStream(stream Empty) returns (stream HealthResponse);
+  rpc loginStream(stream LoginRequest) returns (stream LoginResponse);
+  rpc logoutStream(stream Empty) returns (stream ActionResponse);
+  rpc userGetStream(stream Empty) returns (stream UserResponse);
+  rpc userUpdateStream(stream UserUpdateRequest) returns (stream UserResponse);
+  rpc userCreateStream(stream UserCreateRequest) returns (stream UserResponse);
+  rpc userDeleteStream(stream UserDeleteRequest) returns (stream ActionResponse);
+  rpc serviceStartStream(stream DomainServiceRequest) returns (stream ActionResponse);
+  rpc serviceStopStream(stream DomainServiceRequest) returns (stream ActionResponse);
+  rpc serverRestartStream(stream ServerRequest) returns (stream ActionResponse);
+  rpc serverStopStream(stream ServerRequest) returns (stream ActionResponse);
+}
+
+message Empty {}
+
+message StatRequest {
+  string range = 1;
+  string domain = 2;
+}
+
+message StatResponse {
+  int64 total = 1;
+  int64 api = 2;
+  int64 static = 3;
+  int64 fail = 4;
+  int64 today = 5;
+  StatMeta meta = 6;
+  StatSummary summary = 7;
+  StatSeries series = 8;
+  map<string, ConnectionState> connections = 9;
+  repeated DomainSummary domains = 10;
+  repeated DomainSeriesPoint domain_series = 11;
+}
+
+message StatMeta {
+  string range = 1;
+  string start_time = 2;
+  string end_time = 3;
+  int64 bucket_seconds = 4;
+  string generated_at = 5;
+  int32 retention_days = 6;
+  map<string, bool> capabilities = 7;
+}
+
+message StatSummary {
+  int64 total_requests = 1;
+  int64 frontend_requests = 2;
+  int64 backend_requests = 3;
+  int64 unknown_requests = 4;
+  int64 error_requests = 5;
+  double rps = 6;
+  double error_rate = 7;
+  StatusSummary status = 8;
+  LatencySummary latency = 9;
+  GCSummary gc = 10;
+  TrafficSummary frontend_traffic = 11;
+  TrafficSummary backend_traffic = 12;
+  TrafficSummary total_traffic = 13;
+}
+
+message StatusSummary {
+  int64 status1xx = 1 [json_name = "1xx"];
+  int64 status2xx = 2 [json_name = "2xx"];
+  int64 status3xx = 3 [json_name = "3xx"];
+  int64 status4xx = 4 [json_name = "4xx"];
+  int64 status5xx = 5 [json_name = "5xx"];
+}
+
+message LatencySummary {
+  double avg_ms = 1;
+  double p95_ms = 2;
+  double max_ms = 3;
+}
+
+message TrafficSummary {
+  int64 request_bytes = 1;
+  int64 response_bytes = 2;
+  int64 total_bytes = 3;
+}
+
+message GCSummary {
+  int64 cycles = 1;
+  int64 forced_cycles = 2;
+  double pressure_percent = 3;
+  double pause_total_ms = 4;
+  double pause_avg_ms = 5;
+  double pause_p95_ms = 6;
+  double pause_max_ms = 7;
+}
+
+message StatSeries {
+  repeated RequestSeriesPoint requests = 1;
+  repeated TrafficSeriesPoint traffic = 2;
+  repeated GCSeriesPoint gc = 3;
+  repeated SystemSeriesPoint system = 4;
+  repeated ProcessSeriesPoint process = 5;
+}
+
+message RequestSeriesPoint {
+  string timestamp = 1;
+  int64 frontend = 2;
+  int64 backend = 3;
+  int64 unknown = 4;
+  int64 total = 5;
+  int64 errors = 6;
+  int64 status1xx = 7 [json_name = "status_1xx"];
+  int64 status2xx = 8 [json_name = "status_2xx"];
+  int64 status3xx = 9 [json_name = "status_3xx"];
+  int64 status4xx = 10 [json_name = "status_4xx"];
+  int64 status5xx = 11 [json_name = "status_5xx"];
+  double rps = 12;
+  double avg_latency_ms = 13;
+  double p95_latency_ms = 14;
+  double max_latency_ms = 15;
+}
+
+message TrafficSeriesPoint {
+  string timestamp = 1;
+  int64 frontend_request_bytes = 2;
+  int64 frontend_response_bytes = 3;
+  int64 backend_request_bytes = 4;
+  int64 backend_response_bytes = 5;
+  int64 request_bytes = 6;
+  int64 response_bytes = 7;
+}
+
+message GCSeriesPoint {
+  string timestamp = 1;
+  int64 cycles = 2;
+  int64 forced_cycles = 3;
+  double pressure_percent = 4;
+  double pause_total_ms = 5;
+  double pause_avg_ms = 6;
+  double pause_p95_ms = 7;
+  double pause_max_ms = 8;
+}
+
+message SystemSeriesPoint {
+  string timestamp = 1;
+  optional double cpu_percent = 2;
+  optional double cpu_peak_percent = 3;
+  optional double memory_percent = 4;
+  optional double memory_peak_percent = 5;
+  optional int64 network_rx_bytes = 6;
+  optional int64 network_tx_bytes = 7;
+  optional int64 disk_read_bytes = 8;
+  optional int64 disk_write_bytes = 9;
+}
+
+message ProcessSeriesPoint {
+  string timestamp = 1;
+  optional double cpu_percent = 2;
+  optional double cpu_peak_percent = 3;
+  optional int64 memory_bytes = 4;
+  optional int64 memory_peak_bytes = 5;
+  optional double memory_percent = 6;
+  optional double memory_peak_percent = 7;
+  optional int64 disk_read_bytes = 8;
+  optional int64 disk_write_bytes = 9;
+}
+
+message DomainSummary {
+  string domain = 1;
+  int64 requests = 2;
+  int64 errors = 3;
+  int64 request_bytes = 4;
+  int64 response_bytes = 5;
+}
+
+message DomainSeriesPoint {
+  string timestamp = 1;
+  int64 requests = 2;
+  int64 errors = 3;
+  int64 request_bytes = 4;
+  int64 response_bytes = 5;
+}
+
+message ConnectionState {
+  int64 new = 1;
+  int64 active = 2;
+  int64 idle = 3;
+  int64 hijacked = 4;
+  int64 closed = 5;
+}
+
+message GeoResponse {
+  map<string, int64> values = 1;
+}
+
+message DomainResponse {
+  map<string, int64> values = 1;
+}
+
+message ConnResponse {
+  map<string, ConnectionState> values = 1;
+}
+
+message HealthResponse {
+  map<string, string> values = 1;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  User user = 2;
+}
+
+message UserResponse {
+  User user = 1;
+}
+
+message User {
+  string username = 1;
+  string nickname = 2;
+  string avatar = 3;
+}
+
+message UserUpdateRequest {
+  string username = 1;
+  string password = 2;
+  string nickname = 3;
+  string avatar = 4;
+}
+
+message UserCreateRequest {
+  string username = 1;
+  string password = 2;
+  string nickname = 3;
+  string avatar = 4;
+}
+
+message UserDeleteRequest {
+  string username = 1;
+}
+
+message DomainServiceRequest {
+  string domain = 1;
+}
+
+message ServerRequest {
+  string server = 1;
+}
+
+message ActionResponse {
+  bool success = 1;
+  string message = 2;
+}
