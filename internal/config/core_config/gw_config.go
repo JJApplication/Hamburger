@@ -1,5 +1,7 @@
 package core_config
 
+import "fmt"
+
 type ProxyConfig struct {
 	FlushInterval   int64  `yaml:"flush_interval" json:"flush_interval"`
 	BufSize         int    `yaml:"buf_size" json:"buf_size"`
@@ -130,6 +132,9 @@ type SecurityConfig struct {
 	AllowIPs   []string `yaml:"allow_ips" json:"allow_ips"`     // 允许的IP列表
 	DenyIPs    []string `yaml:"deny_ips" json:"deny_ips"`       // 拒绝的IP列表
 	RateLimit  int      `yaml:"rate_limit" json:"rate_limit"`   // 速率限制
+	// MaxQuerySize limits the complete request target (path and query) in bytes.
+	// Zero uses DefaultMaxQuerySize; negative values are invalid.
+	MaxQuerySize int64 `yaml:"max_query_size" json:"max_query_size"`
 
 	HSTS             bool     `yaml:"hsts" json:"hsts"`                     // HSTS策略
 	HSTSSubdomain    bool     `yaml:"hsts_subdomain" json:"hsts_subdomain"` // 包含子域名
@@ -138,6 +143,21 @@ type SecurityConfig struct {
 	IFrameProtection bool     `yaml:"iframe_protection" json:"iframe_protection"`
 	SameSite         bool     `yaml:"same_site" json:"same_site"`                 // 同源策略
 	WhiteListDomain  []string `yaml:"white_list_domain" json:"white_list_domain"` // 白名单放行
+}
+
+// DefaultMaxQuerySize is the safe default for the complete HTTP request target.
+const DefaultMaxQuerySize int64 = 2 * 1024
+
+// EffectiveMaxQuerySize resolves the configured request-target limit and
+// rejects negative values before a gateway listener is started.
+func EffectiveMaxQuerySize(configured int64) (int64, error) {
+	if configured < 0 {
+		return 0, fmt.Errorf("max_query_size must be non-negative, got %d", configured)
+	}
+	if configured == 0 {
+		return DefaultMaxQuerySize, nil
+	}
+	return configured, nil
 }
 
 type ProxyHeader struct {

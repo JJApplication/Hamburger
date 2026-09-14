@@ -1,9 +1,15 @@
 package config
 
-import "testing"
+import (
+	"Hamburger/internal/config/core_config"
+	"testing"
+)
 
 func TestDefaultConnectProtocolConfig(t *testing.T) {
 	cfg := GetDefaultConfig()
+	if cfg.Security.MaxQuerySize != core_config.DefaultMaxQuerySize {
+		t.Fatalf("default max query size = %d, want %d", cfg.Security.MaxQuerySize, core_config.DefaultMaxQuerySize)
+	}
 	if cfg.ConnectProtocol.Enabled {
 		t.Fatal("ConnectProtocol should be disabled by default")
 	}

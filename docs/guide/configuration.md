@@ -104,6 +104,18 @@ response, err := stream.Receive()
 
 流式示例要求网关监听器启用 HTTP/2，并将 `enable_bidi_stream` 设为 `true`。
 
+## 网关请求目标安全限制
+
+核心网关的 `security.max_query_size` 限制完整原始请求目标的最大字节数，即路径和查询字符串（`path?query`），并不只计算 `?` 后的内容。该限制适用于 GET、POST、CONNECT 等所有请求方法，也适用于 HTTP/1.1、HTTP/2 和 HTTP/3。
+
+```hamburger
+security: {
+  max_query_size: 2048
+}
+```
+
+省略该字段或设置为 `0` 时默认限制为 2 KiB；负数会被视为无效配置并阻止网关启动。长度按请求进入网关时的原始编码字节数计算，因此百分号编码后的字符会按编码后的实际字节计数。超过限制的请求直接返回 `414 URI Too Long`，不会继续执行认证、路由、缓存或后端转发。修改运行中的监听器配置后，需要重启网关监听器（例如执行 `control restart gateway`）使新限制生效。
+
 若需重新生成绑定，安装 `protoc`、`protoc-gen-go` 和 `protoc-gen-connect-go` 后执行 `go generate ./app/connect`。
 
 ## 配置组织建议

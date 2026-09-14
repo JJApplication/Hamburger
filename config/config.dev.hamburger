@@ -167,7 +167,8 @@
     strict_mode: true,
     allow_ips: [],
     deny_ips: [],
-    rate_limit: 1000
+    rate_limit: 1000,
+    max_query_size: 2048
   },
 
   # 代理头

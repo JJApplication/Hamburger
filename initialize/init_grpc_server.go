@@ -13,6 +13,7 @@ import (
 	"Hamburger/gateway/resolver"
 	"Hamburger/grpc_server"
 	"Hamburger/internal/config"
+	"Hamburger/internal/config/core_config"
 	"Hamburger/internal/config/loader"
 	"Hamburger/internal/connectprotocol"
 	"errors"
@@ -220,6 +221,9 @@ func (i *Initializer) reloadConfigInPlaceLocked() error {
 	mergedCfg := loader.Merge(appCfg)
 	if mergedCfg == nil {
 		return errors.New("configuration unavailable")
+	}
+	if _, err := core_config.EffectiveMaxQuerySize(mergedCfg.Security.MaxQuerySize); err != nil {
+		return fmt.Errorf("invalid security.max_query_size: %w", err)
 	}
 	if _, err := connectprotocol.BaseRoute(mergedCfg.ConnectProtocol.BaseRoute); err != nil {
 		return fmt.Errorf("invalid ConnectProtocol configuration: %w", err)

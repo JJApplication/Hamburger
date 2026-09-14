@@ -177,10 +177,11 @@ func GetDefaultConfig() *AppConfig {
 			},
 		},
 		Security: core_config.SecurityConfig{
-			StrictMode: false,
-			AllowIPs:   []string{},
-			DenyIPs:    []string{},
-			RateLimit:  1000,
+			StrictMode:   false,
+			AllowIPs:     []string{},
+			DenyIPs:      []string{},
+			RateLimit:    1000,
+			MaxQuerySize: core_config.DefaultMaxQuerySize,
 		},
 		ProxyHeader: core_config.ProxyHeader{
 			TraceId:            "X-Gateway-Trace-Id",

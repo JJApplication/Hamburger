@@ -52,7 +52,18 @@ func (r *nbioServerRunner) Close() error {
 	return nil
 }
 
-func CommonNbioServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager) (*ServerInstance, error) {
+func CommonNbioServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager, maxQuerySize ...int64) (*ServerInstance, error) {
+	if len(maxQuerySize) > 1 {
+		return nil, fmt.Errorf("maxQuerySize accepts at most one value")
+	}
+	configuredMaxQuerySize := int64(0)
+	if len(maxQuerySize) == 1 {
+		configuredMaxQuerySize = maxQuerySize[0]
+	}
+	if _, err := core_config.EffectiveMaxQuerySize(configuredMaxQuerySize); err != nil {
+		return nil, err
+	}
+
 	instance := &ServerInstance{
 		Name:   serverConfig.Name,
 		Config: serverConfig,
@@ -76,6 +87,11 @@ func CommonNbioServer(serverConfig core_config.ServerConfig, logger *zerolog.Log
 	if serverConfig.Protocol == "http" {
 		originHandler = wrapHandlerWithAutoHttpsRedirect(originHandler, logger, serverConfig)
 	}
+	limitedHandler, err := WrapHandlerWithMaxQuerySize(originHandler, configuredMaxQuerySize, logger)
+	if err != nil {
+		return nil, err
+	}
+	originHandler = limitedHandler
 
 	conf := nbhttp.Config{
 		Name:    serverConfig.Name,

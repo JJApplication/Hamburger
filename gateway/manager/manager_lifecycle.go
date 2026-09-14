@@ -49,6 +49,9 @@ func (m *Manager) Start() error {
 	if m.started {
 		return fmt.Errorf("server manager already started")
 	}
+	if _, err := core_config.EffectiveMaxQuerySize(m.config.Security.MaxQuerySize); err != nil {
+		return fmt.Errorf("invalid security.max_query_size: %w", err)
+	}
 
 	// 获取启用的服务器配置
 	enabledServers := GetEnabledServers(m.config)
@@ -107,11 +110,11 @@ func (m *Manager) startServer(serverConfig core_config.ServerConfig, logger *zer
 	var err error
 	switch netIO {
 	case constant.NetIO_NBIO:
-		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, true)
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, true, m.config.Security.MaxQuerySize)
 	case constant.NetIO_NET:
-		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, false)
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, false, m.config.Security.MaxQuerySize)
 	default:
-		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, false)
+		instance, err = server.CommonHttpServer(serverConfig, logger, m.handler, m.tlsManager, false, m.config.Security.MaxQuerySize)
 	}
 	if err != nil {
 		return err
@@ -129,7 +132,11 @@ func (m *Manager) startServer(serverConfig core_config.ServerConfig, logger *zer
 
 func (m *Manager) startHttp3Server(cfg core_config.HTTP3Config, serverConfig core_config.ServerConfig, logger *zerolog.Logger, handler http.Handler) error {
 	addr := fmt.Sprintf("%s:%d", serverConfig.Host, serverConfig.Port)
-	http3Srv := server.NewHttp3Server(cfg, handler, logger)
+	limitedHandler, err := server.WrapHandlerWithMaxQuerySize(handler, m.config.Security.MaxQuerySize, logger)
+	if err != nil {
+		return fmt.Errorf("invalid security.max_query_size: %w", err)
+	}
+	http3Srv := server.NewHttp3Server(cfg, limitedHandler, logger)
 	m.http3Server[serverConfig.Name] = http3Srv
 
 	m.wg.Add(1)

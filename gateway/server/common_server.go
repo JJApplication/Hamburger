@@ -136,8 +136,19 @@ func wrapHandlerWithAutoHttpsRedirect(h http.Handler, logger *zerolog.Logger, se
 	})
 }
 
-// CommonHttpServer 通用http服务器
-func CommonHttpServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager, useNBIO bool) (*ServerInstance, error) {
+// CommonHttpServer 通用http服务器。可选的 maxQuerySize 参数用于覆盖
+// 请求目标长度限制；省略时使用安全默认值。
+func CommonHttpServer(serverConfig core_config.ServerConfig, logger *zerolog.Logger, h http.Handler, tlsManager *tls.TLSManager, useNBIO bool, maxQuerySize ...int64) (*ServerInstance, error) {
+	if len(maxQuerySize) > 1 {
+		return nil, fmt.Errorf("maxQuerySize accepts at most one value")
+	}
+	configuredMaxQuerySize := int64(0)
+	if len(maxQuerySize) == 1 {
+		configuredMaxQuerySize = maxQuerySize[0]
+	}
+	if _, err := core_config.EffectiveMaxQuerySize(configuredMaxQuerySize); err != nil {
+		return nil, err
+	}
 	// 创建服务器实例
 	instance := &ServerInstance{
 		Name:   serverConfig.Name,
@@ -234,9 +245,14 @@ func CommonHttpServer(serverConfig core_config.ServerConfig, logger *zerolog.Log
 		httpServer.Handler = wrapHandlerWithAutoHttpsRedirect(httpServer.Handler, logger, serverConfig)
 	}
 	httpServer.Handler = wrapHandlerWithWebSocket(httpServer.Handler, logger, serverConfig)
+	limitedHandler, err := WrapHandlerWithMaxQuerySize(httpServer.Handler, configuredMaxQuerySize, logger)
+	if err != nil {
+		return nil, err
+	}
+	httpServer.Handler = limitedHandler
 	// Keep request observation at the outermost HTTP layer so redirects,
-	// static aliases, resolver errors and streamed responses all contribute
-	// their final status and actual payload bytes.
+	// static aliases, resolver errors, streamed responses and early request
+	// target rejections all contribute their final status and payload bytes.
 	httpServer.Handler = stat.WrapHTTPHandler(httpServer.Handler)
 
 	// 创建监听器

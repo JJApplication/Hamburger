@@ -218,6 +218,7 @@
     allow_ips: [],
     deny_ips: [],
     rate_limit: 1000,
+    max_query_size: 2048,
     white_list_domain: ["*.renj.io"]
   },
 
