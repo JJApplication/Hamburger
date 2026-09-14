@@ -318,5 +318,5 @@ function LegacyStatCard({ label, value, color, reducedMotion }: { label: string;
 }
 
 function ConnectionCard({ title, value }: { title: string; value: ConnectionSnapshot }) {
-  return <div className="connection-card"><div className="connection-title"><span>{title}</span><i /></div><div className="connection-main"><strong>{formatNumber(value.active + value.idle)}</strong><span>活动 / 空闲</span></div><div className="connection-stats"><span>新建 <b>{formatNumber(value.new)}</b></span><span>升级 <b>{formatNumber(value.hijacked)}</b></span><span>关闭 <b>{formatNumber(value.closed)}</b></span></div></div>;
+	return <div className="connection-card"><div className="connection-title"><span>{title}</span><i /></div><div className="connection-main"><strong>{formatNumber(value.active + value.idle)}</strong><span>当前连接</span></div><div className="connection-stats connection-current-stats"><span>活动 <b>{formatNumber(value.active)}</b></span><span>空闲 <b>{formatNumber(value.idle)}</b></span></div><div className="connection-stats"><span>新建 <b>{formatNumber(value.new)}</b></span><span>升级 <b>{formatNumber(value.hijacked)}</b></span><span>关闭 <b>{formatNumber(value.closed)}</b></span></div></div>;
 }

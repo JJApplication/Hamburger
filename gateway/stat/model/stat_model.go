@@ -23,9 +23,8 @@ type DomainModel struct {
 	Count  int64  `json:"count" gorm:"column:count"`
 }
 
-// GatewayConnModel 网关代理连接数
-//
-// 当前没有存储必要 是每次启动后的临时数据
+// GatewayConnModel 网关代理连接数。active 和 idle 是当前连接状态，
+// 其余字段是进程启动后的累计事件。
 type GatewayConnModel struct {
 	New      int64 `json:"new" gorm:"column:new"`
 	Active   int64 `json:"active" gorm:"column:active"`
@@ -34,7 +33,8 @@ type GatewayConnModel struct {
 	Closed   int64 `json:"closed" gorm:"column:closed"`
 }
 
-// FrontConnModel 前端服务连接数
+// FrontConnModel 前端服务连接数。active 和 idle 是当前连接状态，
+// 其余字段是进程启动后的累计事件。
 type FrontConnModel struct {
 	New      int64 `json:"new" gorm:"column:new"`
 	Active   int64 `json:"active" gorm:"column:active"`

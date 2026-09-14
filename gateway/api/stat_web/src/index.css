@@ -258,6 +258,7 @@ h1 { max-width: 680px; margin-top: 9px; font-size: clamp(32px, 5vw, 58px); line-
 .connection-main strong { font-size: 28px; letter-spacing: -0.06em; }
 .connection-main span { color: var(--muted); font-size: 10px; }
 .connection-stats { display: flex; gap: 14px; margin-top: 12px; color: var(--muted); font-size: 10px; }
+.connection-current-stats { margin-top: 9px; }
 .connection-stats b { margin-left: 3px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .page-footer { display: flex; justify-content: space-between; gap: 16px; padding: 3px 2px; color: var(--muted); font-size: 10px; }
 

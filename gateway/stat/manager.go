@@ -30,8 +30,8 @@ type StatManager struct {
 	geoMu      sync.Mutex
 	domainMu   sync.Mutex
 
-	connStatGw     *structure.Map[*int64]
-	connStatFront  *structure.Map[*int64]
+	connStatGw     *connectionTracker
+	connStatFront  *connectionTracker
 	domainConnStat *structure.Map[*structure.Map[*int64]]
 	connHostMap    *structure.Map[string]
 
@@ -62,8 +62,8 @@ func NewStatManager(cfg *config.Config) *StatManager {
 		bc:             cache,
 		geoIp:          structure.NewMap[*int64](),
 		domainStat:     structure.NewMap[*int64](),
-		connStatGw:     structure.NewMap[*int64](),
-		connStatFront:  structure.NewMap[*int64](),
+		connStatGw:     newConnectionTracker(),
+		connStatFront:  newConnectionTracker(),
 		domainConnStat: structure.NewMap[*structure.Map[*int64]](),
 		connHostMap:    structure.NewMap[string](),
 	}

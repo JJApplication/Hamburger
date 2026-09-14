@@ -47,6 +47,9 @@ describe("Stat Web page", () => {
     expect(screen.getByText("失败请求数")).toBeInTheDocument();
     expect(screen.getByText("前端请求数")).toBeInTheDocument();
     expect(screen.getByText("后端请求数")).toBeInTheDocument();
+    expect(screen.getAllByText("当前连接").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("活动").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("空闲").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByLabelText("不同时间段内的 GC 次数")).toBeInTheDocument();
     expect(screen.getByLabelText("GC 压力延迟")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "24h" }));

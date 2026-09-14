@@ -1,6 +1,7 @@
 package frontend_proxy
 
 import (
+	"Hamburger/gateway/stat"
 	"Hamburger/internal/config"
 	"Hamburger/internal/config/frontproxy_config"
 	"context"
@@ -365,7 +366,13 @@ func (s *HeliosServer) Status() {
 }
 
 func (s *HeliosServer) httpServer(addr string) error {
-	return s.gin.Run(addr)
+	server := &http.Server{
+		Addr:      addr,
+		Handler:   s.gin,
+		ConnState: stat.HandleConn(stat.ConnFrontServer),
+	}
+	s.logger.Info().Str("address", addr).Msg("starting helios server")
+	return server.ListenAndServe()
 }
 
 func (s *HeliosServer) http2Server(addr string) error {
@@ -384,6 +391,7 @@ func (s *HeliosServer) http2Server(addr string) error {
 		ReadHeaderTimeout: time.Second * time.Duration(defaultInt64(h2c.ReadHeaderTimeout, 10)),
 		MaxHeaderBytes:    int(defaultInt64(h2c.MaxHeaderBytes, 5<<20)),
 		Protocols:         proto,
+		ConnState:         stat.HandleConn(stat.ConnFrontServer),
 	}
 	h2s := &http2.Server{}
 	if h2c.MaxHandlers > 0 {
@@ -438,12 +446,34 @@ func (s *HeliosServer) http3Server(addr string) error {
 	}
 	server := http3.Server{
 		Addr:       addr,
-		Handler:    s.gin,
+		Handler:    s.http3Handler(),
 		TLSConfig:  tlsConfig,
 		QUICConfig: quicConfig,
+		ConnContext: func(ctx context.Context, conn *quic.Conn) context.Context {
+			key := fmt.Sprintf("%p", conn)
+			stat.FrontConnOpened(key)
+			go func() {
+				<-conn.Context().Done()
+				stat.FrontConnClosed(key)
+			}()
+			return context.WithValue(ctx, frontHTTP3ConnKey{}, key)
+		},
 	}
 	s.logger.Info().Str("address", addr).Msg("starting helios http3 server")
 	return server.ListenAndServe()
+}
+
+type frontHTTP3ConnKey struct{}
+
+func (s *HeliosServer) http3Handler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key, _ := r.Context().Value(frontHTTP3ConnKey{}).(string)
+		if key != "" {
+			stat.FrontConnRequestStart(key)
+			defer stat.FrontConnRequestEnd(key)
+		}
+		s.gin.ServeHTTP(w, r)
+	})
 }
 
 func listenWithKeepAlive(addr string, keepAliveSeconds int64) (net.Listener, error) {
