@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"io"
 	"net"
+	"sync"
 	"time"
 
 	anytls "github.com/anytls/sing-anytls"
@@ -18,6 +19,7 @@ import (
 )
 
 type AnyTLSServer struct {
+	mu       sync.Mutex
 	cfg      *config.Config
 	logger   *zerolog.Logger
 	enabled  bool
@@ -83,14 +85,49 @@ func NewAnyTLSServer(cfg *config.Config, logger *zerolog.Logger) *AnyTLSServer {
 }
 
 func (as *AnyTLSServer) Start() error {
-	if !as.enabled {
-		return nil
+	listener, service, err := as.open()
+	if err != nil || listener == nil {
+		return err
+	}
+	return as.serve(listener, service)
+}
+
+// StartAsync binds the configured listener before returning and serves it in
+// the background. Management operations use this form so success means the
+// port was actually opened rather than merely scheduling a goroutine.
+func (as *AnyTLSServer) StartAsync() error {
+	listener, service, err := as.open()
+	if err != nil || listener == nil {
+		return err
+	}
+	go func() {
+		if serveErr := as.serve(listener, service); serveErr != nil && as.logger != nil {
+			as.logger.Error().Err(serveErr).Msg("anytls error serving listener")
+		}
+	}()
+	return nil
+}
+
+func (as *AnyTLSServer) open() (net.Listener, *anytls.Service, error) {
+	if as == nil || as.cfg == nil {
+		return nil, nil, errors.New("anytls configuration unavailable")
 	}
 	asCfg := as.cfg.ExpConfig.AnyTLSServer
+	as.mu.Lock()
+	defer as.mu.Unlock()
+	as.enabled = asCfg.Enabled
+	if !as.enabled {
+		return nil, nil, nil
+	}
+	if as.listener != nil {
+		return nil, nil, errors.New("anytls server already running")
+	}
 	certificate, err := tls.LoadX509KeyPair(asCfg.CertFile, asCfg.KeyFile)
 	if err != nil {
-		as.logger.Error().Err(err).Msg("anytls error loading certificate")
-		return err
+		if as.logger != nil {
+			as.logger.Error().Err(err).Msg("anytls error loading certificate")
+		}
+		return nil, nil, err
 	}
 	service, err := anytls.NewService(anytls.ServiceConfig{
 		Users: []anytls.User{
@@ -105,36 +142,49 @@ func (as *AnyTLSServer) Start() error {
 		Logger: logger.NOP(),
 	})
 	if err != nil {
-		as.logger.Error().Err(err).Msg("anytls error creating service")
-		return err
+		if as.logger != nil {
+			as.logger.Error().Err(err).Msg("anytls error creating service")
+		}
+		return nil, nil, err
 	}
 	listener, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", asCfg.Host, asCfg.Port), &tls.Config{
 		MinVersion:   tls.VersionTLS12,
 		Certificates: []tls.Certificate{certificate},
 	})
 	if err != nil {
-		as.logger.Error().Err(err).Msg("anytls error creating listener")
-		return err
+		if as.logger != nil {
+			as.logger.Error().Err(err).Msg("anytls error creating listener")
+		}
+		return nil, nil, err
 	}
 	as.service = service
 	as.listener = listener
+	return listener, service, nil
+}
 
+func (as *AnyTLSServer) serve(listener net.Listener, service *anytls.Service) error {
 	for {
 		conn, acceptErr := listener.Accept()
 		if acceptErr != nil {
 			if errors.Is(acceptErr, net.ErrClosed) {
-				as.logger.Info().Msg("anytls listener closed")
+				if as.logger != nil {
+					as.logger.Info().Msg("anytls listener closed")
+				}
 				return nil
 			}
-			as.logger.Error().Err(acceptErr).Msg("anytls error accepting connection")
+			if as.logger != nil {
+				as.logger.Error().Err(acceptErr).Msg("anytls error accepting connection")
+			}
 			continue
 		}
 
 		go func(c net.Conn) {
 			source := M.SocksaddrFromNet(c.RemoteAddr())
-			serveErr := as.service.NewConnection(context.Background(), c, source, func(_ error) {})
+			serveErr := service.NewConnection(context.Background(), c, source, func(_ error) {})
 			if serveErr != nil && !errors.Is(serveErr, net.ErrClosed) {
-				as.logger.Error().Err(serveErr).Msg("anytls error serving connection")
+				if as.logger != nil {
+					as.logger.Error().Err(serveErr).Msg("anytls error serving connection")
+				}
 			}
 			_ = c.Close()
 		}(conn)
@@ -142,8 +192,16 @@ func (as *AnyTLSServer) Start() error {
 }
 
 func (as *AnyTLSServer) Stop() error {
-	if !as.enabled {
+	if as == nil {
 		return nil
 	}
-	return as.listener.Close()
+	as.mu.Lock()
+	listener := as.listener
+	as.listener = nil
+	as.service = nil
+	as.mu.Unlock()
+	if listener == nil {
+		return nil
+	}
+	return listener.Close()
 }

@@ -240,6 +240,114 @@ func (s *Service) ServerStop(_ context.Context, req *connectrpc.Request[connectp
 	return connectrpc.NewResponse(okAction()), nil
 }
 
+func (s *Service) ManagementDomains(_ context.Context, req *connectrpc.Request[connectpb.Empty]) (*connectrpc.Response[connectpb.ManagementDomainsResponse], error) {
+	if err := s.authorize("managementDomains", req.Header(), req.Peer()); err != nil {
+		return nil, err
+	}
+	if s.api == nil {
+		return nil, unavailable("api service unavailable")
+	}
+	payload, err := json.Marshal(map[string]interface{}{"domains": s.api.GetManagementDomains()})
+	if err != nil {
+		return nil, fmt.Errorf("encode management domains: %w", err)
+	}
+	return connectrpc.NewResponse(&connectpb.ManagementDomainsResponse{PayloadJson: string(payload)}), nil
+}
+
+func (s *Service) ManagementDomainState(_ context.Context, req *connectrpc.Request[connectpb.DomainStateRequest]) (*connectrpc.Response[connectpb.ActionResponse], error) {
+	if err := s.authorize("managementDomainState", req.Header(), req.Peer()); err != nil {
+		return nil, err
+	}
+	if s.api == nil {
+		return nil, unavailable("api service unavailable")
+	}
+	domain := strings.TrimSpace(req.Msg.GetDomain())
+	if domain == "" {
+		return nil, rpcError(errors.New("domain is empty"))
+	}
+	var err error
+	switch strings.ToLower(strings.TrimSpace(req.Msg.GetState())) {
+	case "start", "running":
+		err = s.api.StartDomainService(domain)
+	case "stop", "stopped":
+		err = s.api.StopDomainService(domain)
+	default:
+		return nil, rpcError(errors.New("state must be start or stop"))
+	}
+	if err != nil {
+		return nil, rpcError(err)
+	}
+	return connectrpc.NewResponse(okAction()), nil
+}
+
+func (s *Service) ManagementConfigGet(_ context.Context, req *connectrpc.Request[connectpb.Empty]) (*connectrpc.Response[connectpb.ManagementConfigResponse], error) {
+	if err := s.authorize("managementConfigGet", req.Header(), req.Peer()); err != nil {
+		return nil, err
+	}
+	if s.api == nil {
+		return nil, unavailable("api service unavailable")
+	}
+	value, err := s.api.GetManagementConfig()
+	if err != nil {
+		return nil, rpcError(err)
+	}
+	response, err := managementConfigResponse(value)
+	if err != nil {
+		return nil, fmt.Errorf("encode management config: %w", err)
+	}
+	return connectrpc.NewResponse(response), nil
+}
+
+func (s *Service) ManagementConfigPut(_ context.Context, req *connectrpc.Request[connectpb.ManagementConfigRequest]) (*connectrpc.Response[connectpb.ManagementConfigResponse], error) {
+	if err := s.authorize("managementConfigPut", req.Header(), req.Peer()); err != nil {
+		return nil, err
+	}
+	if s.api == nil {
+		return nil, unavailable("api service unavailable")
+	}
+	if strings.TrimSpace(req.Msg.GetValuesJson()) == "" {
+		return nil, rpcError(errors.New("configuration values are empty"))
+	}
+	values := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(req.Msg.GetValuesJson()), &values); err != nil {
+		return nil, rpcError(fmt.Errorf("invalid configuration values: %w", err))
+	}
+	if len(values) == 0 {
+		return nil, rpcError(errors.New("configuration values are empty"))
+	}
+	value, err := s.api.SaveManagementConfig(req.Msg.GetVersion(), values)
+	if err != nil {
+		return nil, rpcError(err)
+	}
+	response, err := managementConfigResponse(value)
+	if err != nil {
+		return nil, fmt.Errorf("encode management config: %w", err)
+	}
+	return connectrpc.NewResponse(response), nil
+}
+
+func (s *Service) ManagementConfigApply(_ context.Context, req *connectrpc.Request[connectpb.ManagementApplyRequest]) (*connectrpc.Response[connectpb.OperationResponse], error) {
+	if err := s.authorize("managementConfigApply", req.Header(), req.Peer()); err != nil {
+		return nil, err
+	}
+	if s.api == nil {
+		return nil, unavailable("api service unavailable")
+	}
+	id := s.api.ApplyManagementConfig(req.Msg.GetServices())
+	return connectrpc.NewResponse(&connectpb.OperationResponse{OperationId: id, Status: "queued"}), nil
+}
+
+func (s *Service) ManagementOperationGet(_ context.Context, req *connectrpc.Request[connectpb.OperationRequest]) (*connectrpc.Response[connectpb.OperationResponse], error) {
+	if err := s.authorize("managementOperationGet", req.Header(), req.Peer()); err != nil {
+		return nil, err
+	}
+	value, ok := service.GetManagementOperation(strings.TrimSpace(req.Msg.GetOperationId()))
+	if !ok {
+		return nil, connectrpc.NewError(connectrpc.CodeNotFound, errors.New("operation not found"))
+	}
+	return connectrpc.NewResponse(&connectpb.OperationResponse{OperationId: req.Msg.GetOperationId(), Status: value["status"], Error: value["error"]}), nil
+}
+
 func (s *Service) StatStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.StatRequest, connectpb.StatResponse]) error {
 	return serveBidi(ctx, stream, s.Stat)
 }
@@ -327,6 +435,30 @@ func (s *Service) ServerStopStream(ctx context.Context, stream *connectrpc.BidiS
 	return serveBidi(ctx, stream, s.ServerStop)
 }
 
+func (s *Service) ManagementDomainsStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.Empty, connectpb.ManagementDomainsResponse]) error {
+	return serveBidi(ctx, stream, s.ManagementDomains)
+}
+
+func (s *Service) ManagementDomainStateStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.DomainStateRequest, connectpb.ActionResponse]) error {
+	return serveBidi(ctx, stream, s.ManagementDomainState)
+}
+
+func (s *Service) ManagementConfigGetStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.Empty, connectpb.ManagementConfigResponse]) error {
+	return serveBidi(ctx, stream, s.ManagementConfigGet)
+}
+
+func (s *Service) ManagementConfigPutStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.ManagementConfigRequest, connectpb.ManagementConfigResponse]) error {
+	return serveBidi(ctx, stream, s.ManagementConfigPut)
+}
+
+func (s *Service) ManagementConfigApplyStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.ManagementApplyRequest, connectpb.OperationResponse]) error {
+	return serveBidi(ctx, stream, s.ManagementConfigApply)
+}
+
+func (s *Service) ManagementOperationGetStream(ctx context.Context, stream *connectrpc.BidiStream[connectpb.OperationRequest, connectpb.OperationResponse]) error {
+	return serveBidi(ctx, stream, s.ManagementOperationGet)
+}
+
 type unaryHandler[Req any, Res any] func(context.Context, *connectrpc.Request[Req]) (*connectrpc.Response[Res], error)
 
 func serveBidi[Req any, Res any](ctx context.Context, stream *connectrpc.BidiStream[Req, Res], handler unaryHandler[Req, Res]) error {
@@ -362,6 +494,15 @@ func (s *Service) authorize(method string, headers http.Header, peer connectrpc.
 		return connectrpc.NewError(connectrpc.CodeUnimplemented, fmt.Errorf("Connect method %q is not registered", method))
 	}
 	if !endpoint.RequiresAuth {
+		return nil
+	}
+	if endpoint.Path == "" {
+		if s.api == nil {
+			return unavailable("api service unavailable")
+		}
+		if !s.api.AuthorizeManagementHeaders(headers) {
+			return unauthenticated("unauthorized")
+		}
 		return nil
 	}
 	return s.requireAuth(headers, peer)
@@ -417,6 +558,19 @@ func statResponse(value stat.StatResponse) (*connectpb.StatResponse, error) {
 		return nil, err
 	}
 	return response, nil
+}
+
+func managementConfigResponse(value service.ManagementConfig) (*connectpb.ManagementConfigResponse, error) {
+	data, err := json.Marshal(value.Values)
+	if err != nil {
+		return nil, err
+	}
+	return &connectpb.ManagementConfigResponse{
+		SourceFile: value.SourceFile,
+		Version:    value.Version,
+		ValuesJson: string(data),
+		Pending:    value.Pending,
+	}, nil
 }
 
 func int64Map(data []byte) (map[string]int64, error) {

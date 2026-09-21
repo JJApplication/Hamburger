@@ -1,10 +1,13 @@
 "use client";
 
-import { Server } from "lucide-react";
+import { LoaderCircle, Play, Server, Square } from "lucide-react";
+import { useState } from "react";
 
 import { StatusPill } from "@/components/common/status-pill";
 import { usePreferences } from "@/lib/preferences/preferences-context";
 import type { DomainConnection } from "@/types/gateway";
+import { setDomainState } from "@/lib/api/gateway";
+import { useAuth } from "@/lib/auth/auth-context";
 
 interface DomainCardProps {
   domain: DomainConnection;
@@ -12,6 +15,17 @@ interface DomainCardProps {
 
 export function DomainCard({ domain }: DomainCardProps) {
   const { t } = usePreferences();
+  const { token } = useAuth();
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("");
+  const canStop = domain.status !== "offline";
+  const toggle = async () => {
+    if (!token) return;
+    setPending(true); setMessage("");
+    try { await setDomainState(domain.domain, canStop ? "stop" : "start", token); setMessage(canStop ? "已发送停止请求" : "已发送启动请求"); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "操作失败"); }
+    finally { setPending(false); }
+  };
 
   return (
     <article className="panel rounded-2xl border p-4">
@@ -19,7 +33,7 @@ export function DomainCard({ domain }: DomainCardProps) {
         <div>
           <p className="text-lg font-semibold">{domain.domain}</p>
           <p className="text-secondary mt-1 text-xs">
-            {t("domain.lastHeartbeat")}：{domain.lastHeartbeat}
+            最近探测：{domain.lastHeartbeat || "尚未探测"}
           </p>
         </div>
         <StatusPill status={domain.status} />
@@ -53,6 +67,13 @@ export function DomainCard({ domain }: DomainCardProps) {
           </div>
         ))}
       </div>
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-3">
+        <span className="text-secondary text-xs">连接数按域名关联统计，不能直接相加为网关总数</span>
+        <button type="button" onClick={() => void toggle()} disabled={pending} className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition ${canStop ? "border-rose-400/40 text-rose-300 hover:bg-rose-500/10" : "border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/10"}`}>
+          {pending ? <LoaderCircle size={14} className="animate-spin" /> : canStop ? <Square size={13} /> : <Play size={13} />}{pending ? "处理中" : canStop ? "停止服务" : "启动服务"}
+        </button>
+      </div>
+      {message ? <p className="text-secondary mt-2 text-right text-xs">{message}</p> : null}
     </article>
   );
 }

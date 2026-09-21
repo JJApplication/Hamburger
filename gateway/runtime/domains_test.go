@@ -35,8 +35,12 @@ func TestLoadRuntimeDomainsIndexesExactAndRegexSeparately(t *testing.T) {
 	if !ok || service.ServiceName != "RegexFront" {
 		t.Fatalf("regex domain lookup = %#v, %v", service, ok)
 	}
-	if _, ok := DomainsRuntimeMap.DomainsMap.Get("api-one.example.com"); !ok {
-		t.Fatal("regex match was not cached by normalized host")
+	if _, ok := DomainsRuntimeMap.DomainsMap.Get("api-one.example.com"); ok {
+		t.Fatal("regex match must not cache arbitrary request hosts")
+	}
+	_, configured, _ := GetDomainsSnapshot()
+	if configured["/^api-[a-z]+\\.example\\.com$/"] != "RegexFront" {
+		t.Fatal("configured regex rule was not exposed in the management snapshot")
 	}
 }
 

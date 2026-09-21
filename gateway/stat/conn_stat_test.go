@@ -1,101 +1,61 @@
 package stat
 
 import (
-	"net/http"
-	"strconv"
-	"sync"
+	"Hamburger/internal/config"
+	"Hamburger/internal/structure"
+	"net"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
-func TestConnectionTrackerTracksCurrentStateAndTotals(t *testing.T) {
-	tracker := newConnectionTracker()
+type snapshotConn struct{ address net.Addr }
 
-	tracker.onHTTPState("conn-1", http.StateNew)
-	tracker.onHTTPState("conn-1", http.StateActive)
-	tracker.onHTTPState("conn-1", http.StateIdle)
-	snapshot := tracker.snapshot()
-	if snapshot.New != 1 || snapshot.Active != 0 || snapshot.Idle != 1 || snapshot.Closed != 0 {
-		t.Fatalf("unexpected idle snapshot: %+v", snapshot)
+func (c snapshotConn) Read([]byte) (int, error)           { return 0, net.ErrClosed }
+func (c snapshotConn) Write([]byte) (int, error)          { return 0, net.ErrClosed }
+func (c snapshotConn) Close() error                       { return nil }
+func (c snapshotConn) LocalAddr() net.Addr                { return c.address }
+func (c snapshotConn) RemoteAddr() net.Addr               { return c.address }
+func (c snapshotConn) SetDeadline(_ time.Time) error      { return nil }
+func (c snapshotConn) SetReadDeadline(_ time.Time) error  { return nil }
+func (c snapshotConn) SetWriteDeadline(_ time.Time) error { return nil }
+
+func TestDomainConnectionTracksSharedConnectionAssociations(t *testing.T) {
+	m := NewStatManager(&config.Config{})
+	conn := snapshotConn{address: staticAddr("10.0.0.1:1000")}
+	m.bindConnHost(conn.RemoteAddr().String(), "A.example")
+	m.bindConnHost(conn.RemoteAddr().String(), "B.example")
+	snapshot := m.domainSnapshotForTest()
+	if snapshot["a.example"]["active"] != 1 || snapshot["b.example"]["active"] != 1 {
+		t.Fatalf("shared connection was not associated with both domains: %#v", snapshot)
 	}
-
-	tracker.onHTTPState("conn-1", http.StateActive)
-	tracker.onHTTPState("conn-1", http.StateActive)
-	snapshot = tracker.snapshot()
-	if snapshot.Active != 1 || snapshot.Idle != 0 {
-		t.Fatalf("repeated active transition changed gauges: %+v", snapshot)
-	}
-
-	tracker.onHTTPState("conn-1", http.StateClosed)
-	tracker.onHTTPState("conn-1", http.StateClosed)
-	snapshot = tracker.snapshot()
-	if snapshot.Active != 0 || snapshot.Idle != 0 || snapshot.Closed != 1 {
-		t.Fatalf("unexpected closed snapshot: %+v", snapshot)
-	}
-}
-
-func TestConnectionTrackerTracksHijackOnce(t *testing.T) {
-	tracker := newConnectionTracker()
-	tracker.onHTTPState("conn-1", http.StateNew)
-	tracker.onHTTPState("conn-1", http.StateIdle)
-	tracker.onHTTPState("conn-1", http.StateHijacked)
-	tracker.onHTTPState("conn-1", http.StateHijacked)
-
-	snapshot := tracker.snapshot()
-	if snapshot.New != 1 || snapshot.Idle != 0 || snapshot.Hijacked != 1 || snapshot.Closed != 0 {
-		t.Fatalf("unexpected hijack snapshot: %+v", snapshot)
+	m.incrDomainConnStateByConn(conn, "closed", true)
+	snapshot = m.domainSnapshotForTest()
+	if snapshot["a.example"]["closed"] != 1 || snapshot["b.example"]["closed"] != 1 {
+		t.Fatalf("shared connection close was not released per domain: %#v", snapshot)
 	}
 }
 
-func TestConnectionTrackerTracksHTTP3RequestConcurrency(t *testing.T) {
-	tracker := newConnectionTracker()
-	tracker.openIdle("quic-1")
-	tracker.requestStart("quic-1")
-	tracker.requestStart("quic-1")
+type staticAddr string
 
-	snapshot := tracker.snapshot()
-	if snapshot.New != 1 || snapshot.Active != 1 || snapshot.Idle != 0 {
-		t.Fatalf("unexpected active HTTP/3 snapshot: %+v", snapshot)
-	}
+func (a staticAddr) Network() string { return "tcp" }
+func (a staticAddr) String() string  { return string(a) }
 
-	tracker.requestEnd("quic-1")
-	snapshot = tracker.snapshot()
-	if snapshot.Active != 1 || snapshot.Idle != 0 {
-		t.Fatalf("connection became idle while a request remained: %+v", snapshot)
-	}
-
-	tracker.requestEnd("quic-1")
-	snapshot = tracker.snapshot()
-	if snapshot.Active != 0 || snapshot.Idle != 1 {
-		t.Fatalf("connection did not return to idle: %+v", snapshot)
-	}
-
-	tracker.onHTTPState("quic-1", http.StateClosed)
-	tracker.onHTTPState("quic-1", http.StateClosed)
-	snapshot = tracker.snapshot()
-	if snapshot.Active != 0 || snapshot.Idle != 0 || snapshot.Closed != 1 {
-		t.Fatalf("unexpected closed HTTP/3 snapshot: %+v", snapshot)
-	}
+func (m *StatManager) domainSnapshotForTest() map[string]map[string]int64 {
+	return GetDomainConnSnapshotForManager(m)
 }
 
-func TestConnectionTrackerConcurrentConnections(t *testing.T) {
-	tracker := newConnectionTracker()
-	const count = 256
-	var wg sync.WaitGroup
-	wg.Add(count)
-	for i := 0; i < count; i++ {
-		key := "conn-" + strconv.Itoa(i)
-		go func() {
-			defer wg.Done()
-			tracker.onHTTPState(key, http.StateNew)
-			tracker.onHTTPState(key, http.StateActive)
-			tracker.onHTTPState(key, http.StateIdle)
-			tracker.onHTTPState(key, http.StateClosed)
-		}()
-	}
-	wg.Wait()
-
-	snapshot := tracker.snapshot()
-	if snapshot.New != count || snapshot.Active != 0 || snapshot.Idle != 0 || snapshot.Closed != count {
-		t.Fatalf("unexpected concurrent snapshot: %+v", snapshot)
-	}
+func GetDomainConnSnapshotForManager(m *StatManager) map[string]map[string]int64 {
+	result := map[string]map[string]int64{}
+	m.domainConnStat.Range(func(host string, states *structure.Map[*int64]) bool {
+		item := map[string]int64{}
+		for _, state := range []string{"active", "idle", "closed"} {
+			if value, ok := states.Get(state); ok && value != nil {
+				item[state] = atomic.LoadInt64(value)
+			}
+		}
+		result[host] = item
+		return true
+	})
+	return result
 }

@@ -1,79 +1,17 @@
-export type DomainHealthStatus = "online" | "offline" | "warning";
-
-export interface ConnectionTrendPoint {
-  timestamp: string;
-  totalConnections: number;
-  activeDomains: number;
-}
-
-export interface DomainMapping {
-  frontendPort: number;
-  backendTarget: string;
-  protocol: "http" | "https" | "tcp";
-}
-
-export interface DomainConnection {
-  domain: string;
-  status: DomainHealthStatus;
-  currentConnections: number;
-  peakConnections: number;
-  lastHeartbeat: string;
-  mappings: DomainMapping[];
-}
-
-export interface GatewayOverview {
-  totalConnections: number;
-  activeDomains: number;
-  warningDomains: number;
-  totalMappings: number;
-  criticalAlerts: number;
-  latestChange: string;
-  trend: ConnectionTrendPoint[];
-}
-
-export interface CoreGatewayConfig {
-  mode: string;
-  listener: string;
-  logLevel: string;
-  maxConnections: number;
-  readTimeoutMs: number;
-  writeTimeoutMs: number;
-}
-
-export interface FrontendProxyConfig {
-  upstreamScheme: string;
-  gzip: boolean;
-  websocket: boolean;
-  cors: boolean;
-  errorPage: string;
-}
-
-export interface BackendServiceConfig {
-  name: string;
-  target: string;
-  healthCheckPath: string;
-  healthStatus: "healthy" | "degraded" | "down";
-  weight: number;
-}
-
-export interface GatewayConfigs {
-  core: CoreGatewayConfig;
-  frontendProxy: FrontendProxyConfig;
-  backendServices: BackendServiceConfig[];
-}
-
-export interface ExperimentFeature {
-  key: "anytls" | "trojan";
-  name: string;
-  enabled: boolean;
-  riskLevel: "low" | "medium" | "high";
-  description: string;
-  params: Record<string, string | number | boolean>;
-}
-
-export interface GatewayData {
-  overview: GatewayOverview;
-  domains: DomainConnection[];
-  configs: GatewayConfigs;
-  experiments: ExperimentFeature[];
-}
+export type DomainHealthStatus = "online" | "offline" | "warning" | "unknown";
+export interface ConnectionTrendPoint { timestamp: string; totalConnections: number; activeDomains: number }
+export interface DomainMapping { frontendPort: number; backendTarget: string; protocol: "http" | "https" | "tcp" | string }
+export interface DomainConnection { domain: string; service?: string; status: DomainHealthStatus; currentConnections: number; peakConnections: number; lastHeartbeat: string; mappings: DomainMapping[] }
+export interface ConnectionSnapshot { new: number; active: number; idle: number; hijacked: number; closed: number }
+export interface TrafficSummary { request_bytes: number; response_bytes: number; total_bytes: number }
+export interface StatSummary { total_requests: number; frontend_requests: number; backend_requests: number; unknown_requests: number; error_requests: number; rps: number; error_rate: number; status: Record<string, number>; latency: { avg_ms: number; p95_ms: number; max_ms: number }; gc: { cycles: number; forced_cycles: number; pressure_percent: number; pause_total_ms: number; pause_avg_ms: number; pause_p95_ms: number; pause_max_ms: number }; frontend_traffic: TrafficSummary; backend_traffic: TrafficSummary; total_traffic: TrafficSummary }
+export interface StatPoint extends Record<string, number | string | null> { timestamp: string }
+export interface StatResponse { total: number; api: number; static: number; fail: number; today: number; meta: { range: string; bucket_seconds: number; start_time: string; end_time: string; generated_at: string; capabilities?: Record<string, boolean> }; summary: StatSummary; series: { requests: StatPoint[]; traffic: StatPoint[]; gc: StatPoint[]; system: StatPoint[]; process: StatPoint[] }; connections: { gateway: ConnectionSnapshot; front: ConnectionSnapshot }; domains: Array<{ domain: string; requests: number; errors: number; request_bytes: number; response_bytes: number }>; domain_series?: StatPoint[] }
+export interface GatewayOverview { totalConnections: number; activeDomains: number; warningDomains: number; totalMappings: number; criticalAlerts: number; latestChange: string; trend: ConnectionTrendPoint[] }
+export interface CoreGatewayConfig { mode: string; listener: string; logLevel: string; maxConnections: number; readTimeoutMs: number; writeTimeoutMs: number }
+export interface FrontendProxyConfig { upstreamScheme: string; gzip: boolean; cache: boolean; websocket: boolean; cors: boolean; errorPage: string }
+export interface BackendServiceConfig { name: string; target: string; healthCheckPath: string; healthStatus: "healthy" | "degraded" | "down" | "unknown"; weight: number }
+export interface ManagementConfig { source_file: string; version: string; pending: boolean; values: Record<string, unknown> }
+export interface GatewayConfigs { core: CoreGatewayConfig; frontendProxy: FrontendProxyConfig; backendServices: BackendServiceConfig[]; raw?: ManagementConfig }
+export interface ExperimentFeature { key: "anytls" | "trojan"; name: string; enabled: boolean; riskLevel: "low" | "medium" | "high"; description: string; params: Record<string, string | number | boolean> }
+export interface GatewayData { overview: GatewayOverview; domains: DomainConnection[]; configs: GatewayConfigs; experiments: ExperimentFeature[]; stat?: StatResponse; geo?: Record<string, number>; connections?: { gateway: ConnectionSnapshot; front: ConnectionSnapshot } }

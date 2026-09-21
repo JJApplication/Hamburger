@@ -13,6 +13,7 @@ const statusStyles: Record<DomainHealthStatus, string> = {
   online: "bg-emerald-500/15 text-emerald-300 border-emerald-400/30",
   warning: "bg-amber-500/15 text-amber-300 border-amber-400/30",
   offline: "bg-rose-500/15 text-rose-300 border-rose-400/30",
+  unknown: "bg-slate-500/15 text-slate-300 border-slate-400/30",
 };
 
 export function StatusPill({ status }: StatusPillProps) {
@@ -22,6 +23,7 @@ export function StatusPill({ status }: StatusPillProps) {
     online: t("domain.status.online"),
     warning: t("domain.status.warning"),
     offline: t("domain.status.offline"),
+    unknown: t("domain.status.unknown"),
   };
 
   return (

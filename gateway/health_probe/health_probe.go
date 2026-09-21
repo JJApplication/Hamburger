@@ -3,6 +3,8 @@ package health_probe
 import (
 	"context"
 	"github.com/allegro/bigcache/v3"
+	"sync"
+	"time"
 )
 
 // 健康检查探针
@@ -11,6 +13,8 @@ import (
 
 var (
 	healthProbeCache *bigcache.BigCache
+	probeTimesMu     sync.RWMutex
+	probeTimes       = map[string]time.Time{}
 )
 
 var (
@@ -55,6 +59,9 @@ func SetProbe(domain string, probe []byte) {
 		return
 	}
 	healthProbeCache.Set(domain, probe)
+	probeTimesMu.Lock()
+	probeTimes[domain] = time.Now().UTC()
+	probeTimesMu.Unlock()
 }
 
 func GetProbe(domain string) []byte {
@@ -63,4 +70,13 @@ func GetProbe(domain string) []byte {
 	}
 	result, _ := healthProbeCache.Get(domain)
 	return result
+}
+
+// GetProbeTime reports when a domain was last checked. The timestamp is kept
+// alongside the cache because the cache stores only the health result.
+func GetProbeTime(domain string) (time.Time, bool) {
+	probeTimesMu.RLock()
+	value, ok := probeTimes[domain]
+	probeTimesMu.RUnlock()
+	return value, ok
 }

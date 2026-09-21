@@ -2,7 +2,9 @@ package service
 
 import (
 	"Hamburger/gateway/api/model"
+	"Hamburger/internal/config"
 	"Hamburger/internal/config/svr_config"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"strings"
@@ -19,6 +21,7 @@ var (
 )
 
 type APIService struct {
+	cfg        *config.Config
 	jwtCfg     svr_config.JWTConfig
 	bboltCfg   svr_config.APIBBoltConfig
 	db         *bbolt.DB
@@ -28,10 +31,23 @@ type APIService struct {
 	restartFn  map[string]func() error
 }
 
-func NewAPIService(apiCfg svr_config.ApiServerConfig) *APIService {
+func NewAPIService(apiCfg svr_config.ApiServerConfig, cfg ...*config.Config) *APIService {
 	s := &APIService{
 		jwtCfg:   apiCfg.JWT,
 		bboltCfg: apiCfg.BBolt,
+	}
+	if len(cfg) > 0 {
+		s.cfg = cfg[0]
+	}
+	if strings.TrimSpace(s.jwtCfg.Secret) == "" {
+		// Public legacy routes may keep JWT disabled, but dashboard login still
+		// needs a process-local signing key for management tokens.
+		buf := make([]byte, 32)
+		if _, err := rand.Read(buf); err == nil {
+			s.jwtCfg.Secret = fmt.Sprintf("%x", buf)
+		} else {
+			s.jwtCfg.Secret = "hamburger-dashboard-session"
+		}
 	}
 	if !s.bboltCfg.Enabled {
 		return s

@@ -30,10 +30,13 @@ type StatManager struct {
 	geoMu      sync.Mutex
 	domainMu   sync.Mutex
 
-	connStatGw     *connectionTracker
-	connStatFront  *connectionTracker
-	domainConnStat *structure.Map[*structure.Map[*int64]]
-	connHostMap    *structure.Map[string]
+	connStatGw      *connectionTracker
+	connStatFront   *connectionTracker
+	domainConnStat  *structure.Map[*structure.Map[*int64]]
+	domainConnPeak  *structure.Map[*int64]
+	domainConnState *structure.Map[string]
+	connDomains     *structure.Map[map[string]struct{}]
+	connDomainMu    sync.Mutex
 
 	history    *HistoryStore
 	sampler    *resourceSampler
@@ -58,14 +61,16 @@ func NewStatManager(cfg *config.Config) *StatManager {
 		MaxEntrySize:       1024,
 	})
 	return &StatManager{
-		cfg:            cfg,
-		bc:             cache,
-		geoIp:          structure.NewMap[*int64](),
-		domainStat:     structure.NewMap[*int64](),
-		connStatGw:     newConnectionTracker(),
-		connStatFront:  newConnectionTracker(),
-		domainConnStat: structure.NewMap[*structure.Map[*int64]](),
-		connHostMap:    structure.NewMap[string](),
+		cfg:             cfg,
+		bc:              cache,
+		geoIp:           structure.NewMap[*int64](),
+		domainStat:      structure.NewMap[*int64](),
+		connStatGw:      newConnectionTracker(),
+		connStatFront:   newConnectionTracker(),
+		domainConnStat:  structure.NewMap[*structure.Map[*int64]](),
+		domainConnPeak:  structure.NewMap[*int64](),
+		domainConnState: structure.NewMap[string](),
+		connDomains:     structure.NewMap[map[string]struct{}](),
 	}
 }
 

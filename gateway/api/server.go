@@ -131,6 +131,7 @@ func (s *Server) newHTTPServerLocked() (*http.Server, error) {
 	engine := gin.New()
 	middleware.Register(engine)
 	route.Register(engine, s.service, middleware.JWT(s.jwtCfg))
+	route.RegisterManagement(engine, s.service, middleware.ManagementJWT(s.service))
 	s.engine = engine
 
 	server := &http.Server{

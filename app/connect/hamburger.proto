@@ -23,6 +23,12 @@ service service {
   rpc serviceStop(DomainServiceRequest) returns (ActionResponse);
   rpc serverRestart(ServerRequest) returns (ActionResponse);
   rpc serverStop(ServerRequest) returns (ActionResponse);
+  rpc managementDomains(Empty) returns (ManagementDomainsResponse);
+  rpc managementDomainState(DomainStateRequest) returns (ActionResponse);
+  rpc managementConfigGet(Empty) returns (ManagementConfigResponse);
+  rpc managementConfigPut(ManagementConfigRequest) returns (ManagementConfigResponse);
+  rpc managementConfigApply(ManagementApplyRequest) returns (OperationResponse);
+  rpc managementOperationGet(OperationRequest) returns (OperationResponse);
 
   rpc statStream(stream StatRequest) returns (stream StatResponse);
   rpc geoStream(stream Empty) returns (stream GeoResponse);
@@ -39,6 +45,12 @@ service service {
   rpc serviceStopStream(stream DomainServiceRequest) returns (stream ActionResponse);
   rpc serverRestartStream(stream ServerRequest) returns (stream ActionResponse);
   rpc serverStopStream(stream ServerRequest) returns (stream ActionResponse);
+  rpc managementDomainsStream(stream Empty) returns (stream ManagementDomainsResponse);
+  rpc managementDomainStateStream(stream DomainStateRequest) returns (stream ActionResponse);
+  rpc managementConfigGetStream(stream Empty) returns (stream ManagementConfigResponse);
+  rpc managementConfigPutStream(stream ManagementConfigRequest) returns (stream ManagementConfigResponse);
+  rpc managementConfigApplyStream(stream ManagementApplyRequest) returns (stream OperationResponse);
+  rpc managementOperationGetStream(stream OperationRequest) returns (stream OperationResponse);
 }
 
 message Empty {}
@@ -278,4 +290,39 @@ message ServerRequest {
 message ActionResponse {
   bool success = 1;
   string message = 2;
+}
+
+message ManagementDomainsResponse {
+  string payload_json = 1;
+}
+
+message DomainStateRequest {
+  string domain = 1;
+  string state = 2;
+}
+
+message ManagementConfigResponse {
+  string source_file = 1;
+  string version = 2;
+  string values_json = 3;
+  bool pending = 4;
+}
+
+message ManagementConfigRequest {
+  string version = 1;
+  string values_json = 2;
+}
+
+message ManagementApplyRequest {
+  repeated string services = 1;
+}
+
+message OperationRequest {
+  string operation_id = 1;
+}
+
+message OperationResponse {
+  string operation_id = 1;
+  string status = 2;
+  string error = 3;
 }

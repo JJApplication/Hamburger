@@ -16,7 +16,7 @@ func (i *Initializer) InitAPIService() Runner {
 			// Keep one service instance for the process even when both HTTP
 			// facades start disabled. A later in-place config reload can enable
 			// Connect without needing to replace the handler or reopen the store.
-			i.APIService = service.NewAPIService(i.cfg.ApiServerConfig)
+			i.APIService = service.NewAPIService(i.cfg.ApiServerConfig, i.cfg)
 			return nil
 		},
 	}

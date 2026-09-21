@@ -1,8 +1,10 @@
 package stat
 
 import (
+	runtimeDomains "Hamburger/gateway/runtime"
 	"Hamburger/gateway/stat/model"
 	"Hamburger/internal/structure"
+	"Hamburger/internal/utils"
 	"fmt"
 	"net"
 	"net/http"
@@ -205,7 +207,9 @@ func (m *StatManager) handleConnGw(conn net.Conn, state http.ConnState) {
 	m.connStatGw.onHTTPState(key, state)
 	switch state {
 	case http.StateNew:
-		m.connHostMap.Put(connKey(conn), "")
+		m.connDomainMu.Lock()
+		m.connDomains.Put(connKey(conn), map[string]struct{}{})
+		m.connDomainMu.Unlock()
 		return
 	case http.StateActive:
 		return
@@ -260,10 +264,28 @@ func (m *StatManager) bindConnHost(remoteAddr, host string) {
 	if remoteAddr == "" || host == "" {
 		return
 	}
-	prevHost, ok := m.connHostMap.Get(remoteAddr)
-	m.connHostMap.Put(remoteAddr, host)
-	if !ok || prevHost == "" {
+	m.connDomainMu.Lock()
+	defer m.connDomainMu.Unlock()
+	domains, ok := m.connDomains.Get(remoteAddr)
+	if !ok || domains == nil {
+		domains = map[string]struct{}{}
+	}
+	if _, associated := domains[host]; !associated {
+		domains[host] = struct{}{}
+		m.connDomains.Put(remoteAddr, domains)
 		m.incrDomainConnState(host, "active")
+		m.domainConnState.Put(domainStateKey(remoteAddr, host), "active")
+		return
+	}
+	stateKey := domainStateKey(remoteAddr, host)
+	if previous, hasPrevious := m.domainConnState.Get(stateKey); hasPrevious && previous == "idle" {
+		if states, found := m.domainConnStat.Get(host); found {
+			if value, foundState := states.Get("idle"); foundState && value != nil {
+				atomic.AddInt64(value, -1)
+			}
+		}
+		m.incrDomainConnState(host, "active")
+		m.domainConnState.Put(stateKey, "active")
 	}
 }
 
@@ -272,14 +294,33 @@ func (m *StatManager) incrDomainConnStateByConn(conn net.Conn, state string, cle
 	if key == "" {
 		return
 	}
-	host, ok := m.connHostMap.Get(key)
-	if ok && host != "" {
-		m.incrDomainConnState(host, state)
+	m.connDomainMu.Lock()
+	defer m.connDomainMu.Unlock()
+	domains, ok := m.connDomains.Get(key)
+	if ok {
+		for host := range domains {
+			stateKey := domainStateKey(key, host)
+			if previous, hasPrevious := m.domainConnState.Get(stateKey); hasPrevious && previous != state {
+				if states, found := m.domainConnStat.Get(host); found {
+					if value, foundState := states.Get(previous); foundState && value != nil && (previous == "active" || previous == "idle") {
+						atomic.AddInt64(value, -1)
+					}
+				}
+			}
+			m.incrDomainConnState(host, state)
+			if state == "idle" {
+				m.domainConnState.Put(stateKey, "idle")
+			} else {
+				m.domainConnState.Delete(stateKey)
+			}
+		}
 	}
 	if clear {
-		m.connHostMap.Delete(key)
+		m.connDomains.Delete(key)
 	}
 }
+
+func domainStateKey(connection, host string) string { return connection + "\x00" + host }
 
 func (m *StatManager) incrDomainConnState(host, state string) {
 	host = normalizeConnHost(host)
@@ -290,9 +331,35 @@ func (m *StatManager) incrDomainConnState(host, state string) {
 	ds, ok := hostConnStat.Get(state)
 	if !ok {
 		hostConnStat.Put(state, new(int64))
-		return
+	} else {
+		atomic.AddInt64(ds, 1)
 	}
-	atomic.AddInt64(ds, 1)
+	if state == "active" || state == "idle" {
+		active, _ := hostConnStat.Get("active")
+		idle, _ := hostConnStat.Get("idle")
+		current := int64(0)
+		if active != nil {
+			current += atomic.LoadInt64(active)
+		}
+		if idle != nil {
+			current += atomic.LoadInt64(idle)
+		}
+		m.updateDomainPeak(host, current)
+	}
+}
+
+func (m *StatManager) updateDomainPeak(host string, active int64) {
+	peak, ok := m.domainConnPeak.Get(host)
+	if !ok {
+		peak = new(int64)
+		m.domainConnPeak.Put(host, peak)
+	}
+	for {
+		current := atomic.LoadInt64(peak)
+		if active <= current || atomic.CompareAndSwapInt64(peak, current, active) {
+			return
+		}
+	}
 }
 
 func (m *StatManager) getOrInitDomainConnStat(host string) *structure.Map[*int64] {
@@ -321,8 +388,17 @@ func normalizeConnHost(host string) string {
 	if host == "" {
 		return ""
 	}
-	if idx := strings.LastIndex(host, ":"); idx != -1 {
-		return host[:idx]
+	if normalized, _, err := net.SplitHostPort(host); err == nil {
+		host = normalized
+	} else if strings.Count(host, ":") == 1 {
+		if idx := strings.LastIndex(host, ":"); idx > 0 {
+			host = host[:idx]
+		}
+	}
+	host = strings.Trim(host, "[]")
+	host = strings.ToLower(host)
+	if item, ok := runtimeDomains.GetDomain2Service(host); ok && utils.IsDomainRegex(item.ServiceDomain) {
+		return strings.TrimSpace(item.ServiceDomain)
 	}
 	return host
 }
@@ -347,4 +423,29 @@ func GetGatewayConn() model.GatewayConnModel {
 func GetFrontConn() model.FrontConnModel {
 	s := GetManager().connStatFront.snapshot()
 	return model.FrontConnModel{New: s.New, Active: s.Active, Idle: s.Idle, Hijacked: s.Hijacked, Closed: s.Closed}
+}
+
+// GetDomainConnSnapshot returns a consistent, bounded snapshot for management
+// dashboards. Keys originate from configured/runtime domains and are not
+// created from arbitrary request Host values.
+func GetDomainConnSnapshot() map[string]map[string]int64 {
+	m := GetManager()
+	result := map[string]map[string]int64{}
+	if m == nil || m.domainConnStat == nil {
+		return result
+	}
+	m.domainConnStat.Range(func(host string, states *structure.Map[*int64]) bool {
+		item := map[string]int64{}
+		for _, state := range []string{"active", "idle", "hijacked", "closed"} {
+			if value, ok := states.Get(state); ok && value != nil {
+				item[state] = atomic.LoadInt64(value)
+			}
+		}
+		if peak, ok := m.domainConnPeak.Get(host); ok && peak != nil {
+			item["peak"] = atomic.LoadInt64(peak)
+		}
+		result[host] = item
+		return true
+	})
+	return result
 }

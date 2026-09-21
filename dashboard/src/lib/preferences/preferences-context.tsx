@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
@@ -34,6 +35,7 @@ export type MessageKey =
   | "domains.filterOnline"
   | "domains.filterWarning"
   | "domains.filterOffline"
+  | "domains.filterUnknown"
   | "domains.filterPort"
   | "domains.empty"
   | "domains.paginationSummary"
@@ -46,6 +48,7 @@ export type MessageKey =
   | "domain.status.online"
   | "domain.status.warning"
   | "domain.status.offline"
+  | "domain.status.unknown"
   | "common.loading"
   | "common.retry"
   | "configs.title"
@@ -113,18 +116,20 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "domains.filterOnline": "在线",
     "domains.filterWarning": "告警",
     "domains.filterOffline": "离线",
+    "domains.filterUnknown": "未探测",
     "domains.filterPort": "按前端端口筛选",
     "domains.empty": "没有匹配条件的域名连接数据。",
     "domains.paginationSummary": "第 {page} / {total} 页，共 {count} 条",
     "domains.prev": "上一页",
     "domains.next": "下一页",
-    "domain.lastHeartbeat": "最近心跳",
+    "domain.lastHeartbeat": "最近探测",
     "domain.currentConnections": "当前连接",
     "domain.peakConnections": "峰值连接",
     "domain.mappingCount": "映射数量",
     "domain.status.online": "在线",
     "domain.status.warning": "告警",
     "domain.status.offline": "离线",
+    "domain.status.unknown": "未知",
     "common.loading": "正在加载网关数据...",
     "common.retry": "重新加载",
     "configs.title": "网关配置中心",
@@ -183,18 +188,20 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "domains.filterOnline": "Online",
     "domains.filterWarning": "Warning",
     "domains.filterOffline": "Offline",
+    "domains.filterUnknown": "Not probed",
     "domains.filterPort": "Filter by frontend port",
     "domains.empty": "No domain data matched current filters.",
     "domains.paginationSummary": "Page {page} / {total}, {count} items",
     "domains.prev": "Previous",
     "domains.next": "Next",
-    "domain.lastHeartbeat": "Last heartbeat",
+    "domain.lastHeartbeat": "Last probe",
     "domain.currentConnections": "Current",
     "domain.peakConnections": "Peak",
     "domain.mappingCount": "Mappings",
     "domain.status.online": "Online",
     "domain.status.warning": "Warning",
     "domain.status.offline": "Offline",
+    "domain.status.unknown": "Unknown",
     "common.loading": "Loading gateway data...",
     "common.retry": "Reload",
     "configs.title": "Gateway Config Center",

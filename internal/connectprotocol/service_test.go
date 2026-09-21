@@ -61,6 +61,31 @@ func TestProtectedUnaryReusesJWTPolicy(t *testing.T) {
 	}
 }
 
+func TestManagementUnaryRequiresExistingUserWhenJWTIsDisabled(t *testing.T) {
+	apiService := service.NewAPIService(svr_config.ApiServerConfig{
+		JWT:   svr_config.JWTConfig{Enabled: false, TokenHeader: "Authorization"},
+		BBolt: svr_config.APIBBoltConfig{Enabled: true, File: filepath.Join(t.TempDir(), "users.db")},
+	})
+	defer apiService.CloseDB()
+	connectService := NewService(apiService)
+	request := connectrpc.NewRequest(&connectpb.Empty{})
+	if _, err := connectService.ManagementDomains(context.Background(), request); connectrpc.CodeOf(err) != connectrpc.CodeUnauthenticated {
+		t.Fatalf("missing management token error = %v, want unauthenticated", err)
+	}
+	token, _, err := apiService.Login("admin", "admin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header().Set("Authorization", "Bearer "+token)
+	response, err := connectService.ManagementDomains(context.Background(), request)
+	if err != nil {
+		t.Fatalf("valid management token rejected: %v", err)
+	}
+	if response.Msg.GetPayloadJson() == "" {
+		t.Fatal("management domains payload is empty")
+	}
+}
+
 func TestGatewayStopReturnsBeforeGatewayShutdown(t *testing.T) {
 	apiService := service.NewAPIService(svr_config.ApiServerConfig{})
 	started := make(chan struct{})

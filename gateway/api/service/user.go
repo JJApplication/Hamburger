@@ -174,6 +174,21 @@ func (s *APIService) AuthorizeHeaders(headers http.Header, host string) bool {
 	return err == nil
 }
 
+// AuthorizeManagementHeaders is intentionally stricter than the legacy API
+// middleware: management mutations always require a valid user token, even
+// when public API JWT checks are disabled or the gateway runs in dev mode.
+func (s *APIService) AuthorizeManagementHeaders(headers http.Header) bool {
+	if s == nil {
+		return false
+	}
+	token, err := s.TokenFromRequest(&http.Request{Header: headers})
+	if err != nil {
+		return false
+	}
+	_, err = s.GetUserByToken(token)
+	return err == nil
+}
+
 func (s *APIService) initDefaultUser() error {
 	if s.db == nil {
 		return nil

@@ -62,6 +62,24 @@ const (
 	ServiceServerRestartProcedure = "/hamburger.service/serverRestart"
 	// ServiceServerStopProcedure is the fully-qualified name of the service's serverStop RPC.
 	ServiceServerStopProcedure = "/hamburger.service/serverStop"
+	// ServiceManagementDomainsProcedure is the fully-qualified name of the service's managementDomains
+	// RPC.
+	ServiceManagementDomainsProcedure = "/hamburger.service/managementDomains"
+	// ServiceManagementDomainStateProcedure is the fully-qualified name of the service's
+	// managementDomainState RPC.
+	ServiceManagementDomainStateProcedure = "/hamburger.service/managementDomainState"
+	// ServiceManagementConfigGetProcedure is the fully-qualified name of the service's
+	// managementConfigGet RPC.
+	ServiceManagementConfigGetProcedure = "/hamburger.service/managementConfigGet"
+	// ServiceManagementConfigPutProcedure is the fully-qualified name of the service's
+	// managementConfigPut RPC.
+	ServiceManagementConfigPutProcedure = "/hamburger.service/managementConfigPut"
+	// ServiceManagementConfigApplyProcedure is the fully-qualified name of the service's
+	// managementConfigApply RPC.
+	ServiceManagementConfigApplyProcedure = "/hamburger.service/managementConfigApply"
+	// ServiceManagementOperationGetProcedure is the fully-qualified name of the service's
+	// managementOperationGet RPC.
+	ServiceManagementOperationGetProcedure = "/hamburger.service/managementOperationGet"
 	// ServiceStatStreamProcedure is the fully-qualified name of the service's statStream RPC.
 	ServiceStatStreamProcedure = "/hamburger.service/statStream"
 	// ServiceGeoStreamProcedure is the fully-qualified name of the service's geoStream RPC.
@@ -99,6 +117,24 @@ const (
 	// ServiceServerStopStreamProcedure is the fully-qualified name of the service's serverStopStream
 	// RPC.
 	ServiceServerStopStreamProcedure = "/hamburger.service/serverStopStream"
+	// ServiceManagementDomainsStreamProcedure is the fully-qualified name of the service's
+	// managementDomainsStream RPC.
+	ServiceManagementDomainsStreamProcedure = "/hamburger.service/managementDomainsStream"
+	// ServiceManagementDomainStateStreamProcedure is the fully-qualified name of the service's
+	// managementDomainStateStream RPC.
+	ServiceManagementDomainStateStreamProcedure = "/hamburger.service/managementDomainStateStream"
+	// ServiceManagementConfigGetStreamProcedure is the fully-qualified name of the service's
+	// managementConfigGetStream RPC.
+	ServiceManagementConfigGetStreamProcedure = "/hamburger.service/managementConfigGetStream"
+	// ServiceManagementConfigPutStreamProcedure is the fully-qualified name of the service's
+	// managementConfigPutStream RPC.
+	ServiceManagementConfigPutStreamProcedure = "/hamburger.service/managementConfigPutStream"
+	// ServiceManagementConfigApplyStreamProcedure is the fully-qualified name of the service's
+	// managementConfigApplyStream RPC.
+	ServiceManagementConfigApplyStreamProcedure = "/hamburger.service/managementConfigApplyStream"
+	// ServiceManagementOperationGetStreamProcedure is the fully-qualified name of the service's
+	// managementOperationGetStream RPC.
+	ServiceManagementOperationGetStreamProcedure = "/hamburger.service/managementOperationGetStream"
 )
 
 // ServiceClient is a client for the hamburger.service service.
@@ -118,6 +154,12 @@ type ServiceClient interface {
 	ServiceStop(context.Context, *connect.Request[DomainServiceRequest]) (*connect.Response[ActionResponse], error)
 	ServerRestart(context.Context, *connect.Request[ServerRequest]) (*connect.Response[ActionResponse], error)
 	ServerStop(context.Context, *connect.Request[ServerRequest]) (*connect.Response[ActionResponse], error)
+	ManagementDomains(context.Context, *connect.Request[Empty]) (*connect.Response[ManagementDomainsResponse], error)
+	ManagementDomainState(context.Context, *connect.Request[DomainStateRequest]) (*connect.Response[ActionResponse], error)
+	ManagementConfigGet(context.Context, *connect.Request[Empty]) (*connect.Response[ManagementConfigResponse], error)
+	ManagementConfigPut(context.Context, *connect.Request[ManagementConfigRequest]) (*connect.Response[ManagementConfigResponse], error)
+	ManagementConfigApply(context.Context, *connect.Request[ManagementApplyRequest]) (*connect.Response[OperationResponse], error)
+	ManagementOperationGet(context.Context, *connect.Request[OperationRequest]) (*connect.Response[OperationResponse], error)
 	StatStream(context.Context) *connect.BidiStreamForClient[StatRequest, StatResponse]
 	GeoStream(context.Context) *connect.BidiStreamForClient[Empty, GeoResponse]
 	DomainStream(context.Context) *connect.BidiStreamForClient[Empty, DomainResponse]
@@ -133,6 +175,12 @@ type ServiceClient interface {
 	ServiceStopStream(context.Context) *connect.BidiStreamForClient[DomainServiceRequest, ActionResponse]
 	ServerRestartStream(context.Context) *connect.BidiStreamForClient[ServerRequest, ActionResponse]
 	ServerStopStream(context.Context) *connect.BidiStreamForClient[ServerRequest, ActionResponse]
+	ManagementDomainsStream(context.Context) *connect.BidiStreamForClient[Empty, ManagementDomainsResponse]
+	ManagementDomainStateStream(context.Context) *connect.BidiStreamForClient[DomainStateRequest, ActionResponse]
+	ManagementConfigGetStream(context.Context) *connect.BidiStreamForClient[Empty, ManagementConfigResponse]
+	ManagementConfigPutStream(context.Context) *connect.BidiStreamForClient[ManagementConfigRequest, ManagementConfigResponse]
+	ManagementConfigApplyStream(context.Context) *connect.BidiStreamForClient[ManagementApplyRequest, OperationResponse]
+	ManagementOperationGetStream(context.Context) *connect.BidiStreamForClient[OperationRequest, OperationResponse]
 }
 
 // NewServiceClient constructs a client for the hamburger.service service. By default, it uses the
@@ -236,6 +284,42 @@ func NewServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...con
 			connect.WithSchema(serviceMethods.ByName("serverStop")),
 			connect.WithClientOptions(opts...),
 		),
+		managementDomains: connect.NewClient[Empty, ManagementDomainsResponse](
+			httpClient,
+			baseURL+ServiceManagementDomainsProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementDomains")),
+			connect.WithClientOptions(opts...),
+		),
+		managementDomainState: connect.NewClient[DomainStateRequest, ActionResponse](
+			httpClient,
+			baseURL+ServiceManagementDomainStateProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementDomainState")),
+			connect.WithClientOptions(opts...),
+		),
+		managementConfigGet: connect.NewClient[Empty, ManagementConfigResponse](
+			httpClient,
+			baseURL+ServiceManagementConfigGetProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementConfigGet")),
+			connect.WithClientOptions(opts...),
+		),
+		managementConfigPut: connect.NewClient[ManagementConfigRequest, ManagementConfigResponse](
+			httpClient,
+			baseURL+ServiceManagementConfigPutProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementConfigPut")),
+			connect.WithClientOptions(opts...),
+		),
+		managementConfigApply: connect.NewClient[ManagementApplyRequest, OperationResponse](
+			httpClient,
+			baseURL+ServiceManagementConfigApplyProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementConfigApply")),
+			connect.WithClientOptions(opts...),
+		),
+		managementOperationGet: connect.NewClient[OperationRequest, OperationResponse](
+			httpClient,
+			baseURL+ServiceManagementOperationGetProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementOperationGet")),
+			connect.WithClientOptions(opts...),
+		),
 		statStream: connect.NewClient[StatRequest, StatResponse](
 			httpClient,
 			baseURL+ServiceStatStreamProcedure,
@@ -326,41 +410,89 @@ func NewServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...con
 			connect.WithSchema(serviceMethods.ByName("serverStopStream")),
 			connect.WithClientOptions(opts...),
 		),
+		managementDomainsStream: connect.NewClient[Empty, ManagementDomainsResponse](
+			httpClient,
+			baseURL+ServiceManagementDomainsStreamProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementDomainsStream")),
+			connect.WithClientOptions(opts...),
+		),
+		managementDomainStateStream: connect.NewClient[DomainStateRequest, ActionResponse](
+			httpClient,
+			baseURL+ServiceManagementDomainStateStreamProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementDomainStateStream")),
+			connect.WithClientOptions(opts...),
+		),
+		managementConfigGetStream: connect.NewClient[Empty, ManagementConfigResponse](
+			httpClient,
+			baseURL+ServiceManagementConfigGetStreamProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementConfigGetStream")),
+			connect.WithClientOptions(opts...),
+		),
+		managementConfigPutStream: connect.NewClient[ManagementConfigRequest, ManagementConfigResponse](
+			httpClient,
+			baseURL+ServiceManagementConfigPutStreamProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementConfigPutStream")),
+			connect.WithClientOptions(opts...),
+		),
+		managementConfigApplyStream: connect.NewClient[ManagementApplyRequest, OperationResponse](
+			httpClient,
+			baseURL+ServiceManagementConfigApplyStreamProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementConfigApplyStream")),
+			connect.WithClientOptions(opts...),
+		),
+		managementOperationGetStream: connect.NewClient[OperationRequest, OperationResponse](
+			httpClient,
+			baseURL+ServiceManagementOperationGetStreamProcedure,
+			connect.WithSchema(serviceMethods.ByName("managementOperationGetStream")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // serviceClient implements ServiceClient.
 type serviceClient struct {
-	stat                *connect.Client[StatRequest, StatResponse]
-	geo                 *connect.Client[Empty, GeoResponse]
-	domain              *connect.Client[Empty, DomainResponse]
-	conn                *connect.Client[Empty, ConnResponse]
-	health              *connect.Client[Empty, HealthResponse]
-	login               *connect.Client[LoginRequest, LoginResponse]
-	logout              *connect.Client[Empty, ActionResponse]
-	userGet             *connect.Client[Empty, UserResponse]
-	userUpdate          *connect.Client[UserUpdateRequest, UserResponse]
-	userCreate          *connect.Client[UserCreateRequest, UserResponse]
-	userDelete          *connect.Client[UserDeleteRequest, ActionResponse]
-	serviceStart        *connect.Client[DomainServiceRequest, ActionResponse]
-	serviceStop         *connect.Client[DomainServiceRequest, ActionResponse]
-	serverRestart       *connect.Client[ServerRequest, ActionResponse]
-	serverStop          *connect.Client[ServerRequest, ActionResponse]
-	statStream          *connect.Client[StatRequest, StatResponse]
-	geoStream           *connect.Client[Empty, GeoResponse]
-	domainStream        *connect.Client[Empty, DomainResponse]
-	connStream          *connect.Client[Empty, ConnResponse]
-	healthStream        *connect.Client[Empty, HealthResponse]
-	loginStream         *connect.Client[LoginRequest, LoginResponse]
-	logoutStream        *connect.Client[Empty, ActionResponse]
-	userGetStream       *connect.Client[Empty, UserResponse]
-	userUpdateStream    *connect.Client[UserUpdateRequest, UserResponse]
-	userCreateStream    *connect.Client[UserCreateRequest, UserResponse]
-	userDeleteStream    *connect.Client[UserDeleteRequest, ActionResponse]
-	serviceStartStream  *connect.Client[DomainServiceRequest, ActionResponse]
-	serviceStopStream   *connect.Client[DomainServiceRequest, ActionResponse]
-	serverRestartStream *connect.Client[ServerRequest, ActionResponse]
-	serverStopStream    *connect.Client[ServerRequest, ActionResponse]
+	stat                         *connect.Client[StatRequest, StatResponse]
+	geo                          *connect.Client[Empty, GeoResponse]
+	domain                       *connect.Client[Empty, DomainResponse]
+	conn                         *connect.Client[Empty, ConnResponse]
+	health                       *connect.Client[Empty, HealthResponse]
+	login                        *connect.Client[LoginRequest, LoginResponse]
+	logout                       *connect.Client[Empty, ActionResponse]
+	userGet                      *connect.Client[Empty, UserResponse]
+	userUpdate                   *connect.Client[UserUpdateRequest, UserResponse]
+	userCreate                   *connect.Client[UserCreateRequest, UserResponse]
+	userDelete                   *connect.Client[UserDeleteRequest, ActionResponse]
+	serviceStart                 *connect.Client[DomainServiceRequest, ActionResponse]
+	serviceStop                  *connect.Client[DomainServiceRequest, ActionResponse]
+	serverRestart                *connect.Client[ServerRequest, ActionResponse]
+	serverStop                   *connect.Client[ServerRequest, ActionResponse]
+	managementDomains            *connect.Client[Empty, ManagementDomainsResponse]
+	managementDomainState        *connect.Client[DomainStateRequest, ActionResponse]
+	managementConfigGet          *connect.Client[Empty, ManagementConfigResponse]
+	managementConfigPut          *connect.Client[ManagementConfigRequest, ManagementConfigResponse]
+	managementConfigApply        *connect.Client[ManagementApplyRequest, OperationResponse]
+	managementOperationGet       *connect.Client[OperationRequest, OperationResponse]
+	statStream                   *connect.Client[StatRequest, StatResponse]
+	geoStream                    *connect.Client[Empty, GeoResponse]
+	domainStream                 *connect.Client[Empty, DomainResponse]
+	connStream                   *connect.Client[Empty, ConnResponse]
+	healthStream                 *connect.Client[Empty, HealthResponse]
+	loginStream                  *connect.Client[LoginRequest, LoginResponse]
+	logoutStream                 *connect.Client[Empty, ActionResponse]
+	userGetStream                *connect.Client[Empty, UserResponse]
+	userUpdateStream             *connect.Client[UserUpdateRequest, UserResponse]
+	userCreateStream             *connect.Client[UserCreateRequest, UserResponse]
+	userDeleteStream             *connect.Client[UserDeleteRequest, ActionResponse]
+	serviceStartStream           *connect.Client[DomainServiceRequest, ActionResponse]
+	serviceStopStream            *connect.Client[DomainServiceRequest, ActionResponse]
+	serverRestartStream          *connect.Client[ServerRequest, ActionResponse]
+	serverStopStream             *connect.Client[ServerRequest, ActionResponse]
+	managementDomainsStream      *connect.Client[Empty, ManagementDomainsResponse]
+	managementDomainStateStream  *connect.Client[DomainStateRequest, ActionResponse]
+	managementConfigGetStream    *connect.Client[Empty, ManagementConfigResponse]
+	managementConfigPutStream    *connect.Client[ManagementConfigRequest, ManagementConfigResponse]
+	managementConfigApplyStream  *connect.Client[ManagementApplyRequest, OperationResponse]
+	managementOperationGetStream *connect.Client[OperationRequest, OperationResponse]
 }
 
 // Stat calls hamburger.service.stat.
@@ -438,6 +570,36 @@ func (c *serviceClient) ServerStop(ctx context.Context, req *connect.Request[Ser
 	return c.serverStop.CallUnary(ctx, req)
 }
 
+// ManagementDomains calls hamburger.service.managementDomains.
+func (c *serviceClient) ManagementDomains(ctx context.Context, req *connect.Request[Empty]) (*connect.Response[ManagementDomainsResponse], error) {
+	return c.managementDomains.CallUnary(ctx, req)
+}
+
+// ManagementDomainState calls hamburger.service.managementDomainState.
+func (c *serviceClient) ManagementDomainState(ctx context.Context, req *connect.Request[DomainStateRequest]) (*connect.Response[ActionResponse], error) {
+	return c.managementDomainState.CallUnary(ctx, req)
+}
+
+// ManagementConfigGet calls hamburger.service.managementConfigGet.
+func (c *serviceClient) ManagementConfigGet(ctx context.Context, req *connect.Request[Empty]) (*connect.Response[ManagementConfigResponse], error) {
+	return c.managementConfigGet.CallUnary(ctx, req)
+}
+
+// ManagementConfigPut calls hamburger.service.managementConfigPut.
+func (c *serviceClient) ManagementConfigPut(ctx context.Context, req *connect.Request[ManagementConfigRequest]) (*connect.Response[ManagementConfigResponse], error) {
+	return c.managementConfigPut.CallUnary(ctx, req)
+}
+
+// ManagementConfigApply calls hamburger.service.managementConfigApply.
+func (c *serviceClient) ManagementConfigApply(ctx context.Context, req *connect.Request[ManagementApplyRequest]) (*connect.Response[OperationResponse], error) {
+	return c.managementConfigApply.CallUnary(ctx, req)
+}
+
+// ManagementOperationGet calls hamburger.service.managementOperationGet.
+func (c *serviceClient) ManagementOperationGet(ctx context.Context, req *connect.Request[OperationRequest]) (*connect.Response[OperationResponse], error) {
+	return c.managementOperationGet.CallUnary(ctx, req)
+}
+
 // StatStream calls hamburger.service.statStream.
 func (c *serviceClient) StatStream(ctx context.Context) *connect.BidiStreamForClient[StatRequest, StatResponse] {
 	return c.statStream.CallBidiStream(ctx)
@@ -513,6 +675,36 @@ func (c *serviceClient) ServerStopStream(ctx context.Context) *connect.BidiStrea
 	return c.serverStopStream.CallBidiStream(ctx)
 }
 
+// ManagementDomainsStream calls hamburger.service.managementDomainsStream.
+func (c *serviceClient) ManagementDomainsStream(ctx context.Context) *connect.BidiStreamForClient[Empty, ManagementDomainsResponse] {
+	return c.managementDomainsStream.CallBidiStream(ctx)
+}
+
+// ManagementDomainStateStream calls hamburger.service.managementDomainStateStream.
+func (c *serviceClient) ManagementDomainStateStream(ctx context.Context) *connect.BidiStreamForClient[DomainStateRequest, ActionResponse] {
+	return c.managementDomainStateStream.CallBidiStream(ctx)
+}
+
+// ManagementConfigGetStream calls hamburger.service.managementConfigGetStream.
+func (c *serviceClient) ManagementConfigGetStream(ctx context.Context) *connect.BidiStreamForClient[Empty, ManagementConfigResponse] {
+	return c.managementConfigGetStream.CallBidiStream(ctx)
+}
+
+// ManagementConfigPutStream calls hamburger.service.managementConfigPutStream.
+func (c *serviceClient) ManagementConfigPutStream(ctx context.Context) *connect.BidiStreamForClient[ManagementConfigRequest, ManagementConfigResponse] {
+	return c.managementConfigPutStream.CallBidiStream(ctx)
+}
+
+// ManagementConfigApplyStream calls hamburger.service.managementConfigApplyStream.
+func (c *serviceClient) ManagementConfigApplyStream(ctx context.Context) *connect.BidiStreamForClient[ManagementApplyRequest, OperationResponse] {
+	return c.managementConfigApplyStream.CallBidiStream(ctx)
+}
+
+// ManagementOperationGetStream calls hamburger.service.managementOperationGetStream.
+func (c *serviceClient) ManagementOperationGetStream(ctx context.Context) *connect.BidiStreamForClient[OperationRequest, OperationResponse] {
+	return c.managementOperationGetStream.CallBidiStream(ctx)
+}
+
 // ServiceHandler is an implementation of the hamburger.service service.
 type ServiceHandler interface {
 	Stat(context.Context, *connect.Request[StatRequest]) (*connect.Response[StatResponse], error)
@@ -530,6 +722,12 @@ type ServiceHandler interface {
 	ServiceStop(context.Context, *connect.Request[DomainServiceRequest]) (*connect.Response[ActionResponse], error)
 	ServerRestart(context.Context, *connect.Request[ServerRequest]) (*connect.Response[ActionResponse], error)
 	ServerStop(context.Context, *connect.Request[ServerRequest]) (*connect.Response[ActionResponse], error)
+	ManagementDomains(context.Context, *connect.Request[Empty]) (*connect.Response[ManagementDomainsResponse], error)
+	ManagementDomainState(context.Context, *connect.Request[DomainStateRequest]) (*connect.Response[ActionResponse], error)
+	ManagementConfigGet(context.Context, *connect.Request[Empty]) (*connect.Response[ManagementConfigResponse], error)
+	ManagementConfigPut(context.Context, *connect.Request[ManagementConfigRequest]) (*connect.Response[ManagementConfigResponse], error)
+	ManagementConfigApply(context.Context, *connect.Request[ManagementApplyRequest]) (*connect.Response[OperationResponse], error)
+	ManagementOperationGet(context.Context, *connect.Request[OperationRequest]) (*connect.Response[OperationResponse], error)
 	StatStream(context.Context, *connect.BidiStream[StatRequest, StatResponse]) error
 	GeoStream(context.Context, *connect.BidiStream[Empty, GeoResponse]) error
 	DomainStream(context.Context, *connect.BidiStream[Empty, DomainResponse]) error
@@ -545,6 +743,12 @@ type ServiceHandler interface {
 	ServiceStopStream(context.Context, *connect.BidiStream[DomainServiceRequest, ActionResponse]) error
 	ServerRestartStream(context.Context, *connect.BidiStream[ServerRequest, ActionResponse]) error
 	ServerStopStream(context.Context, *connect.BidiStream[ServerRequest, ActionResponse]) error
+	ManagementDomainsStream(context.Context, *connect.BidiStream[Empty, ManagementDomainsResponse]) error
+	ManagementDomainStateStream(context.Context, *connect.BidiStream[DomainStateRequest, ActionResponse]) error
+	ManagementConfigGetStream(context.Context, *connect.BidiStream[Empty, ManagementConfigResponse]) error
+	ManagementConfigPutStream(context.Context, *connect.BidiStream[ManagementConfigRequest, ManagementConfigResponse]) error
+	ManagementConfigApplyStream(context.Context, *connect.BidiStream[ManagementApplyRequest, OperationResponse]) error
+	ManagementOperationGetStream(context.Context, *connect.BidiStream[OperationRequest, OperationResponse]) error
 }
 
 // NewServiceHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -644,6 +848,42 @@ func NewServiceHandler(svc ServiceHandler, opts ...connect.HandlerOption) (strin
 		connect.WithSchema(serviceMethods.ByName("serverStop")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serviceManagementDomainsHandler := connect.NewUnaryHandler(
+		ServiceManagementDomainsProcedure,
+		svc.ManagementDomains,
+		connect.WithSchema(serviceMethods.ByName("managementDomains")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementDomainStateHandler := connect.NewUnaryHandler(
+		ServiceManagementDomainStateProcedure,
+		svc.ManagementDomainState,
+		connect.WithSchema(serviceMethods.ByName("managementDomainState")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementConfigGetHandler := connect.NewUnaryHandler(
+		ServiceManagementConfigGetProcedure,
+		svc.ManagementConfigGet,
+		connect.WithSchema(serviceMethods.ByName("managementConfigGet")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementConfigPutHandler := connect.NewUnaryHandler(
+		ServiceManagementConfigPutProcedure,
+		svc.ManagementConfigPut,
+		connect.WithSchema(serviceMethods.ByName("managementConfigPut")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementConfigApplyHandler := connect.NewUnaryHandler(
+		ServiceManagementConfigApplyProcedure,
+		svc.ManagementConfigApply,
+		connect.WithSchema(serviceMethods.ByName("managementConfigApply")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementOperationGetHandler := connect.NewUnaryHandler(
+		ServiceManagementOperationGetProcedure,
+		svc.ManagementOperationGet,
+		connect.WithSchema(serviceMethods.ByName("managementOperationGet")),
+		connect.WithHandlerOptions(opts...),
+	)
 	serviceStatStreamHandler := connect.NewBidiStreamHandler(
 		ServiceStatStreamProcedure,
 		svc.StatStream,
@@ -734,6 +974,42 @@ func NewServiceHandler(svc ServiceHandler, opts ...connect.HandlerOption) (strin
 		connect.WithSchema(serviceMethods.ByName("serverStopStream")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serviceManagementDomainsStreamHandler := connect.NewBidiStreamHandler(
+		ServiceManagementDomainsStreamProcedure,
+		svc.ManagementDomainsStream,
+		connect.WithSchema(serviceMethods.ByName("managementDomainsStream")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementDomainStateStreamHandler := connect.NewBidiStreamHandler(
+		ServiceManagementDomainStateStreamProcedure,
+		svc.ManagementDomainStateStream,
+		connect.WithSchema(serviceMethods.ByName("managementDomainStateStream")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementConfigGetStreamHandler := connect.NewBidiStreamHandler(
+		ServiceManagementConfigGetStreamProcedure,
+		svc.ManagementConfigGetStream,
+		connect.WithSchema(serviceMethods.ByName("managementConfigGetStream")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementConfigPutStreamHandler := connect.NewBidiStreamHandler(
+		ServiceManagementConfigPutStreamProcedure,
+		svc.ManagementConfigPutStream,
+		connect.WithSchema(serviceMethods.ByName("managementConfigPutStream")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementConfigApplyStreamHandler := connect.NewBidiStreamHandler(
+		ServiceManagementConfigApplyStreamProcedure,
+		svc.ManagementConfigApplyStream,
+		connect.WithSchema(serviceMethods.ByName("managementConfigApplyStream")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementOperationGetStreamHandler := connect.NewBidiStreamHandler(
+		ServiceManagementOperationGetStreamProcedure,
+		svc.ManagementOperationGetStream,
+		connect.WithSchema(serviceMethods.ByName("managementOperationGetStream")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/hamburger.service/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ServiceStatProcedure:
@@ -766,6 +1042,18 @@ func NewServiceHandler(svc ServiceHandler, opts ...connect.HandlerOption) (strin
 			serviceServerRestartHandler.ServeHTTP(w, r)
 		case ServiceServerStopProcedure:
 			serviceServerStopHandler.ServeHTTP(w, r)
+		case ServiceManagementDomainsProcedure:
+			serviceManagementDomainsHandler.ServeHTTP(w, r)
+		case ServiceManagementDomainStateProcedure:
+			serviceManagementDomainStateHandler.ServeHTTP(w, r)
+		case ServiceManagementConfigGetProcedure:
+			serviceManagementConfigGetHandler.ServeHTTP(w, r)
+		case ServiceManagementConfigPutProcedure:
+			serviceManagementConfigPutHandler.ServeHTTP(w, r)
+		case ServiceManagementConfigApplyProcedure:
+			serviceManagementConfigApplyHandler.ServeHTTP(w, r)
+		case ServiceManagementOperationGetProcedure:
+			serviceManagementOperationGetHandler.ServeHTTP(w, r)
 		case ServiceStatStreamProcedure:
 			serviceStatStreamHandler.ServeHTTP(w, r)
 		case ServiceGeoStreamProcedure:
@@ -796,6 +1084,18 @@ func NewServiceHandler(svc ServiceHandler, opts ...connect.HandlerOption) (strin
 			serviceServerRestartStreamHandler.ServeHTTP(w, r)
 		case ServiceServerStopStreamProcedure:
 			serviceServerStopStreamHandler.ServeHTTP(w, r)
+		case ServiceManagementDomainsStreamProcedure:
+			serviceManagementDomainsStreamHandler.ServeHTTP(w, r)
+		case ServiceManagementDomainStateStreamProcedure:
+			serviceManagementDomainStateStreamHandler.ServeHTTP(w, r)
+		case ServiceManagementConfigGetStreamProcedure:
+			serviceManagementConfigGetStreamHandler.ServeHTTP(w, r)
+		case ServiceManagementConfigPutStreamProcedure:
+			serviceManagementConfigPutStreamHandler.ServeHTTP(w, r)
+		case ServiceManagementConfigApplyStreamProcedure:
+			serviceManagementConfigApplyStreamHandler.ServeHTTP(w, r)
+		case ServiceManagementOperationGetStreamProcedure:
+			serviceManagementOperationGetStreamHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -865,6 +1165,30 @@ func (UnimplementedServiceHandler) ServerStop(context.Context, *connect.Request[
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.serverStop is not implemented"))
 }
 
+func (UnimplementedServiceHandler) ManagementDomains(context.Context, *connect.Request[Empty]) (*connect.Response[ManagementDomainsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementDomains is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementDomainState(context.Context, *connect.Request[DomainStateRequest]) (*connect.Response[ActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementDomainState is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementConfigGet(context.Context, *connect.Request[Empty]) (*connect.Response[ManagementConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementConfigGet is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementConfigPut(context.Context, *connect.Request[ManagementConfigRequest]) (*connect.Response[ManagementConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementConfigPut is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementConfigApply(context.Context, *connect.Request[ManagementApplyRequest]) (*connect.Response[OperationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementConfigApply is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementOperationGet(context.Context, *connect.Request[OperationRequest]) (*connect.Response[OperationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementOperationGet is not implemented"))
+}
+
 func (UnimplementedServiceHandler) StatStream(context.Context, *connect.BidiStream[StatRequest, StatResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.statStream is not implemented"))
 }
@@ -923,4 +1247,28 @@ func (UnimplementedServiceHandler) ServerRestartStream(context.Context, *connect
 
 func (UnimplementedServiceHandler) ServerStopStream(context.Context, *connect.BidiStream[ServerRequest, ActionResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.serverStopStream is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementDomainsStream(context.Context, *connect.BidiStream[Empty, ManagementDomainsResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementDomainsStream is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementDomainStateStream(context.Context, *connect.BidiStream[DomainStateRequest, ActionResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementDomainStateStream is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementConfigGetStream(context.Context, *connect.BidiStream[Empty, ManagementConfigResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementConfigGetStream is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementConfigPutStream(context.Context, *connect.BidiStream[ManagementConfigRequest, ManagementConfigResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementConfigPutStream is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementConfigApplyStream(context.Context, *connect.BidiStream[ManagementApplyRequest, OperationResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementConfigApplyStream is not implemented"))
+}
+
+func (UnimplementedServiceHandler) ManagementOperationGetStream(context.Context, *connect.BidiStream[OperationRequest, OperationResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hamburger.service.managementOperationGetStream is not implemented"))
 }

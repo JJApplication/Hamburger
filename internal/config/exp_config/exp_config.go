@@ -9,6 +9,9 @@ type ExpConfig struct {
 	WebDAV       WebDAVConfig          `yaml:"webdav" json:"webdav"`
 	Traversal    TraversalServerConfig `yaml:"traversal" json:"traversal"`
 	TrojanServer string                `yaml:"trojan_server" json:"trojan_server"`
+	// TrojanEnabled is optional for compatibility: when omitted, a non-empty
+	// TrojanServer path keeps the historical enabled behavior.
+	TrojanEnabled *bool `yaml:"trojan_enabled" json:"trojan_enabled"`
 }
 
 type AnyTLSServer struct {

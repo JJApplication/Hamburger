@@ -41,6 +41,7 @@ func LoadConfig(file string) (*config.AppConfig, error) {
 		return nil, err
 	}
 	var config config.AppConfig
+	config.SourceFile = file
 	ext := filepath.Ext(file)
 	switch ext {
 	case ".json":

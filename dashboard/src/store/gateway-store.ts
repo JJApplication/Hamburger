@@ -2,12 +2,12 @@
 
 import { create } from "zustand";
 
-import { fetchGatewayData } from "@/lib/api/gateway";
+import { fetchGatewayData, fetchManagementDomains } from "@/lib/api/gateway";
 import type { DomainConnection, ExperimentFeature, GatewayData } from "@/types/gateway";
 
 interface DomainFilter {
   keyword: string;
-  status: "all" | "online" | "offline" | "warning";
+  status: "all" | "online" | "offline" | "warning" | "unknown";
   port?: number;
 }
 
@@ -16,8 +16,9 @@ interface GatewayStoreState {
   isLoading: boolean;
   error: string | null;
   domainFilter: DomainFilter;
-  initialize: () => Promise<void>;
-  refresh: () => Promise<void>;
+  initialize: (token: string) => Promise<void>;
+  refresh: (token?: string) => Promise<void>;
+  refreshDomains: (token: string) => Promise<void>;
   setDomainFilter: (patch: Partial<DomainFilter>) => void;
   toggleExperiment: (key: ExperimentFeature["key"]) => void;
 }
@@ -35,22 +36,42 @@ export const useGatewayStore = create<GatewayStoreState>((set, get) => ({
   isLoading: false,
   error: null,
   domainFilter: initialFilter,
-  initialize: async () => {
+  initialize: async (token) => {
     if (get().data) {
       return;
     }
-    await get().refresh();
+    await get().refresh(token);
   },
-  refresh: async () => {
+  refresh: async (token) => {
+    if (!token) {
+      set({ data: null, error: null, isLoading: false });
+      return;
+    }
     set({ isLoading: true, error: null });
     try {
-      const data = await fetchGatewayData();
+      const data = await fetchGatewayData(token);
       set({ data, isLoading: false, error: null });
-    } catch {
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
       set({
+        data: status === 401 ? null : get().data,
         isLoading: false,
         error: "数据加载失败，请稍后重试。",
       });
+    }
+  },
+  refreshDomains: async (token) => {
+    if (!token) return;
+    if (!get().data) {
+      await get().refresh(token);
+      return;
+    }
+    try {
+      const result = await fetchManagementDomains(token);
+      set((state) => state.data ? { data: { ...state.data, domains: result.domains ?? [] } } : state);
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
+      if (status === 401) set({ data: null });
     }
   },
   setDomainFilter: (patch) => {

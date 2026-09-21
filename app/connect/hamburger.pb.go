@@ -2325,6 +2325,370 @@ func (x *ActionResponse) GetMessage() string {
 	return ""
 }
 
+type ManagementDomainsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PayloadJson   string                 `protobuf:"bytes,1,opt,name=payload_json,json=payloadJson,proto3" json:"payload_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ManagementDomainsResponse) Reset() {
+	*x = ManagementDomainsResponse{}
+	mi := &file_hamburger_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ManagementDomainsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ManagementDomainsResponse) ProtoMessage() {}
+
+func (x *ManagementDomainsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ManagementDomainsResponse.ProtoReflect.Descriptor instead.
+func (*ManagementDomainsResponse) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *ManagementDomainsResponse) GetPayloadJson() string {
+	if x != nil {
+		return x.PayloadJson
+	}
+	return ""
+}
+
+type DomainStateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Domain        string                 `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DomainStateRequest) Reset() {
+	*x = DomainStateRequest{}
+	mi := &file_hamburger_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DomainStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DomainStateRequest) ProtoMessage() {}
+
+func (x *DomainStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DomainStateRequest.ProtoReflect.Descriptor instead.
+func (*DomainStateRequest) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *DomainStateRequest) GetDomain() string {
+	if x != nil {
+		return x.Domain
+	}
+	return ""
+}
+
+func (x *DomainStateRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+type ManagementConfigResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceFile    string                 `protobuf:"bytes,1,opt,name=source_file,json=sourceFile,proto3" json:"source_file,omitempty"`
+	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	ValuesJson    string                 `protobuf:"bytes,3,opt,name=values_json,json=valuesJson,proto3" json:"values_json,omitempty"`
+	Pending       bool                   `protobuf:"varint,4,opt,name=pending,proto3" json:"pending,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ManagementConfigResponse) Reset() {
+	*x = ManagementConfigResponse{}
+	mi := &file_hamburger_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ManagementConfigResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ManagementConfigResponse) ProtoMessage() {}
+
+func (x *ManagementConfigResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ManagementConfigResponse.ProtoReflect.Descriptor instead.
+func (*ManagementConfigResponse) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *ManagementConfigResponse) GetSourceFile() string {
+	if x != nil {
+		return x.SourceFile
+	}
+	return ""
+}
+
+func (x *ManagementConfigResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *ManagementConfigResponse) GetValuesJson() string {
+	if x != nil {
+		return x.ValuesJson
+	}
+	return ""
+}
+
+func (x *ManagementConfigResponse) GetPending() bool {
+	if x != nil {
+		return x.Pending
+	}
+	return false
+}
+
+type ManagementConfigRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	ValuesJson    string                 `protobuf:"bytes,2,opt,name=values_json,json=valuesJson,proto3" json:"values_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ManagementConfigRequest) Reset() {
+	*x = ManagementConfigRequest{}
+	mi := &file_hamburger_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ManagementConfigRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ManagementConfigRequest) ProtoMessage() {}
+
+func (x *ManagementConfigRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ManagementConfigRequest.ProtoReflect.Descriptor instead.
+func (*ManagementConfigRequest) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *ManagementConfigRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *ManagementConfigRequest) GetValuesJson() string {
+	if x != nil {
+		return x.ValuesJson
+	}
+	return ""
+}
+
+type ManagementApplyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Services      []string               `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ManagementApplyRequest) Reset() {
+	*x = ManagementApplyRequest{}
+	mi := &file_hamburger_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ManagementApplyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ManagementApplyRequest) ProtoMessage() {}
+
+func (x *ManagementApplyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ManagementApplyRequest.ProtoReflect.Descriptor instead.
+func (*ManagementApplyRequest) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *ManagementApplyRequest) GetServices() []string {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+type OperationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationRequest) Reset() {
+	*x = OperationRequest{}
+	mi := &file_hamburger_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationRequest) ProtoMessage() {}
+
+func (x *OperationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationRequest.ProtoReflect.Descriptor instead.
+func (*OperationRequest) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *OperationRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+type OperationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationResponse) Reset() {
+	*x = OperationResponse{}
+	mi := &file_hamburger_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationResponse) ProtoMessage() {}
+
+func (x *OperationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_hamburger_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationResponse.ProtoReflect.Descriptor instead.
+func (*OperationResponse) Descriptor() ([]byte, []int) {
+	return file_hamburger_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *OperationResponse) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *OperationResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *OperationResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_hamburger_proto protoreflect.FileDescriptor
 
 const file_hamburger_proto_rawDesc = "" +
@@ -2559,7 +2923,31 @@ const file_hamburger_proto_rawDesc = "" +
 	"\x06server\x18\x01 \x01(\tR\x06server\"D\n" +
 	"\x0eActionResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xe9\x0f\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\">\n" +
+	"\x19ManagementDomainsResponse\x12!\n" +
+	"\fpayload_json\x18\x01 \x01(\tR\vpayloadJson\"B\n" +
+	"\x12DomainStateRequest\x12\x16\n" +
+	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\"\x90\x01\n" +
+	"\x18ManagementConfigResponse\x12\x1f\n" +
+	"\vsource_file\x18\x01 \x01(\tR\n" +
+	"sourceFile\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\x12\x1f\n" +
+	"\vvalues_json\x18\x03 \x01(\tR\n" +
+	"valuesJson\x12\x18\n" +
+	"\apending\x18\x04 \x01(\bR\apending\"T\n" +
+	"\x17ManagementConfigRequest\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12\x1f\n" +
+	"\vvalues_json\x18\x02 \x01(\tR\n" +
+	"valuesJson\"4\n" +
+	"\x16ManagementApplyRequest\x12\x1a\n" +
+	"\bservices\x18\x01 \x03(\tR\bservices\"5\n" +
+	"\x10OperationRequest\x12!\n" +
+	"\foperation_id\x18\x01 \x01(\tR\voperationId\"d\n" +
+	"\x11OperationResponse\x12!\n" +
+	"\foperation_id\x18\x01 \x01(\tR\voperationId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error2\x9f\x18\n" +
 	"\aservice\x127\n" +
 	"\x04stat\x12\x16.hamburger.StatRequest\x1a\x17.hamburger.StatResponse\x12/\n" +
 	"\x03geo\x12\x10.hamburger.Empty\x1a\x16.hamburger.GeoResponse\x125\n" +
@@ -2579,7 +2967,13 @@ const file_hamburger_proto_rawDesc = "" +
 	"\vserviceStop\x12\x1f.hamburger.DomainServiceRequest\x1a\x19.hamburger.ActionResponse\x12D\n" +
 	"\rserverRestart\x12\x18.hamburger.ServerRequest\x1a\x19.hamburger.ActionResponse\x12A\n" +
 	"\n" +
-	"serverStop\x12\x18.hamburger.ServerRequest\x1a\x19.hamburger.ActionResponse\x12A\n" +
+	"serverStop\x12\x18.hamburger.ServerRequest\x1a\x19.hamburger.ActionResponse\x12K\n" +
+	"\x11managementDomains\x12\x10.hamburger.Empty\x1a$.hamburger.ManagementDomainsResponse\x12Q\n" +
+	"\x15managementDomainState\x12\x1d.hamburger.DomainStateRequest\x1a\x19.hamburger.ActionResponse\x12L\n" +
+	"\x13managementConfigGet\x12\x10.hamburger.Empty\x1a#.hamburger.ManagementConfigResponse\x12^\n" +
+	"\x13managementConfigPut\x12\".hamburger.ManagementConfigRequest\x1a#.hamburger.ManagementConfigResponse\x12X\n" +
+	"\x15managementConfigApply\x12!.hamburger.ManagementApplyRequest\x1a\x1c.hamburger.OperationResponse\x12S\n" +
+	"\x16managementOperationGet\x12\x1b.hamburger.OperationRequest\x1a\x1c.hamburger.OperationResponse\x12A\n" +
 	"\n" +
 	"statStream\x12\x16.hamburger.StatRequest\x1a\x17.hamburger.StatResponse(\x010\x01\x129\n" +
 	"\tgeoStream\x12\x10.hamburger.Empty\x1a\x16.hamburger.GeoResponse(\x010\x01\x12?\n" +
@@ -2596,7 +2990,13 @@ const file_hamburger_proto_rawDesc = "" +
 	"\x12serviceStartStream\x12\x1f.hamburger.DomainServiceRequest\x1a\x19.hamburger.ActionResponse(\x010\x01\x12S\n" +
 	"\x11serviceStopStream\x12\x1f.hamburger.DomainServiceRequest\x1a\x19.hamburger.ActionResponse(\x010\x01\x12N\n" +
 	"\x13serverRestartStream\x12\x18.hamburger.ServerRequest\x1a\x19.hamburger.ActionResponse(\x010\x01\x12K\n" +
-	"\x10serverStopStream\x12\x18.hamburger.ServerRequest\x1a\x19.hamburger.ActionResponse(\x010\x01B\x1fZ\x1dHamburger/app/connect;connectb\x06proto3"
+	"\x10serverStopStream\x12\x18.hamburger.ServerRequest\x1a\x19.hamburger.ActionResponse(\x010\x01\x12U\n" +
+	"\x17managementDomainsStream\x12\x10.hamburger.Empty\x1a$.hamburger.ManagementDomainsResponse(\x010\x01\x12[\n" +
+	"\x1bmanagementDomainStateStream\x12\x1d.hamburger.DomainStateRequest\x1a\x19.hamburger.ActionResponse(\x010\x01\x12V\n" +
+	"\x19managementConfigGetStream\x12\x10.hamburger.Empty\x1a#.hamburger.ManagementConfigResponse(\x010\x01\x12h\n" +
+	"\x19managementConfigPutStream\x12\".hamburger.ManagementConfigRequest\x1a#.hamburger.ManagementConfigResponse(\x010\x01\x12b\n" +
+	"\x1bmanagementConfigApplyStream\x12!.hamburger.ManagementApplyRequest\x1a\x1c.hamburger.OperationResponse(\x010\x01\x12]\n" +
+	"\x1cmanagementOperationGetStream\x12\x1b.hamburger.OperationRequest\x1a\x1c.hamburger.OperationResponse(\x010\x01B\x1fZ\x1dHamburger/app/connect;connectb\x06proto3"
 
 var (
 	file_hamburger_proto_rawDescOnce sync.Once
@@ -2610,55 +3010,62 @@ func file_hamburger_proto_rawDescGZIP() []byte {
 	return file_hamburger_proto_rawDescData
 }
 
-var file_hamburger_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_hamburger_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_hamburger_proto_goTypes = []any{
-	(*Empty)(nil),                // 0: hamburger.Empty
-	(*StatRequest)(nil),          // 1: hamburger.StatRequest
-	(*StatResponse)(nil),         // 2: hamburger.StatResponse
-	(*StatMeta)(nil),             // 3: hamburger.StatMeta
-	(*StatSummary)(nil),          // 4: hamburger.StatSummary
-	(*StatusSummary)(nil),        // 5: hamburger.StatusSummary
-	(*LatencySummary)(nil),       // 6: hamburger.LatencySummary
-	(*TrafficSummary)(nil),       // 7: hamburger.TrafficSummary
-	(*GCSummary)(nil),            // 8: hamburger.GCSummary
-	(*StatSeries)(nil),           // 9: hamburger.StatSeries
-	(*RequestSeriesPoint)(nil),   // 10: hamburger.RequestSeriesPoint
-	(*TrafficSeriesPoint)(nil),   // 11: hamburger.TrafficSeriesPoint
-	(*GCSeriesPoint)(nil),        // 12: hamburger.GCSeriesPoint
-	(*SystemSeriesPoint)(nil),    // 13: hamburger.SystemSeriesPoint
-	(*ProcessSeriesPoint)(nil),   // 14: hamburger.ProcessSeriesPoint
-	(*DomainSummary)(nil),        // 15: hamburger.DomainSummary
-	(*DomainSeriesPoint)(nil),    // 16: hamburger.DomainSeriesPoint
-	(*ConnectionState)(nil),      // 17: hamburger.ConnectionState
-	(*GeoResponse)(nil),          // 18: hamburger.GeoResponse
-	(*DomainResponse)(nil),       // 19: hamburger.DomainResponse
-	(*ConnResponse)(nil),         // 20: hamburger.ConnResponse
-	(*HealthResponse)(nil),       // 21: hamburger.HealthResponse
-	(*LoginRequest)(nil),         // 22: hamburger.LoginRequest
-	(*LoginResponse)(nil),        // 23: hamburger.LoginResponse
-	(*UserResponse)(nil),         // 24: hamburger.UserResponse
-	(*User)(nil),                 // 25: hamburger.User
-	(*UserUpdateRequest)(nil),    // 26: hamburger.UserUpdateRequest
-	(*UserCreateRequest)(nil),    // 27: hamburger.UserCreateRequest
-	(*UserDeleteRequest)(nil),    // 28: hamburger.UserDeleteRequest
-	(*DomainServiceRequest)(nil), // 29: hamburger.DomainServiceRequest
-	(*ServerRequest)(nil),        // 30: hamburger.ServerRequest
-	(*ActionResponse)(nil),       // 31: hamburger.ActionResponse
-	nil,                          // 32: hamburger.StatResponse.ConnectionsEntry
-	nil,                          // 33: hamburger.StatMeta.CapabilitiesEntry
-	nil,                          // 34: hamburger.GeoResponse.ValuesEntry
-	nil,                          // 35: hamburger.DomainResponse.ValuesEntry
-	nil,                          // 36: hamburger.ConnResponse.ValuesEntry
-	nil,                          // 37: hamburger.HealthResponse.ValuesEntry
+	(*Empty)(nil),                     // 0: hamburger.Empty
+	(*StatRequest)(nil),               // 1: hamburger.StatRequest
+	(*StatResponse)(nil),              // 2: hamburger.StatResponse
+	(*StatMeta)(nil),                  // 3: hamburger.StatMeta
+	(*StatSummary)(nil),               // 4: hamburger.StatSummary
+	(*StatusSummary)(nil),             // 5: hamburger.StatusSummary
+	(*LatencySummary)(nil),            // 6: hamburger.LatencySummary
+	(*TrafficSummary)(nil),            // 7: hamburger.TrafficSummary
+	(*GCSummary)(nil),                 // 8: hamburger.GCSummary
+	(*StatSeries)(nil),                // 9: hamburger.StatSeries
+	(*RequestSeriesPoint)(nil),        // 10: hamburger.RequestSeriesPoint
+	(*TrafficSeriesPoint)(nil),        // 11: hamburger.TrafficSeriesPoint
+	(*GCSeriesPoint)(nil),             // 12: hamburger.GCSeriesPoint
+	(*SystemSeriesPoint)(nil),         // 13: hamburger.SystemSeriesPoint
+	(*ProcessSeriesPoint)(nil),        // 14: hamburger.ProcessSeriesPoint
+	(*DomainSummary)(nil),             // 15: hamburger.DomainSummary
+	(*DomainSeriesPoint)(nil),         // 16: hamburger.DomainSeriesPoint
+	(*ConnectionState)(nil),           // 17: hamburger.ConnectionState
+	(*GeoResponse)(nil),               // 18: hamburger.GeoResponse
+	(*DomainResponse)(nil),            // 19: hamburger.DomainResponse
+	(*ConnResponse)(nil),              // 20: hamburger.ConnResponse
+	(*HealthResponse)(nil),            // 21: hamburger.HealthResponse
+	(*LoginRequest)(nil),              // 22: hamburger.LoginRequest
+	(*LoginResponse)(nil),             // 23: hamburger.LoginResponse
+	(*UserResponse)(nil),              // 24: hamburger.UserResponse
+	(*User)(nil),                      // 25: hamburger.User
+	(*UserUpdateRequest)(nil),         // 26: hamburger.UserUpdateRequest
+	(*UserCreateRequest)(nil),         // 27: hamburger.UserCreateRequest
+	(*UserDeleteRequest)(nil),         // 28: hamburger.UserDeleteRequest
+	(*DomainServiceRequest)(nil),      // 29: hamburger.DomainServiceRequest
+	(*ServerRequest)(nil),             // 30: hamburger.ServerRequest
+	(*ActionResponse)(nil),            // 31: hamburger.ActionResponse
+	(*ManagementDomainsResponse)(nil), // 32: hamburger.ManagementDomainsResponse
+	(*DomainStateRequest)(nil),        // 33: hamburger.DomainStateRequest
+	(*ManagementConfigResponse)(nil),  // 34: hamburger.ManagementConfigResponse
+	(*ManagementConfigRequest)(nil),   // 35: hamburger.ManagementConfigRequest
+	(*ManagementApplyRequest)(nil),    // 36: hamburger.ManagementApplyRequest
+	(*OperationRequest)(nil),          // 37: hamburger.OperationRequest
+	(*OperationResponse)(nil),         // 38: hamburger.OperationResponse
+	nil,                               // 39: hamburger.StatResponse.ConnectionsEntry
+	nil,                               // 40: hamburger.StatMeta.CapabilitiesEntry
+	nil,                               // 41: hamburger.GeoResponse.ValuesEntry
+	nil,                               // 42: hamburger.DomainResponse.ValuesEntry
+	nil,                               // 43: hamburger.ConnResponse.ValuesEntry
+	nil,                               // 44: hamburger.HealthResponse.ValuesEntry
 }
 var file_hamburger_proto_depIdxs = []int32{
 	3,  // 0: hamburger.StatResponse.meta:type_name -> hamburger.StatMeta
 	4,  // 1: hamburger.StatResponse.summary:type_name -> hamburger.StatSummary
 	9,  // 2: hamburger.StatResponse.series:type_name -> hamburger.StatSeries
-	32, // 3: hamburger.StatResponse.connections:type_name -> hamburger.StatResponse.ConnectionsEntry
+	39, // 3: hamburger.StatResponse.connections:type_name -> hamburger.StatResponse.ConnectionsEntry
 	15, // 4: hamburger.StatResponse.domains:type_name -> hamburger.DomainSummary
 	16, // 5: hamburger.StatResponse.domain_series:type_name -> hamburger.DomainSeriesPoint
-	33, // 6: hamburger.StatMeta.capabilities:type_name -> hamburger.StatMeta.CapabilitiesEntry
+	40, // 6: hamburger.StatMeta.capabilities:type_name -> hamburger.StatMeta.CapabilitiesEntry
 	5,  // 7: hamburger.StatSummary.status:type_name -> hamburger.StatusSummary
 	6,  // 8: hamburger.StatSummary.latency:type_name -> hamburger.LatencySummary
 	8,  // 9: hamburger.StatSummary.gc:type_name -> hamburger.GCSummary
@@ -2670,10 +3077,10 @@ var file_hamburger_proto_depIdxs = []int32{
 	12, // 15: hamburger.StatSeries.gc:type_name -> hamburger.GCSeriesPoint
 	13, // 16: hamburger.StatSeries.system:type_name -> hamburger.SystemSeriesPoint
 	14, // 17: hamburger.StatSeries.process:type_name -> hamburger.ProcessSeriesPoint
-	34, // 18: hamburger.GeoResponse.values:type_name -> hamburger.GeoResponse.ValuesEntry
-	35, // 19: hamburger.DomainResponse.values:type_name -> hamburger.DomainResponse.ValuesEntry
-	36, // 20: hamburger.ConnResponse.values:type_name -> hamburger.ConnResponse.ValuesEntry
-	37, // 21: hamburger.HealthResponse.values:type_name -> hamburger.HealthResponse.ValuesEntry
+	41, // 18: hamburger.GeoResponse.values:type_name -> hamburger.GeoResponse.ValuesEntry
+	42, // 19: hamburger.DomainResponse.values:type_name -> hamburger.DomainResponse.ValuesEntry
+	43, // 20: hamburger.ConnResponse.values:type_name -> hamburger.ConnResponse.ValuesEntry
+	44, // 21: hamburger.HealthResponse.values:type_name -> hamburger.HealthResponse.ValuesEntry
 	25, // 22: hamburger.LoginResponse.user:type_name -> hamburger.User
 	25, // 23: hamburger.UserResponse.user:type_name -> hamburger.User
 	17, // 24: hamburger.StatResponse.ConnectionsEntry.value:type_name -> hamburger.ConnectionState
@@ -2693,53 +3100,77 @@ var file_hamburger_proto_depIdxs = []int32{
 	29, // 38: hamburger.service.serviceStop:input_type -> hamburger.DomainServiceRequest
 	30, // 39: hamburger.service.serverRestart:input_type -> hamburger.ServerRequest
 	30, // 40: hamburger.service.serverStop:input_type -> hamburger.ServerRequest
-	1,  // 41: hamburger.service.statStream:input_type -> hamburger.StatRequest
-	0,  // 42: hamburger.service.geoStream:input_type -> hamburger.Empty
-	0,  // 43: hamburger.service.domainStream:input_type -> hamburger.Empty
-	0,  // 44: hamburger.service.connStream:input_type -> hamburger.Empty
-	0,  // 45: hamburger.service.healthStream:input_type -> hamburger.Empty
-	22, // 46: hamburger.service.loginStream:input_type -> hamburger.LoginRequest
-	0,  // 47: hamburger.service.logoutStream:input_type -> hamburger.Empty
-	0,  // 48: hamburger.service.userGetStream:input_type -> hamburger.Empty
-	26, // 49: hamburger.service.userUpdateStream:input_type -> hamburger.UserUpdateRequest
-	27, // 50: hamburger.service.userCreateStream:input_type -> hamburger.UserCreateRequest
-	28, // 51: hamburger.service.userDeleteStream:input_type -> hamburger.UserDeleteRequest
-	29, // 52: hamburger.service.serviceStartStream:input_type -> hamburger.DomainServiceRequest
-	29, // 53: hamburger.service.serviceStopStream:input_type -> hamburger.DomainServiceRequest
-	30, // 54: hamburger.service.serverRestartStream:input_type -> hamburger.ServerRequest
-	30, // 55: hamburger.service.serverStopStream:input_type -> hamburger.ServerRequest
-	2,  // 56: hamburger.service.stat:output_type -> hamburger.StatResponse
-	18, // 57: hamburger.service.geo:output_type -> hamburger.GeoResponse
-	19, // 58: hamburger.service.domain:output_type -> hamburger.DomainResponse
-	20, // 59: hamburger.service.conn:output_type -> hamburger.ConnResponse
-	21, // 60: hamburger.service.health:output_type -> hamburger.HealthResponse
-	23, // 61: hamburger.service.login:output_type -> hamburger.LoginResponse
-	31, // 62: hamburger.service.logout:output_type -> hamburger.ActionResponse
-	24, // 63: hamburger.service.userGet:output_type -> hamburger.UserResponse
-	24, // 64: hamburger.service.userUpdate:output_type -> hamburger.UserResponse
-	24, // 65: hamburger.service.userCreate:output_type -> hamburger.UserResponse
-	31, // 66: hamburger.service.userDelete:output_type -> hamburger.ActionResponse
-	31, // 67: hamburger.service.serviceStart:output_type -> hamburger.ActionResponse
-	31, // 68: hamburger.service.serviceStop:output_type -> hamburger.ActionResponse
-	31, // 69: hamburger.service.serverRestart:output_type -> hamburger.ActionResponse
-	31, // 70: hamburger.service.serverStop:output_type -> hamburger.ActionResponse
-	2,  // 71: hamburger.service.statStream:output_type -> hamburger.StatResponse
-	18, // 72: hamburger.service.geoStream:output_type -> hamburger.GeoResponse
-	19, // 73: hamburger.service.domainStream:output_type -> hamburger.DomainResponse
-	20, // 74: hamburger.service.connStream:output_type -> hamburger.ConnResponse
-	21, // 75: hamburger.service.healthStream:output_type -> hamburger.HealthResponse
-	23, // 76: hamburger.service.loginStream:output_type -> hamburger.LoginResponse
-	31, // 77: hamburger.service.logoutStream:output_type -> hamburger.ActionResponse
-	24, // 78: hamburger.service.userGetStream:output_type -> hamburger.UserResponse
-	24, // 79: hamburger.service.userUpdateStream:output_type -> hamburger.UserResponse
-	24, // 80: hamburger.service.userCreateStream:output_type -> hamburger.UserResponse
-	31, // 81: hamburger.service.userDeleteStream:output_type -> hamburger.ActionResponse
-	31, // 82: hamburger.service.serviceStartStream:output_type -> hamburger.ActionResponse
-	31, // 83: hamburger.service.serviceStopStream:output_type -> hamburger.ActionResponse
-	31, // 84: hamburger.service.serverRestartStream:output_type -> hamburger.ActionResponse
-	31, // 85: hamburger.service.serverStopStream:output_type -> hamburger.ActionResponse
-	56, // [56:86] is the sub-list for method output_type
-	26, // [26:56] is the sub-list for method input_type
+	0,  // 41: hamburger.service.managementDomains:input_type -> hamburger.Empty
+	33, // 42: hamburger.service.managementDomainState:input_type -> hamburger.DomainStateRequest
+	0,  // 43: hamburger.service.managementConfigGet:input_type -> hamburger.Empty
+	35, // 44: hamburger.service.managementConfigPut:input_type -> hamburger.ManagementConfigRequest
+	36, // 45: hamburger.service.managementConfigApply:input_type -> hamburger.ManagementApplyRequest
+	37, // 46: hamburger.service.managementOperationGet:input_type -> hamburger.OperationRequest
+	1,  // 47: hamburger.service.statStream:input_type -> hamburger.StatRequest
+	0,  // 48: hamburger.service.geoStream:input_type -> hamburger.Empty
+	0,  // 49: hamburger.service.domainStream:input_type -> hamburger.Empty
+	0,  // 50: hamburger.service.connStream:input_type -> hamburger.Empty
+	0,  // 51: hamburger.service.healthStream:input_type -> hamburger.Empty
+	22, // 52: hamburger.service.loginStream:input_type -> hamburger.LoginRequest
+	0,  // 53: hamburger.service.logoutStream:input_type -> hamburger.Empty
+	0,  // 54: hamburger.service.userGetStream:input_type -> hamburger.Empty
+	26, // 55: hamburger.service.userUpdateStream:input_type -> hamburger.UserUpdateRequest
+	27, // 56: hamburger.service.userCreateStream:input_type -> hamburger.UserCreateRequest
+	28, // 57: hamburger.service.userDeleteStream:input_type -> hamburger.UserDeleteRequest
+	29, // 58: hamburger.service.serviceStartStream:input_type -> hamburger.DomainServiceRequest
+	29, // 59: hamburger.service.serviceStopStream:input_type -> hamburger.DomainServiceRequest
+	30, // 60: hamburger.service.serverRestartStream:input_type -> hamburger.ServerRequest
+	30, // 61: hamburger.service.serverStopStream:input_type -> hamburger.ServerRequest
+	0,  // 62: hamburger.service.managementDomainsStream:input_type -> hamburger.Empty
+	33, // 63: hamburger.service.managementDomainStateStream:input_type -> hamburger.DomainStateRequest
+	0,  // 64: hamburger.service.managementConfigGetStream:input_type -> hamburger.Empty
+	35, // 65: hamburger.service.managementConfigPutStream:input_type -> hamburger.ManagementConfigRequest
+	36, // 66: hamburger.service.managementConfigApplyStream:input_type -> hamburger.ManagementApplyRequest
+	37, // 67: hamburger.service.managementOperationGetStream:input_type -> hamburger.OperationRequest
+	2,  // 68: hamburger.service.stat:output_type -> hamburger.StatResponse
+	18, // 69: hamburger.service.geo:output_type -> hamburger.GeoResponse
+	19, // 70: hamburger.service.domain:output_type -> hamburger.DomainResponse
+	20, // 71: hamburger.service.conn:output_type -> hamburger.ConnResponse
+	21, // 72: hamburger.service.health:output_type -> hamburger.HealthResponse
+	23, // 73: hamburger.service.login:output_type -> hamburger.LoginResponse
+	31, // 74: hamburger.service.logout:output_type -> hamburger.ActionResponse
+	24, // 75: hamburger.service.userGet:output_type -> hamburger.UserResponse
+	24, // 76: hamburger.service.userUpdate:output_type -> hamburger.UserResponse
+	24, // 77: hamburger.service.userCreate:output_type -> hamburger.UserResponse
+	31, // 78: hamburger.service.userDelete:output_type -> hamburger.ActionResponse
+	31, // 79: hamburger.service.serviceStart:output_type -> hamburger.ActionResponse
+	31, // 80: hamburger.service.serviceStop:output_type -> hamburger.ActionResponse
+	31, // 81: hamburger.service.serverRestart:output_type -> hamburger.ActionResponse
+	31, // 82: hamburger.service.serverStop:output_type -> hamburger.ActionResponse
+	32, // 83: hamburger.service.managementDomains:output_type -> hamburger.ManagementDomainsResponse
+	31, // 84: hamburger.service.managementDomainState:output_type -> hamburger.ActionResponse
+	34, // 85: hamburger.service.managementConfigGet:output_type -> hamburger.ManagementConfigResponse
+	34, // 86: hamburger.service.managementConfigPut:output_type -> hamburger.ManagementConfigResponse
+	38, // 87: hamburger.service.managementConfigApply:output_type -> hamburger.OperationResponse
+	38, // 88: hamburger.service.managementOperationGet:output_type -> hamburger.OperationResponse
+	2,  // 89: hamburger.service.statStream:output_type -> hamburger.StatResponse
+	18, // 90: hamburger.service.geoStream:output_type -> hamburger.GeoResponse
+	19, // 91: hamburger.service.domainStream:output_type -> hamburger.DomainResponse
+	20, // 92: hamburger.service.connStream:output_type -> hamburger.ConnResponse
+	21, // 93: hamburger.service.healthStream:output_type -> hamburger.HealthResponse
+	23, // 94: hamburger.service.loginStream:output_type -> hamburger.LoginResponse
+	31, // 95: hamburger.service.logoutStream:output_type -> hamburger.ActionResponse
+	24, // 96: hamburger.service.userGetStream:output_type -> hamburger.UserResponse
+	24, // 97: hamburger.service.userUpdateStream:output_type -> hamburger.UserResponse
+	24, // 98: hamburger.service.userCreateStream:output_type -> hamburger.UserResponse
+	31, // 99: hamburger.service.userDeleteStream:output_type -> hamburger.ActionResponse
+	31, // 100: hamburger.service.serviceStartStream:output_type -> hamburger.ActionResponse
+	31, // 101: hamburger.service.serviceStopStream:output_type -> hamburger.ActionResponse
+	31, // 102: hamburger.service.serverRestartStream:output_type -> hamburger.ActionResponse
+	31, // 103: hamburger.service.serverStopStream:output_type -> hamburger.ActionResponse
+	32, // 104: hamburger.service.managementDomainsStream:output_type -> hamburger.ManagementDomainsResponse
+	31, // 105: hamburger.service.managementDomainStateStream:output_type -> hamburger.ActionResponse
+	34, // 106: hamburger.service.managementConfigGetStream:output_type -> hamburger.ManagementConfigResponse
+	34, // 107: hamburger.service.managementConfigPutStream:output_type -> hamburger.ManagementConfigResponse
+	38, // 108: hamburger.service.managementConfigApplyStream:output_type -> hamburger.OperationResponse
+	38, // 109: hamburger.service.managementOperationGetStream:output_type -> hamburger.OperationResponse
+	68, // [68:110] is the sub-list for method output_type
+	26, // [26:68] is the sub-list for method input_type
 	26, // [26:26] is the sub-list for extension type_name
 	26, // [26:26] is the sub-list for extension extendee
 	0,  // [0:26] is the sub-list for field type_name
@@ -2758,7 +3189,7 @@ func file_hamburger_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hamburger_proto_rawDesc), len(file_hamburger_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   38,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

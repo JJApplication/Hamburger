@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -9,18 +10,21 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { useGatewayBootstrap } from "@/lib/hooks/use-gateway-bootstrap";
 import { usePreferences } from "@/lib/preferences/preferences-context";
 import { useGatewaySelectors, useGatewayStore } from "@/store/gateway-store";
+import { useAuth } from "@/lib/auth/auth-context";
 
 const PAGE_SIZE = 5;
 
 export default function DomainsPage() {
   useGatewayBootstrap();
   const { t } = usePreferences();
+  const { token } = useAuth();
 
   const domains = useGatewayStore(useGatewaySelectors.filteredDomains);
   const filter = useGatewayStore((state) => state.domainFilter);
   const isLoading = useGatewayStore((state) => state.isLoading);
   const error = useGatewayStore((state) => state.error);
   const refresh = useGatewayStore((state) => state.refresh);
+  const refreshDomains = useGatewayStore((state) => state.refreshDomains);
   const setDomainFilter = useGatewayStore((state) => state.setDomainFilter);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -47,6 +51,12 @@ export default function DomainsPage() {
     }
   }, [currentPage, totalPages]);
 
+  useEffect(() => {
+    if (!token) return;
+    const timer = window.setInterval(() => void refreshDomains(token), 5_000);
+    return () => window.clearInterval(timer);
+  }, [refreshDomains, token]);
+
   return (
     <DashboardShell title={t("domains.title")} subtitle={t("domains.subtitle")}>
       <Panel className="grid gap-3 md:grid-cols-3">
@@ -65,6 +75,7 @@ export default function DomainsPage() {
           <option value="online">{t("domains.filterOnline")}</option>
           <option value="warning">{t("domains.filterWarning")}</option>
           <option value="offline">{t("domains.filterOffline")}</option>
+          <option value="unknown">{t("domains.filterUnknown")}</option>
         </select>
         <input
           value={portFilter}
@@ -77,7 +88,7 @@ export default function DomainsPage() {
         />
       </Panel>
 
-      <DataState isLoading={isLoading && domains.length === 0} error={error} onRetry={() => void refresh()} />
+      <DataState isLoading={isLoading && domains.length === 0} error={error} onRetry={() => token && void refresh(token)} />
       {domains.length === 0 && !isLoading && !error ? (
         <Panel className="text-secondary py-12 text-center text-sm">{t("domains.empty")}</Panel>
       ) : null}

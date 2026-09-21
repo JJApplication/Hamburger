@@ -11,6 +11,9 @@ import (
 
 // Config 主配置结构体，包含所有服务配置信息
 type Config struct {
+	// SourceFile is the actual configuration file used to start the process.
+	// It is metadata for management APIs and is never serialized.
+	SourceFile         string                            `yaml:"-" json:"-" toml:"-"`
 	CoreProxy          core_config.ProxyConfig           `yaml:"proxy" json:"proxy"` // 核心代理配置
 	ErrorConfig        core_config.ProxyErrorConfig      `yaml:"error_config" json:"error_config"`
 	Servers            []core_config.ServerConfig        `yaml:"servers" json:"servers"`                     // 服务器配置列表

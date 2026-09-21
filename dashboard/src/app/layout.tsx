@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { PreferencesProvider } from "@/lib/preferences/preferences-context";
+import { AuthProvider } from "@/lib/auth/auth-context";
 
 export const metadata: Metadata = {
   title: "Hamburger Gateway Dashboard",
@@ -15,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased">
-        <PreferencesProvider>{children}</PreferencesProvider>
+        <PreferencesProvider><AuthProvider>{children}</AuthProvider></PreferencesProvider>
       </body>
     </html>
   );

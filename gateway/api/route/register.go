@@ -42,6 +42,15 @@ var endpoints = []Endpoint{
 	{http.MethodPost, "/api/service/stop", "serviceStop", true, func() proto.Message { return new(connectpb.DomainServiceRequest) }, func() proto.Message { return new(connectpb.ActionResponse) }},
 	{http.MethodPost, "/api/server/restart", "serverRestart", true, func() proto.Message { return new(connectpb.ServerRequest) }, func() proto.Message { return new(connectpb.ActionResponse) }},
 	{http.MethodPost, "/api/server/stop", "serverStop", true, func() proto.Message { return new(connectpb.ServerRequest) }, func() proto.Message { return new(connectpb.ActionResponse) }},
+	// Management operations are mounted by RegisterManagement below.  They
+	// stay in this catalog so Connect and REST share one authentication
+	// contract; an empty REST path tells Register to skip the Gin mount.
+	{http.MethodGet, "", "managementDomains", true, func() proto.Message { return new(connectpb.Empty) }, func() proto.Message { return new(connectpb.ManagementDomainsResponse) }},
+	{http.MethodPost, "", "managementDomainState", true, func() proto.Message { return new(connectpb.DomainStateRequest) }, func() proto.Message { return new(connectpb.ActionResponse) }},
+	{http.MethodGet, "", "managementConfigGet", true, func() proto.Message { return new(connectpb.Empty) }, func() proto.Message { return new(connectpb.ManagementConfigResponse) }},
+	{http.MethodPut, "", "managementConfigPut", true, func() proto.Message { return new(connectpb.ManagementConfigRequest) }, func() proto.Message { return new(connectpb.ManagementConfigResponse) }},
+	{http.MethodPost, "", "managementConfigApply", true, func() proto.Message { return new(connectpb.ManagementApplyRequest) }, func() proto.Message { return new(connectpb.OperationResponse) }},
+	{http.MethodGet, "", "managementOperationGet", true, func() proto.Message { return new(connectpb.OperationRequest) }, func() proto.Message { return new(connectpb.OperationResponse) }},
 }
 
 // Endpoints returns a copy of the built-in API catalog.
@@ -82,6 +91,9 @@ func Register(engine *gin.Engine, svc *service.APIService, jwt gin.HandlerFunc) 
 		"serverStop":    h.handleServerStop,
 	}
 	for _, endpoint := range Endpoints() {
+		if endpoint.Path == "" {
+			continue
+		}
 		handler, ok := handlers[endpoint.ConnectMethod]
 		if !ok {
 			panic("API endpoint has no REST handler: " + endpoint.ConnectMethod)

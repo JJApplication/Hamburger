@@ -131,21 +131,32 @@ func GetDomainsSnapshot() ([]string, map[string]string, map[string]string) {
 	copy(domains, DomainsRuntimeMap.Domains)
 
 	domainMap := map[string]string{}
-	for _, domain := range DomainsRuntimeMap.DomainsMap.Keys() {
-		item, ok := DomainsRuntimeMap.DomainsMap.Get(domain)
-		if !ok {
-			continue
+	if DomainsRuntimeMap.DomainsMap != nil {
+		for _, domain := range DomainsRuntimeMap.DomainsMap.Keys() {
+			item, ok := DomainsRuntimeMap.DomainsMap.Get(domain)
+			if !ok {
+				continue
+			}
+			domainMap[domain] = item.ServiceName
 		}
-		domainMap[domain] = item.ServiceName
+	}
+	// Keep configured regular-expression rules visible to management clients
+	// without inserting arbitrary request Host values into the configured list.
+	for _, rule := range DomainsRuntimeMap.RegexDomains {
+		if rule.Pattern != "" {
+			domainMap[rule.Pattern] = rule.Service.ServiceName
+		}
 	}
 
 	frontMap := map[string]string{}
-	for _, key := range DomainsRuntimeMap.DomainFrontMap.Keys() {
-		val, ok := DomainsRuntimeMap.DomainFrontMap.Get(key)
-		if !ok {
-			continue
+	if DomainsRuntimeMap.DomainFrontMap != nil {
+		for _, key := range DomainsRuntimeMap.DomainFrontMap.Keys() {
+			val, ok := DomainsRuntimeMap.DomainFrontMap.Get(key)
+			if !ok {
+				continue
+			}
+			frontMap[key] = val
 		}
-		frontMap[key] = val
 	}
 
 	return domains, domainMap, frontMap
@@ -170,7 +181,6 @@ func GetDomain2Service(host string) (config.Service, bool) {
 	// 只有正则域名才进入请求路径遍历。
 	for _, domain := range regexDomains {
 		if domain.Matcher != nil && domain.Matcher.MatchString(normalizedHost) {
-			domainsMap.Put(hostKey, domain.Service)
 			return domain.Service, true
 		}
 	}

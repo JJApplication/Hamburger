@@ -181,10 +181,10 @@ func (i *Initializer) bindAPIServerControl() {
 			if err := i.reloadConfigInPlace(); err != nil {
 				return err
 			}
-			if err := i.TrojanServer.Stop(); err != nil {
+			if err := i.TrojanServer.Reload(); err != nil {
 				return err
 			}
-			return i.TrojanServer.Start()
+			return i.TrojanServer.StartAsync()
 		},
 		"anytls": func() error {
 			if i.AnyTLSServer == nil {
@@ -196,7 +196,7 @@ func (i *Initializer) bindAPIServerControl() {
 			if err := i.AnyTLSServer.Stop(); err != nil {
 				return err
 			}
-			return i.AnyTLSServer.Start()
+			return i.AnyTLSServer.StartAsync()
 		},
 	}
 	i.APIServer.SetServerControl(stopFn, restartFn)
@@ -214,7 +214,11 @@ func (i *Initializer) reloadConfigInPlace() error {
 }
 
 func (i *Initializer) reloadConfigInPlaceLocked() error {
-	appCfg, err := loader.LoadConfig("config/config.json")
+	path := "config/config.hamburger"
+	if i.appConf != nil && i.appConf.SourceFile != "" {
+		path = i.appConf.SourceFile
+	}
+	appCfg, err := loader.LoadConfig(path)
 	if err != nil {
 		return err
 	}

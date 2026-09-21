@@ -19,6 +19,7 @@ func Merge(appConfig *config.AppConfig) *config.Config {
 	}
 
 	conf := &config.Config{
+		SourceFile:      appConfig.SourceFile,
 		CoreProxy:       appConfig.CoreProxy,
 		ErrorConfig:     appConfig.ErrorConfig,
 		Servers:         appConfig.Servers,

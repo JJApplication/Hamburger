@@ -14,6 +14,10 @@ import (
 
 // AppConfig 配置文件格式模型
 type AppConfig struct {
+	// SourceFile is populated by the loader and is intentionally excluded from
+	// serialized configuration. Management APIs use it to write back to the
+	// same source selected by the running process.
+	SourceFile      string       `yaml:"-" json:"-" toml:"-"`
 	PxyBackendFile  string       `yaml:"pxy_backend_file" json:"pxy_backend_file"` // 配置文件路径
 	PxyFrontendFile string       `yaml:"pxy_frontend_file" json:"pxy_frontend_file"`
 	DomainMap       string       `yaml:"domain_map" json:"domain_map"` // 域名映射文件
