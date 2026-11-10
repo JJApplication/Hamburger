@@ -250,6 +250,7 @@ func CommonHttpServer(serverConfig core_config.ServerConfig, logger *zerolog.Log
 		return nil, err
 	}
 	httpServer.Handler = limitedHandler
+	httpServer.Handler = wrapHandlerWithIdleDeadline(httpServer.Handler, idleTimeoutOf(httpServer))
 	// Keep request observation at the outermost HTTP layer so redirects,
 	// static aliases, resolver errors, streamed responses and early request
 	// target rejections all contribute their final status and payload bytes.

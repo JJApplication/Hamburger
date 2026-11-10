@@ -63,6 +63,9 @@ func (z *ZstdModifier) ModifyResponse(response *http.Response) error {
 	if !z.enabled {
 		return nil
 	}
+	if skipRangeResponse(response) {
+		return nil
+	}
 
 	best := bestCompressionEncoding(response.Request, loader.Get().Middleware.Gzip.Enabled, z.enabled)
 	if best != "zstd" {
@@ -86,35 +89,37 @@ func (z *ZstdModifier) ModifyResponse(response *http.Response) error {
 		}
 	}
 
-	var buf bytes.Buffer
-	tee := io.TeeReader(response.Body, &buf)
-	originalBody, err := io.ReadAll(tee)
+	originalBody, err := readAndCloseBody(response.Body)
 	if err != nil {
 		logger.GetLogger().Debug().Err(err).Msg("failed to read response body")
 		return err
 	}
 
 	if len(originalBody) <= z.threshold {
-		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		response.Body = io.NopCloser(bytes.NewReader(originalBody))
+		response.ContentLength = int64(len(originalBody))
 		return nil
 	}
 
 	compressedBody, err := z.compressData(originalBody)
 	if err != nil {
 		logger.GetLogger().Debug().Err(err).Msg("zstd compression failed")
-		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		response.Body = io.NopCloser(bytes.NewReader(originalBody))
+		response.ContentLength = int64(len(originalBody))
 		return nil
 	}
 
 	if len(compressedBody) >= len(originalBody) {
 		logger.GetLogger().Debug().Msg("compressed size not reduced, using original response")
-		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		response.Body = io.NopCloser(bytes.NewReader(originalBody))
+		response.ContentLength = int64(len(originalBody))
 		return nil
 	}
 
 	response.Header.Set("Content-Encoding", "zstd")
 	response.Header.Set("Content-Length", strconv.Itoa(len(compressedBody)))
 	response.Header.Del("Content-Range")
+	response.ContentLength = int64(len(compressedBody))
 	response.Body = io.NopCloser(bytes.NewReader(compressedBody))
 
 	if loader.Get().Debug {
@@ -215,6 +220,28 @@ func (z *ZstdModifier) UpdateConfig() {
 
 func (z *ZstdModifier) GetName() string {
 	return "zstd"
+}
+
+func skipRangeResponse(response *http.Response) bool {
+	if response == nil {
+		return false
+	}
+	if response.StatusCode == http.StatusPartialContent {
+		return true
+	}
+	return response.Request != nil && strings.TrimSpace(response.Request.Header.Get("Range")) != ""
+}
+
+func readAndCloseBody(body io.ReadCloser) ([]byte, error) {
+	if body == nil {
+		return nil, nil
+	}
+	data, err := io.ReadAll(body)
+	closeErr := body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return data, closeErr
 }
 
 func acceptEncodingQ(acceptEncoding string, encoding string) (float64, bool) {

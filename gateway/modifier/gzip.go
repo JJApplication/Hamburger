@@ -68,6 +68,9 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 	if !g.enabled {
 		return nil
 	}
+	if skipRangeResponse(response) {
+		return nil
+	}
 
 	best := bestCompressionEncoding(response.Request, g.enabled, loader.Get().Middleware.Zstd.Enabled)
 	if best != "gzip" {
@@ -92,10 +95,7 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 			return nil
 		}
 	}
-	// 读取原始响应体
-	var buf bytes.Buffer
-	tee := io.TeeReader(response.Body, &buf)
-	originalBody, err := io.ReadAll(tee)
+	originalBody, err := readAndCloseBody(response.Body)
 	if err != nil {
 		logger.GetLogger().Debug().Err(err).Msg("failed to read response body")
 		return err
@@ -103,7 +103,8 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 
 	// 检查响应体大小，太小的响应不需要压缩
 	if len(originalBody) <= g.threshold { // 小于1KB不压缩
-		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		response.Body = io.NopCloser(bytes.NewReader(originalBody))
+		response.ContentLength = int64(len(originalBody))
 		return nil
 	}
 
@@ -111,24 +112,23 @@ func (g *GzipModifier) ModifyResponse(response *http.Response) error {
 	compressedBody, err := g.compressData(originalBody)
 	if err != nil {
 		logger.GetLogger().Debug().Err(err).Msg("gzip compression failed")
-		// 压缩失败时返回原始响应
-		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		response.Body = io.NopCloser(bytes.NewReader(originalBody))
+		response.ContentLength = int64(len(originalBody))
 		return nil
 	}
 
 	// 检查压缩效果，如果压缩后更大则不使用压缩
 	if len(compressedBody) >= len(originalBody) {
 		logger.GetLogger().Debug().Msg("compressed size not reduced, using original response")
-		response.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		response.Body = io.NopCloser(bytes.NewReader(originalBody))
+		response.ContentLength = int64(len(originalBody))
 		return nil
 	}
 
-	// 设置压缩相关的响应头
 	response.Header.Set("Content-Encoding", "gzip")
 	response.Header.Set("Content-Length", strconv.Itoa(len(compressedBody)))
-	response.Header.Del("Content-Range") // 移除Range相关头部，因为内容已改变
-
-	// 设置新的响应体
+	response.Header.Del("Content-Range")
+	response.ContentLength = int64(len(compressedBody))
 	response.Body = io.NopCloser(bytes.NewReader(compressedBody))
 
 	if loader.Get().Debug {
