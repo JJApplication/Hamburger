@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DataState } from "@/components/common/data-state";
 import { Panel } from "@/components/common/panel";
 import { DomainCard } from "@/components/domains/domain-card";
+import { StatusFilter } from "@/components/domains/status-filter";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { useGatewayBootstrap } from "@/lib/hooks/use-gateway-bootstrap";
 import { usePreferences } from "@/lib/preferences/preferences-context";
@@ -66,17 +67,7 @@ export default function DomainsPage() {
           placeholder={t("domains.search")}
           className="panel-strong text-primary placeholder:text-tertiary rounded-xl border border-[var(--border)] px-3 py-2 text-sm outline-none ring-0 focus:border-cyan-400/60"
         />
-        <select
-          value={filter.status}
-          onChange={(event) => setDomainFilter({ status: event.target.value as typeof filter.status })}
-          className="panel-strong text-primary rounded-xl border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-cyan-400/60"
-        >
-          <option value="all">{t("domains.filterAll")}</option>
-          <option value="online">{t("domains.filterOnline")}</option>
-          <option value="warning">{t("domains.filterWarning")}</option>
-          <option value="offline">{t("domains.filterOffline")}</option>
-          <option value="unknown">{t("domains.filterUnknown")}</option>
-        </select>
+        <StatusFilter value={filter.status} onChange={(status) => setDomainFilter({ status })} />
         <input
           value={portFilter}
           onChange={(event) => {

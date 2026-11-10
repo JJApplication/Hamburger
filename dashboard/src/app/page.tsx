@@ -21,6 +21,18 @@ type Tab = "overview" | "traffic" | "resources" | "geo";
 type Capability = (key: string) => boolean;
 
 const number = (value: number | undefined) => new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 }).format(value ?? 0);
+
+function windowInstant(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate(), hours: date.getHours(), minutes: date.getMinutes() };
+}
+
+function windowLabel(instant: NonNullable<ReturnType<typeof windowInstant>>, withYear: boolean) {
+  const time = `${String(instant.hours).padStart(2, "0")}:${String(instant.minutes).padStart(2, "0")}`;
+  const date = `${withYear ? `${instant.year}年` : ""}${instant.month}月${instant.day}日`;
+  return { date, time };
+}
 const bytes = (value: number | undefined) => {
   const size = value ?? 0;
   if (size < 1024) return `${size} B`;
@@ -123,7 +135,7 @@ function OverviewTab({ overview, current, requestSeries, data }: { overview: { a
   return (
     <>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{kpis.map(({ label, value, icon: Icon }) => <Panel key={label}><div className="flex items-center justify-between"><p className="text-secondary text-sm">{label}</p><Icon size={16} className="text-emerald-300" /></div><p className="mt-3 text-3xl font-semibold">{value}</p></Panel>)}</section>
-      <section className="grid gap-4 xl:grid-cols-[2fr_1fr]"><Panel><div className="flex items-center justify-between"><h2 className="text-lg font-semibold">请求趋势</h2><span className="text-secondary text-xs">每 {current?.meta.bucket_seconds ?? 60} 秒</span></div><Chart data={requestSeries.map((point) => ({ ...point, total: Number(point.total ?? 0), errors: Number(point.errors ?? 0) }))} lines={[{ key: "total", color: "#36d399", name: "总请求" }, { key: "errors", color: "#fb7185", name: "错误" }]} /></Panel><Panel className="space-y-3"><h2 className="text-lg font-semibold">运行摘要</h2><Metric label="活动域名" value={number(overview.activeDomains)} /><Metric label="映射条目" value={number(overview.totalMappings)} /><Metric label="统计窗口" value={current ? `${current.meta.start_time} — ${current.meta.end_time}` : "暂无"} /></Panel></section>
+      <section className="grid gap-4 xl:grid-cols-[2fr_1fr]"><Panel><div className="flex items-center justify-between"><h2 className="text-lg font-semibold">请求趋势</h2><span className="text-secondary text-xs">每 {current?.meta.bucket_seconds ?? 60} 秒</span></div><Chart data={requestSeries.map((point) => ({ ...point, total: Number(point.total ?? 0), errors: Number(point.errors ?? 0) }))} lines={[{ key: "total", color: "#36d399", name: "总请求" }, { key: "errors", color: "#fb7185", name: "错误" }]} /></Panel><Panel className="space-y-3"><h2 className="text-lg font-semibold">运行摘要</h2><Metric label="活动域名" value={number(overview.activeDomains)} /><Metric label="映射条目" value={number(overview.totalMappings)} /><WindowRange start={current?.meta.start_time} end={current?.meta.end_time} /></Panel></section>
     </>
   );
 }
@@ -158,6 +170,61 @@ function GeoTab({ geo, data }: { geo: Array<[string, number]>; data: ReturnType<
 }
 
 function Metric({ label, value }: { label: string; value: string }) { return <div className="panel-soft rounded-xl p-3"><p className="text-secondary text-xs">{label}</p><p className="mt-1 text-xl font-semibold">{value}</p></div>; }
+function WindowRange({ start, end }: { start?: string; end?: string }) {
+  const from = start ? windowInstant(start) : null;
+  const to = end ? windowInstant(end) : null;
+  if (!from || !to) return <Metric label="统计窗口" value="暂无" />;
+  const showYear = from.year !== to.year;
+  const sameDay = from.year === to.year && from.month === to.month && from.day === to.day;
+  const startLabel = windowLabel(from, showYear);
+  const endLabel = windowLabel(to, showYear);
+  if (sameDay) {
+    return (
+      <div className="panel-soft rounded-xl p-3">
+        <p className="text-secondary text-xs">统计窗口</p>
+        <p className="mt-2 text-sm font-medium tabular-nums">{startLabel.date}</p>
+        <p className="mt-0.5 flex items-center gap-2 text-base font-semibold tabular-nums">
+          <time dateTime={start}>{startLabel.time}</time>
+          <span aria-hidden="true" className="text-sm font-medium text-emerald-300/80">→</span>
+          <time dateTime={end}>{endLabel.time}</time>
+        </p>
+      </div>
+    );
+  }
+  if (showYear) {
+    return (
+      <div className="panel-soft rounded-xl p-3">
+        <p className="text-secondary text-xs">统计窗口</p>
+        <div className="mt-2 space-y-1.5">
+          {[{ mark: "起", label: startLabel, value: start }, { mark: "止", label: endLabel, value: end }].map((item) => (
+            <time key={item.mark} dateTime={item.value} className="flex items-baseline justify-between gap-3">
+              <span className="text-tertiary text-[11px]">{item.mark}</span>
+              <span className="text-sm font-medium tabular-nums whitespace-nowrap">{item.label.date} <span className="font-semibold">{item.label.time}</span></span>
+            </time>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="panel-soft rounded-xl p-3">
+      <p className="text-secondary text-xs">统计窗口</p>
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+        <time dateTime={start} className="min-w-0">
+          <span className="text-tertiary block text-[11px]">起</span>
+          <span className="mt-0.5 block whitespace-nowrap text-sm font-medium tabular-nums">{startLabel.date}</span>
+          <span className="block text-base font-semibold tabular-nums">{startLabel.time}</span>
+        </time>
+        <span aria-hidden="true" className="text-emerald-300/80">→</span>
+        <time dateTime={end} className="min-w-0 text-right">
+          <span className="text-tertiary block text-[11px]">止</span>
+          <span className="mt-0.5 block whitespace-nowrap text-sm font-medium tabular-nums">{endLabel.date}</span>
+          <span className="block text-base font-semibold tabular-nums">{endLabel.time}</span>
+        </time>
+      </div>
+    </div>
+  );
+}
 function Unavailable({ label = "不可用" }: { label?: string }) { return <p className="text-secondary flex h-64 items-center justify-center text-sm">{label}</p>; }
 function ConnectionCard({ title, value }: { title: string; value: { active: number; idle: number; new: number; closed: number; hijacked: number } | undefined }) { return <div className="panel-soft rounded-xl p-3"><div className="flex items-center justify-between"><span className="text-secondary text-sm">{title}</span><PlugZap size={15} className="text-emerald-300" /></div><p className="mt-2 text-2xl font-semibold">{number((value?.active ?? 0) + (value?.idle ?? 0))}</p><div className="text-secondary mt-2 grid grid-cols-3 gap-2 text-xs"><span>活动 {number(value?.active)}</span><span>空闲 {number(value?.idle)}</span><span>关闭 {number(value?.closed)}</span></div></div>; }
 function Chart({ data, lines, formatter = number }: { data: Array<Record<string, unknown>>; lines: Array<{ key: string; color: string; name: string }>; formatter?: (value: number) => string }) { return <div className="mt-4 h-64"><ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}><CartesianGrid stroke="var(--border)" strokeDasharray="3 3" /><XAxis dataKey="timestamp" tickFormatter={(value) => { const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }); }} tick={{ fill: "var(--text-secondary)", fontSize: 11 }} tickLine={false} axisLine={false} /><YAxis tick={{ fill: "var(--text-secondary)", fontSize: 11 }} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ background: "var(--panel)", borderColor: "var(--border)", borderRadius: 12 }} formatter={(value) => formatter(Number(value))} />{lines.map((line) => <Line key={line.key} type="monotone" dataKey={line.key} name={line.name} stroke={line.color} strokeWidth={2.5} dot={false} connectNulls />)}</LineChart></ResponsiveContainer></div>; }

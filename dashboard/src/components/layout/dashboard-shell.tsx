@@ -32,9 +32,9 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
   const [loginOpen, setLoginOpen] = useState(false);
 
   return (
-    <div className="app-bg min-h-screen">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 p-4 lg:grid-cols-[248px_1fr] lg:p-6">
-        <aside className="panel flex min-h-0 flex-col rounded-2xl border p-4 lg:min-h-[calc(100vh-3rem)]">
+    <div className="app-bg min-h-screen lg:h-dvh lg:overflow-hidden">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 p-4 lg:h-full lg:grid-cols-[248px_1fr] lg:p-6">
+        <aside className="panel flex min-h-0 flex-col rounded-2xl border p-4 lg:h-full lg:overflow-y-auto">
           <div className="mb-6 flex items-center gap-3 px-2">
             <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-400">
               <Activity size={20} />
@@ -99,7 +99,7 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
           </div>
         </aside>
 
-        <main className="flex min-h-0 flex-col gap-5 lg:min-h-[calc(100vh-3rem)]">
+        <main className="flex min-h-0 flex-col gap-5 lg:h-full lg:overflow-y-auto">
           <header className="panel rounded-2xl border p-5">
             <p className="text-secondary text-sm">{subtitle}</p>
             <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
