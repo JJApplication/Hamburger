@@ -184,7 +184,58 @@ export type MessageKey =
   | "certificates.minVersion"
   | "certificates.autoTlsOn"
   | "certificates.autoTlsOff"
-  | "certificates.noSan";
+  | "certificates.noSan"
+  | "editor.add"
+  | "editor.edit"
+  | "editor.delete"
+  | "editor.save"
+  | "editor.discard"
+  | "editor.saving"
+  | "editor.reloadHint"
+  | "editor.close"
+  | "editor.name"
+  | "editor.domain"
+  | "editor.host"
+  | "editor.port"
+  | "editor.precheck"
+  | "editor.rules"
+  | "editor.addRule"
+  | "editor.api"
+  | "editor.target"
+  | "editor.targetService"
+  | "editor.targetStatic"
+  | "editor.targetHost"
+  | "editor.proxyHost"
+  | "editor.proxyPort"
+  | "editor.useRewrite"
+  | "editor.rewrite"
+  | "editor.addMapping"
+  | "editor.addService"
+  | "editor.addSite"
+  | "editor.siteType"
+  | "editor.root"
+  | "editor.actions"
+  | "editor.headerName"
+  | "editor.headerValue"
+  | "editor.addHeader"
+  | "editor.addMatcher"
+  | "editor.remove"
+  | "editor.conflict"
+  | "editor.auth"
+  | "editor.parse"
+  | "editor.emptyName"
+  | "editor.duplicateService"
+  | "editor.duplicateDomain"
+  | "editor.emptyDomain"
+  | "editor.emptyBinding"
+  | "editor.invalidPort"
+  | "editor.emptySite"
+  | "editor.duplicateSite"
+  | "editor.invalidRule"
+  | "editor.failed"
+  | "editor.confirmDelete"
+  | "editor.cancel"
+  | "editor.findService";
 
 interface I18nContextValue {
   locale: Locale;
@@ -374,6 +425,57 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "certificates.autoTlsOn": "自动证书开启",
     "certificates.autoTlsOff": "自动证书关闭",
     "certificates.noSan": "证书未声明备用名称",
+    "editor.add": "添加",
+    "editor.edit": "编辑",
+    "editor.delete": "删除",
+    "editor.save": "保存",
+    "editor.discard": "放弃",
+    "editor.saving": "正在保存",
+    "editor.reloadHint": "保存后写入配置文件，网关重载后生效。",
+    "editor.close": "关闭",
+    "editor.name": "名称",
+    "editor.domain": "域名",
+    "editor.host": "监听地址",
+    "editor.port": "端口",
+    "editor.precheck": "前置检查",
+    "editor.rules": "转发规则",
+    "editor.addRule": "添加规则",
+    "editor.api": "路径",
+    "editor.target": "目标",
+    "editor.targetService": "转到服务",
+    "editor.targetStatic": "静态目录",
+    "editor.targetHost": "指定主机",
+    "editor.proxyHost": "主机",
+    "editor.proxyPort": "主机端口",
+    "editor.useRewrite": "重写",
+    "editor.rewrite": "重写规则",
+    "editor.addMapping": "添加映射",
+    "editor.addService": "添加服务",
+    "editor.addSite": "添加站点",
+    "editor.siteType": "站点类型",
+    "editor.root": "根目录",
+    "editor.actions": "操作",
+    "editor.headerName": "头名称",
+    "editor.headerValue": "头内容",
+    "editor.addHeader": "添加响应头",
+    "editor.addMatcher": "添加匹配",
+    "editor.remove": "移除",
+    "editor.conflict": "配置已在其他地方修改，请刷新后再保存。",
+    "editor.auth": "请先登录后再保存。",
+    "editor.parse": "写回的配置无法解析。",
+    "editor.emptyName": "服务名不能为空。",
+    "editor.duplicateService": "服务名重复：{name}",
+    "editor.duplicateDomain": "域名重复：{name}",
+    "editor.emptyDomain": "域名不能为空。",
+    "editor.emptyBinding": "映射必须选择服务。",
+    "editor.invalidPort": "{name} 的端口必须是数字。",
+    "editor.emptySite": "站点名不能为空。",
+    "editor.duplicateSite": "站点名重复：{name}",
+    "editor.invalidRule": "{name} 的转发规则缺少目标。",
+    "editor.failed": "保存失败：{message}",
+    "editor.confirmDelete": "删除 {name}？尚未保存的其他修改会保留。",
+    "editor.cancel": "取消",
+    "editor.findService": "搜索服务",
   },
   en: {
     "nav.overview": "Overview",
@@ -554,6 +656,57 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "certificates.autoTlsOn": "Automatic certificates on",
     "certificates.autoTlsOff": "Automatic certificates off",
     "certificates.noSan": "No subject alternative name",
+    "editor.add": "Add",
+    "editor.edit": "Edit",
+    "editor.delete": "Delete",
+    "editor.save": "Save",
+    "editor.discard": "Discard",
+    "editor.saving": "Saving",
+    "editor.reloadHint": "Saving writes the file. Reload the gateway to apply it.",
+    "editor.close": "Close",
+    "editor.name": "Name",
+    "editor.domain": "Domain",
+    "editor.host": "Listen address",
+    "editor.port": "Port",
+    "editor.precheck": "Pre-check",
+    "editor.rules": "Routes",
+    "editor.addRule": "Add route",
+    "editor.api": "Path",
+    "editor.target": "Target",
+    "editor.targetService": "Service",
+    "editor.targetStatic": "Static root",
+    "editor.targetHost": "Host",
+    "editor.proxyHost": "Host",
+    "editor.proxyPort": "Host port",
+    "editor.useRewrite": "Rewrite",
+    "editor.rewrite": "Rewrite rule",
+    "editor.addMapping": "Add mapping",
+    "editor.addService": "Add service",
+    "editor.addSite": "Add site",
+    "editor.siteType": "Site type",
+    "editor.root": "Root",
+    "editor.actions": "Actions",
+    "editor.headerName": "Header name",
+    "editor.headerValue": "Header value",
+    "editor.addHeader": "Add header",
+    "editor.addMatcher": "Add matcher",
+    "editor.remove": "Remove",
+    "editor.conflict": "The file changed elsewhere. Refresh before saving.",
+    "editor.auth": "Sign in before saving.",
+    "editor.parse": "The written configuration could not be parsed.",
+    "editor.emptyName": "Service name is required.",
+    "editor.duplicateService": "Duplicate service name: {name}",
+    "editor.duplicateDomain": "Duplicate domain: {name}",
+    "editor.emptyDomain": "Domain is required.",
+    "editor.emptyBinding": "Each mapping needs a service.",
+    "editor.invalidPort": "Port for {name} must be a number.",
+    "editor.emptySite": "Site name is required.",
+    "editor.duplicateSite": "Duplicate site name: {name}",
+    "editor.invalidRule": "A route on {name} is missing its target.",
+    "editor.failed": "Save failed: {message}",
+    "editor.confirmDelete": "Delete {name}? Other unsaved edits stay in the draft.",
+    "editor.cancel": "Cancel",
+    "editor.findService": "Search services",
   },
 };
 

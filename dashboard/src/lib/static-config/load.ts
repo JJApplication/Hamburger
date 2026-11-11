@@ -1,5 +1,6 @@
 import type { HamburgerValue } from "@/lib/domain-config/parse";
-import { errorMessage, readConfigValue, readQuotedField } from "@/lib/config-files";
+import { configVersion, errorMessage, readConfigText, readQuotedField } from "@/lib/config-files";
+import { parseHamburger } from "@/lib/domain-config/parse";
 
 const SOURCE = "config/frontend.hamburger";
 
@@ -43,6 +44,7 @@ export interface StaticConfigModel {
   headers: { name: string; value: string }[];
   sites: StaticSite[];
   error?: string;
+  version: string;
 }
 
 function isRecord(value: HamburgerValue | undefined): value is { [key: string]: HamburgerValue } {
@@ -129,38 +131,46 @@ export function loadStaticConfig(): StaticConfigModel {
     matchers: [],
     headers: [],
     sites: [],
+    version: "",
   };
   try {
-    const value = readConfigValue(SOURCE);
-    if (!isRecord(value)) throw new Error("静态配置根节点必须是对象");
-    const cache = isRecord(value.cache) ? value.cache : undefined;
-    const fastConnect = isRecord(value.exp_fast_connect) ? value.exp_fast_connect : undefined;
-    const http3 = fastConnect && isRecord(fastConnect.http3) ? fastConnect.http3 : undefined;
-    const headerList = Array.isArray(value.custom_headers) ? value.custom_headers.flatMap((item) => {
-      if (!isRecord(item)) return [];
-      const name = scalar(item.name);
-      const headerValue = scalar(item.value);
-      return name ? [{ name, value: headerValue }] : [];
-    }) : [];
-    return {
-      ...empty,
-      host: scalar(value.host),
-      port: scalar(value.port),
-      balancer: scalar(value.balancer),
-      fastConnect: fastConnect?.enabled === true,
-      http3: http3?.enabled === true,
-      cacheEnabled: cache?.enable === true,
-      cacheDir: scalar(cache?.dir),
-      cacheExpire: scalar(cache?.expire),
-      memoryEnabled: cache?.memory_enable === true,
-      memoryMaxMb: scalar(cache?.memory_max_mb),
-      memoryMaxFileMb: scalar(cache?.memory_max_file_mb),
-      memoryMaxEntries: scalar(cache?.memory_max_entries),
-      memoryRevalidateSeconds: scalar(cache?.memory_revalidate_seconds),
-      matchers: stringList(cache?.matcher),
-      headers: headerList,
-      sites: sites(value.servers),
-    };
+    const text = readConfigText(SOURCE);
+    const version = configVersion(text);
+    try {
+      const value = parseHamburger(text);
+      if (!isRecord(value)) throw new Error("静态配置根节点必须是对象");
+      const cache = isRecord(value.cache) ? value.cache : undefined;
+      const fastConnect = isRecord(value.exp_fast_connect) ? value.exp_fast_connect : undefined;
+      const http3 = fastConnect && isRecord(fastConnect.http3) ? fastConnect.http3 : undefined;
+      const headerList = Array.isArray(value.custom_headers) ? value.custom_headers.flatMap((item) => {
+        if (!isRecord(item)) return [];
+        const name = scalar(item.name);
+        const headerValue = scalar(item.value);
+        return name ? [{ name, value: headerValue }] : [];
+      }) : [];
+      return {
+        ...empty,
+        host: scalar(value.host),
+        port: scalar(value.port),
+        balancer: scalar(value.balancer),
+        fastConnect: fastConnect?.enabled === true,
+        http3: http3?.enabled === true,
+        cacheEnabled: cache?.enable === true,
+        cacheDir: scalar(cache?.dir),
+        cacheExpire: scalar(cache?.expire),
+        memoryEnabled: cache?.memory_enable === true,
+        memoryMaxMb: scalar(cache?.memory_max_mb),
+        memoryMaxFileMb: scalar(cache?.memory_max_file_mb),
+        memoryMaxEntries: scalar(cache?.memory_max_entries),
+        memoryRevalidateSeconds: scalar(cache?.memory_revalidate_seconds),
+        matchers: stringList(cache?.matcher),
+        headers: headerList,
+        sites: sites(value.servers),
+        version,
+      };
+    } catch (error) {
+      return { ...empty, version, error: errorMessage(error, "无法读取静态配置") };
+    }
   } catch (error) {
     return { ...empty, error: errorMessage(error, "无法读取静态配置") };
   }

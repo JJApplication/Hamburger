@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -9,6 +10,10 @@ export function repoRoot(): string {
 
 export function readConfigText(relativePath: string): string {
   return readFileSync(path.join(repoRoot(), relativePath), "utf8");
+}
+
+export function configVersion(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
 }
 
 export function readConfigValue(relativePath: string): HamburgerValue {

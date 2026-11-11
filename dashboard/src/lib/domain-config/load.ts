@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { configVersion } from "@/lib/config-files";
 import { normalizeDomainConfig, parseHamburger, type DomainConfigModel } from "@/lib/domain-config/parse";
 
 const SOURCE = "config/domains.hamburger";
@@ -20,14 +21,26 @@ export function loadDomainConfig(): DomainConfigModel {
   const filePath = path.join(configDir, "domains.hamburger");
   const runtimeMap = readRuntimeMap(path.join(configDir, "config.hamburger"));
   try {
-    const parsed = parseHamburger(readFileSync(filePath, "utf8"));
-    return normalizeDomainConfig(parsed, SOURCE, runtimeMap);
+    const text = readFileSync(filePath, "utf8");
+    try {
+      return { ...normalizeDomainConfig(parseHamburger(text), SOURCE, runtimeMap), version: configVersion(text) };
+    } catch (error) {
+      return {
+        source: SOURCE,
+        runtimeMap,
+        bindings: [],
+        services: [],
+        version: configVersion(text),
+        error: error instanceof Error ? error.message : "无法读取域名配置",
+      };
+    }
   } catch (error) {
     return {
       source: SOURCE,
       runtimeMap,
       bindings: [],
       services: [],
+      version: "",
       error: error instanceof Error ? error.message : "无法读取域名配置",
     };
   }

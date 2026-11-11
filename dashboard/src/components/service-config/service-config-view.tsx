@@ -1,10 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { ConfirmDelete, dangerButtonClass } from "@/components/config-editor/confirm-delete";
+import { SaveBar, saveErrorText } from "@/components/config-editor/save-bar";
+import { ServiceDialog } from "@/components/config-editor/service-dialog";
 import { Panel } from "@/components/common/panel";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import type { DomainConfigModel, DomainServiceDef, ProxyRule } from "@/lib/domain-config/parse";
+import { saveServiceConfig } from "@/lib/config-edit/actions";
+import { blankService, serviceToDraft, type RuleDraft, type ServiceDraft } from "@/lib/config-edit/model";
+import type { DomainConfigModel, ProxyRule } from "@/lib/domain-config/parse";
+import { useAuth } from "@/lib/auth/auth-context";
 import { usePreferences, type MessageKey } from "@/lib/preferences/preferences-context";
 
 const filters = ["all", "frontend", "backend", "custom"] as const;
@@ -17,6 +24,8 @@ const filterLabel: Record<TypeFilter, MessageKey> = {
   custom: "domainConfig.custom",
 };
 
+const actionClass = "rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs text-secondary hover:text-primary";
+
 function typeLabel(type: string, t: (key: MessageKey) => string): string {
   if (type === "frontend" || type === "backend" || type === "custom") return t(filterLabel[type]);
   return type;
@@ -28,9 +37,22 @@ function typeClass(type: string): string {
   return "bg-amber-500/15 text-amber-300 [html.theme-light_&]:text-amber-700";
 }
 
-function listenAddress(service: DomainServiceDef): string {
+function listenAddress(service: ServiceDraft): string {
   if (service.host && service.port) return `${service.host}:${service.port}`;
-  return service.host ?? (service.port ? String(service.port) : "");
+  return service.host || service.port;
+}
+
+function asRule(rule: RuleDraft): ProxyRule {
+  const port = Number(rule.proxyPort);
+  return {
+    api: rule.api,
+    service: rule.mode === "service" ? rule.service || undefined : undefined,
+    staticRoot: rule.mode === "static" ? rule.staticRoot || undefined : undefined,
+    proxyHost: rule.mode === "host" ? rule.proxyHost || undefined : undefined,
+    proxyPort: rule.proxyPort.trim() && Number.isFinite(port) ? port : undefined,
+    useRewrite: rule.useRewrite,
+    rewrite: rule.rewrite || undefined,
+  };
 }
 
 function routeText(rule: ProxyRule, t: (key: MessageKey) => string): string {
@@ -46,21 +68,58 @@ function routeText(rule: ProxyRule, t: (key: MessageKey) => string): string {
 
 export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
   const { t } = usePreferences();
+  const { token } = useAuth();
+  const router = useRouter();
   const [keyword, setKeyword] = useState("");
   const [type, setType] = useState<TypeFilter>("all");
+  const [services, setServices] = useState(() => config.services.map(serviceToDraft));
+  const [seen, setSeen] = useState(config.version);
+  const [editing, setEditing] = useState<ServiceDraft | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [confirm, setConfirm] = useState<{ name: string; run: () => void } | null>(null);
+  if (seen !== config.version) {
+    setSeen(config.version);
+    setServices(config.services.map(serviceToDraft));
+    setNotice("");
+  }
   const query = keyword.trim().toLowerCase();
+  const locked = Boolean(config.error);
+  const dirty = JSON.stringify(services) !== JSON.stringify(config.services.map(serviceToDraft));
 
-  const visible = useMemo(() => config.services.filter((service) => {
+  const visible = useMemo(() => services.filter((service) => {
     if (type !== "all" && service.type !== type) return false;
     if (!query) return true;
-    const routes = service.proxyPass.map((rule) => [rule.api, rule.service, rule.staticRoot, rule.proxyHost].filter(Boolean).join(" ")).join(" ");
+    const routes = service.rules.map((rule) => [rule.api, rule.service, rule.staticRoot, rule.proxyHost].filter(Boolean).join(" ")).join(" ");
     return [service.name, service.domain, service.type, listenAddress(service), routes].join(" ").toLowerCase().includes(query);
-  }), [config.services, query, type]);
+  }), [query, services, type]);
 
   const counts = {
-    frontend: config.services.filter((service) => service.type === "frontend").length,
-    backend: config.services.filter((service) => service.type === "backend").length,
-    custom: config.services.filter((service) => service.type === "custom").length,
+    frontend: services.filter((service) => service.type === "frontend").length,
+    backend: services.filter((service) => service.type === "backend").length,
+    custom: services.filter((service) => service.type === "custom").length,
+  };
+
+  const remove = (service: ServiceDraft) => {
+    setConfirm({
+      name: service.name || service.originalName || "—",
+      run: () => setServices((current) => current.filter((item) => item.key !== service.key)),
+    });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setNotice("");
+    try {
+      const result = await saveServiceConfig(token ?? "", config.version, services);
+      if (!result.ok) {
+        setNotice(saveErrorText(t, result.error));
+        return;
+      }
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -74,7 +133,7 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
         </div>
         {config.error ? <p className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300 [html.theme-light_&]:text-rose-700">{config.error}</p> : null}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label={t("services.total")} value={config.services.length} />
+          <Stat label={t("services.total")} value={services.length} />
           <Stat label={t("domainConfig.frontend")} value={counts.frontend} />
           <Stat label={t("domainConfig.backend")} value={counts.backend} />
           <Stat label={t("domainConfig.custom")} value={counts.custom} />
@@ -112,29 +171,33 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
       </Panel>
 
       <Panel className="shrink-0 overflow-hidden p-0">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <h2 className="text-lg font-semibold">{t("services.total")}</h2>
-          <span className="text-tertiary text-xs">{visible.length}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-tertiary text-xs">{visible.length}</span>
+            {locked ? null : <button type="button" onClick={() => setEditing(blankService())} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-slate-950">{t("editor.addService")}</button>}
+          </div>
         </div>
         {visible.length === 0 ? (
           <p className="text-secondary px-4 pb-4 text-sm">{t("services.empty")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+            <table className="w-full min-w-[760px] border-collapse text-left text-sm">
               <thead>
                 <tr className="text-tertiary border-t border-[var(--border)] text-xs">
                   <th className="px-4 py-2 font-medium">{t("domainConfig.service")}</th>
                   <th className="px-4 py-2 font-medium">{t("domainConfig.type")}</th>
                   <th className="px-4 py-2 font-medium">{t("domainConfig.domain")}</th>
+                  <th className="px-4 py-2 font-medium">{t("editor.actions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.map((service) => {
                   const listen = listenAddress(service);
                   return (
-                    <tr key={service.name} className="border-t border-[var(--border)] align-top">
+                    <tr key={service.key} className="border-t border-[var(--border)] align-top">
                       <td className="px-4 py-2.5">
-                        <p className="text-primary font-medium">{service.name}</p>
+                        <p className="text-primary font-medium">{service.name || t("domainConfig.unbound")}</p>
                         {listen ? <p className="text-tertiary mt-1 font-mono text-xs">{t("services.listen")} {listen}</p> : null}
                       </td>
                       <td className="px-4 py-2.5">
@@ -143,16 +206,24 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
                       </td>
                       <td className="px-4 py-2.5">
                         <p className="text-secondary break-all font-mono text-xs">{service.domain || t("domainConfig.unbound")}</p>
-                        {service.proxyPass.length > 0 ? (
+                        {service.rules.length > 0 ? (
                           <ul className="mt-2 space-y-1">
-                            {service.proxyPass.map((rule) => (
-                              <li key={`${service.name}-${rule.api}-${rule.service ?? rule.staticRoot ?? "rule"}`} className="text-secondary flex flex-wrap items-baseline gap-x-2 text-xs">
+                            {service.rules.map((rule, index) => (
+                              <li key={`${service.key}-${rule.api}-${index}`} className="text-secondary flex flex-wrap items-baseline gap-x-2 text-xs">
                                 <span className="text-primary font-mono">{rule.api || t("domainConfig.proxy")}</span>
-                                <span className="break-all">{routeText(rule, t)}</span>
+                                <span className="break-all">{routeText(asRule(rule), t)}</span>
                               </li>
                             ))}
                           </ul>
                         ) : null}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {locked ? null : (
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => setEditing(service)} className={actionClass}>{t("editor.edit")}</button>
+                            <button type="button" onClick={() => remove(service)} className={dangerButtonClass}>{t("editor.delete")}</button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -162,6 +233,18 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
           </div>
         )}
       </Panel>
+      <SaveBar dirty={dirty && !locked} saving={saving} notice={notice} onDiscard={() => { setServices(config.services.map(serviceToDraft)); setNotice(""); }} onSave={() => void save()} />
+      {editing ? (
+        <ServiceDialog
+          draft={editing}
+          onClose={() => setEditing(null)}
+          onSubmit={(next) => {
+            setServices((current) => current.some((item) => item.key === next.key) ? current.map((item) => item.key === next.key ? next : item) : [...current, next]);
+            setEditing(null);
+          }}
+        />
+      ) : null}
+      {confirm ? <ConfirmDelete name={confirm.name} onClose={() => setConfirm(null)} onConfirm={() => { confirm.run(); setConfirm(null); }} /> : null}
     </DashboardShell>
   );
 }

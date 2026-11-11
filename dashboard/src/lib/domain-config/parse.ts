@@ -37,6 +37,7 @@ export interface DomainConfigModel {
   bindings: DomainBinding[];
   services: DomainServiceDef[];
   error?: string;
+  version: string;
 }
 
 export function parseHamburger(input: string): HamburgerValue {
@@ -290,7 +291,39 @@ function normalizeService(value: HamburgerValue): DomainServiceDef | null {
   };
 }
 
-export function normalizeDomainConfig(value: HamburgerValue, source: string, runtimeMap?: string): DomainConfigModel {
+export function isBareHamburger(value: string): boolean {
+  if (/^@[A-Za-z_][A-Za-z0-9_]*$/.test(value)) return true;
+  const body = value.startsWith("-") ? value.slice(1) : value;
+  if (!/^\d/.test(body)) return false;
+  if (!/[+\-*/%&|<>]/.test(body)) return false;
+  return /^[\d\s+\-*/%<>()|&@A-Za-z0-9_.]+$/.test(value);
+}
+
+function serializeKey(key: string): string {
+  return /^[A-Za-z_][A-Za-z0-9_.-]*$/.test(key) ? key : JSON.stringify(key);
+}
+
+function serializeValue(value: HamburgerValue, level: number): string {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") return isBareHamburger(value) ? value : JSON.stringify(value);
+  const indent = "  ".repeat(level + 1);
+  const end = "  ".repeat(level);
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "[]";
+    return `[\n${value.map((item) => `${indent}${serializeValue(item, level + 1)}`).join(",\n")}\n${end}]`;
+  }
+  const entries = Object.entries(value);
+  if (entries.length === 0) return "{}";
+  return `{\n${entries.map(([key, child]) => `${indent}${serializeKey(key)}: ${serializeValue(child, level + 1)}`).join(",\n")}\n${end}}`;
+}
+
+export function serializeHamburger(value: HamburgerValue): string {
+  return `${serializeValue(value, 0)}\n`;
+}
+
+export function normalizeDomainConfig(value: HamburgerValue, source: string, runtimeMap?: string): Omit<DomainConfigModel, "version"> {
   if (!isRecord(value)) throw new Error("域名配置根节点必须是对象");
   const services = Array.isArray(value.services) ? value.services.flatMap((item) => {
     const service = normalizeService(item);
