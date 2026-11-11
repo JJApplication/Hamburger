@@ -22,6 +22,7 @@ export interface DomainServiceDef {
   host?: string;
   port?: number;
   domain?: string;
+  preCheck?: boolean;
   proxyPass: ProxyRule[];
 }
 
@@ -72,7 +73,7 @@ export function parseHamburger(input: string): HamburgerValue {
     if (char === "{") return parseObject();
     if (char === "[") return parseArray();
     if (char === '"') return parseString();
-    if (char === "-" || (char >= "0" && char <= "9")) return parseNumber();
+    if (char === "-" || (char >= "0" && char <= "9")) return parseNumberOrExpression();
     return parseWord();
   };
 
@@ -170,6 +171,48 @@ export function parseHamburger(input: string): HamburgerValue {
     return value;
   };
 
+  const readOperator = (from: number): number | null => {
+    const operators = ["<<", ">>", "*", "/", "%", "+", "-", "&", "|"];
+    for (const operator of operators) {
+      if (input.startsWith(operator, from)) return from + operator.length;
+    }
+    return null;
+  };
+
+  // Keep formulas such as `50 * 1<<20` as source text. A bare number stays numeric.
+  const parseNumberOrExpression = (): HamburgerValue => {
+    const start = index;
+    const first = parseNumber();
+    let cursor = index;
+    while (input[cursor] === " " || input[cursor] === "\t") cursor += 1;
+    if (!readOperator(cursor)) return first;
+    index = cursor;
+    while (index < input.length) {
+      while (input[index] === " " || input[index] === "\t") index += 1;
+      const operator = readOperator(index);
+      if (operator) {
+        index = operator;
+        continue;
+      }
+      const current = input[index];
+      if (current === "(" || current === ")") {
+        index += 1;
+        continue;
+      }
+      if (current >= "0" && current <= "9") {
+        parseNumber();
+        continue;
+      }
+      if (current === "@" || (current !== undefined && /[A-Za-z_]/.test(current))) {
+        if (current === "@") index += 1;
+        while (index < input.length && /[A-Za-z0-9_]/.test(input[index])) index += 1;
+        continue;
+      }
+      break;
+    }
+    return input.slice(start, index).trim();
+  };
+
   const parseWord = (): HamburgerValue => {
     const start = index;
     if (input[index] === "@") index += 1;
@@ -186,7 +229,8 @@ export function parseHamburger(input: string): HamburgerValue {
     skip();
     if (input[index] === '"') return parseString();
     const start = index;
-    while (index < input.length && /[A-Za-z0-9_]/.test(input[index])) index += 1;
+    if (!/[A-Za-z_]/.test(input[index] ?? "")) fail("缺少字段名");
+    while (index < input.length && /[A-Za-z0-9_.-]/.test(input[index])) index += 1;
     const key = input.slice(start, index);
     if (!key) fail("缺少字段名");
     return key;
@@ -241,6 +285,7 @@ function normalizeService(value: HamburgerValue): DomainServiceDef | null {
     host: asString(value.host) || undefined,
     port: typeof value.port === "number" ? value.port : undefined,
     domain: asString(value.service_domain) || undefined,
+    preCheck: isRecord(value.pre_check) ? value.pre_check.enabled === true : undefined,
     proxyPass,
   };
 }

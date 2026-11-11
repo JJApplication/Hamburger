@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, FlaskConical, Globe, Home, Languages, LogIn, LogOut, Moon, Network, Settings, Sun, Sandwich, UserCircle } from "lucide-react";
+import { Activity, FlaskConical, FolderOpen, Globe, Home, Languages, LogIn, LogOut, Moon, Network, Server, Settings, ShieldCheck, Sun, Sandwich, UserCircle } from "lucide-react";
 
 import type { MessageKey } from "@/lib/preferences/preferences-context";
 import { usePreferences } from "@/lib/preferences/preferences-context";
@@ -21,6 +21,9 @@ const navItems: ReadonlyArray<{ href: string; key: MessageKey; icon: React.Compo
   { href: "/", key: "nav.overview", icon: Home },
   { href: "/domains", key: "nav.domains", icon: Network },
   { href: "/domain-config", key: "nav.domainConfig", icon: Globe },
+  { href: "/services", key: "nav.services", icon: Server },
+  { href: "/static-config", key: "nav.staticConfig", icon: FolderOpen },
+  { href: "/certificates", key: "nav.certificates", icon: ShieldCheck },
   { href: "/configs", key: "nav.configs", icon: Settings },
   { href: "/experiments", key: "nav.experiments", icon: FlaskConical },
 ];
@@ -105,7 +108,7 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
             <p className="text-secondary text-sm">{subtitle}</p>
             <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
           </header>
-          {!ready ? <section className="panel flex min-h-[560px] items-center justify-center rounded-2xl border lg:min-h-0 lg:flex-1"><p className="text-secondary text-sm">正在恢复登录状态...</p></section> : user ? children : <section className="panel relative flex min-h-[560px] flex-col items-center justify-center overflow-hidden rounded-2xl border bg-[radial-gradient(circle_at_50%_30%,rgba(16,185,129,0.16),transparent_52%)] lg:min-h-0 lg:flex-1"><div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.03)_48%,transparent_100%)]" /><div className="relative z-10 w-full max-w-md"><BurgerScene compact paused={loginOpen} /><div className="mt-8 text-center"><p className="text-secondary text-xs uppercase tracking-[0.3em]">Hamburger Gateway</p><h2 className="mt-2 text-2xl font-semibold">登录后管理你的网关</h2><p className="text-secondary mx-auto mt-2 max-w-md text-sm">统计、域名连接、域名配置、运行配置和实验能力都会在登录后加载。</p><button type="button" onClick={() => setLoginOpen(true)} className="mt-5 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400">开始登录</button></div></div></section>}
+          {!ready ? <section className="panel flex min-h-[560px] items-center justify-center rounded-2xl border lg:min-h-0 lg:flex-1"><p className="text-secondary text-sm">正在恢复登录状态...</p></section> : user ? children : <section className="panel relative flex min-h-[560px] flex-col items-center justify-center overflow-hidden rounded-2xl border bg-[radial-gradient(circle_at_50%_30%,rgba(16,185,129,0.16),transparent_52%)] lg:min-h-0 lg:flex-1"><div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.03)_48%,transparent_100%)]" /><div className="relative z-10 w-full max-w-md"><BurgerScene compact paused={loginOpen} /><div className="mt-8 text-center"><p className="text-secondary text-xs uppercase tracking-[0.3em]">Hamburger Gateway</p><h2 className="mt-2 text-2xl font-semibold">登录后管理你的网关</h2><p className="text-secondary mx-auto mt-2 max-w-md text-sm">统计、域名连接、域名配置、服务配置、静态配置、证书检查、运行配置和实验能力都会在登录后加载。</p><button type="button" onClick={() => setLoginOpen(true)} className="mt-5 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400">开始登录</button></div></div></section>}
         </main>
       </div>
       {loginOpen ? <LoginDialog onClose={() => setLoginOpen(false)} /> : null}
