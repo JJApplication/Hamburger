@@ -29,6 +29,7 @@ type managementApplyRequest struct {
 func RegisterManagement(engine *gin.Engine, svc *service.APIService, auth gin.HandlerFunc) {
 	group := engine.Group("/api/management", auth)
 	group.GET("/domains", func(c *gin.Context) { handleManagementDomains(c, svc) })
+	group.POST("/domains/probe", func(c *gin.Context) { handleManagementDomainProbe(c, svc) })
 	group.POST("/domains/state", func(c *gin.Context) { handleManagementDomainState(c, svc) })
 	group.GET("/config", func(c *gin.Context) { handleManagementConfigGet(c, svc) })
 	group.PUT("/config", func(c *gin.Context) { handleManagementConfigPut(c, svc) })
@@ -38,6 +39,20 @@ func RegisterManagement(engine *gin.Engine, svc *service.APIService, auth gin.Ha
 
 func handleManagementDomains(c *gin.Context, svc *service.APIService) {
 	c.JSON(http.StatusOK, gin.H{"domains": svc.GetManagementDomains()})
+}
+
+func handleManagementDomainProbe(c *gin.Context, svc *service.APIService) {
+	var req managementDomainStateRequest
+	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Domain) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		return
+	}
+	result, err := svc.ProbeManagementDomain(req.Domain)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func handleManagementDomainState(c *gin.Context, svc *service.APIService) {

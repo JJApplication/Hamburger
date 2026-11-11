@@ -56,6 +56,11 @@ export async function fetchManagementDomains(token: string): Promise<{ domains: 
   return { domains };
 }
 export async function setDomainState(domain: string, state: "start" | "stop", token: string): Promise<void> { await request("/api/management/domains/state", { method: "POST", body: JSON.stringify({ domain, state }) }, token); }
+export async function probeDomain(domain: string, token: string): Promise<{ status: DomainConnection["status"]; lastProbe: string }> {
+  const response = await request<{ status?: string; last_probe?: string }>("/api/management/domains/probe", { method: "POST", body: JSON.stringify({ domain }) }, token);
+  const status = response.status === "online" || response.status === "offline" || response.status === "warning" ? response.status : "unknown";
+  return { status, lastProbe: String(response.last_probe ?? "") };
+}
 export async function fetchManagementConfig(token: string): Promise<ManagementConfig> { return request("/api/management/config", {}, token); }
 export async function saveManagementConfig(payload: { version: string; values: Record<string, unknown> }, token: string): Promise<ManagementConfig> { return request("/api/management/config", { method: "PUT", body: JSON.stringify(payload) }, token); }
 export async function applyManagementConfig(services: string[], token: string): Promise<{ operation_id: string }> { return request("/api/management/config/apply", { method: "POST", body: JSON.stringify({ services }) }, token); }

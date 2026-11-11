@@ -50,6 +50,9 @@ export type MessageKey =
   | "domain.status.warning"
   | "domain.status.offline"
   | "domain.status.unknown"
+  | "domain.probe"
+  | "domain.probing"
+  | "domain.probeDone"
   | "common.loading"
   | "common.retry"
   | "configs.title"
@@ -154,6 +157,9 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "domain.status.warning": "告警",
     "domain.status.offline": "离线",
     "domain.status.unknown": "未知",
+    "domain.probe": "探测",
+    "domain.probing": "探测中",
+    "domain.probeDone": "探测完成",
     "common.loading": "正在加载网关数据...",
     "common.retry": "重新加载",
     "configs.title": "网关配置中心",
@@ -249,6 +255,9 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "domain.status.warning": "Warning",
     "domain.status.offline": "Offline",
     "domain.status.unknown": "Unknown",
+    "domain.probe": "Probe",
+    "domain.probing": "Probing",
+    "domain.probeDone": "Probe finished",
     "common.loading": "Loading gateway data...",
     "common.retry": "Reload",
     "configs.title": "Gateway Config Center",
