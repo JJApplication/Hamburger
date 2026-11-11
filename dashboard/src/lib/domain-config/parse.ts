@@ -1,0 +1,263 @@
+export type HamburgerValue =
+  | null
+  | boolean
+  | number
+  | string
+  | HamburgerValue[]
+  | { [key: string]: HamburgerValue };
+
+export interface ProxyRule {
+  api: string;
+  service?: string;
+  useRewrite: boolean;
+  rewrite?: string;
+  staticRoot?: string;
+  proxyHost?: string;
+  proxyPort?: number;
+}
+
+export interface DomainServiceDef {
+  name: string;
+  type: string;
+  host?: string;
+  port?: number;
+  domain?: string;
+  proxyPass: ProxyRule[];
+}
+
+export interface DomainBinding {
+  domain: string;
+  service: string;
+}
+
+export interface DomainConfigModel {
+  source: string;
+  runtimeMap?: string;
+  bindings: DomainBinding[];
+  services: DomainServiceDef[];
+  error?: string;
+}
+
+export function parseHamburger(input: string): HamburgerValue {
+  let index = 0;
+
+  const skip = () => {
+    while (index < input.length) {
+      const char = input[index];
+      if (char === " " || char === "\t" || char === "\n" || char === "\r") {
+        index += 1;
+        continue;
+      }
+      if (char === "#") {
+        while (index < input.length && input[index] !== "\n") index += 1;
+        continue;
+      }
+      if (char === "/" && input[index + 1] === "/") {
+        while (index < input.length && input[index] !== "\n") index += 1;
+        continue;
+      }
+      break;
+    }
+  };
+
+  const fail = (message: string): never => {
+    const line = input.slice(0, index).split("\n").length;
+    throw new Error(`${message}（第 ${line} 行）`);
+  };
+
+  const parseValue = (): HamburgerValue => {
+    skip();
+    if (index >= input.length) fail("配置意外结束");
+    const char = input[index];
+    if (char === "{") return parseObject();
+    if (char === "[") return parseArray();
+    if (char === '"') return parseString();
+    if (char === "-" || (char >= "0" && char <= "9")) return parseNumber();
+    return parseWord();
+  };
+
+  const parseObject = (): { [key: string]: HamburgerValue } => {
+    index += 1;
+    const result: { [key: string]: HamburgerValue } = {};
+    skip();
+    if (input[index] === "}") {
+      index += 1;
+      return result;
+    }
+    while (index < input.length) {
+      const key = parseKey();
+      skip();
+      if (input[index] !== ":") fail("对象字段后缺少冒号");
+      index += 1;
+      result[key] = parseValue();
+      skip();
+      if (input[index] === ",") {
+        index += 1;
+        skip();
+        if (input[index] === "}") {
+          index += 1;
+          return result;
+        }
+        continue;
+      }
+      if (input[index] === "}") {
+        index += 1;
+        return result;
+      }
+      return fail("对象字段后缺少逗号或结束括号");
+    }
+    return fail("对象没有结束");
+  };
+
+  const parseArray = (): HamburgerValue[] => {
+    index += 1;
+    const result: HamburgerValue[] = [];
+    skip();
+    if (input[index] === "]") {
+      index += 1;
+      return result;
+    }
+    while (index < input.length) {
+      result.push(parseValue());
+      skip();
+      if (input[index] === ",") {
+        index += 1;
+        skip();
+        if (input[index] === "]") {
+          index += 1;
+          return result;
+        }
+        continue;
+      }
+      if (input[index] === "]") {
+        index += 1;
+        return result;
+      }
+      return fail("数组元素后缺少逗号或结束括号");
+    }
+    return fail("数组没有结束");
+  };
+
+  const parseString = (): string => {
+    index += 1;
+    let value = "";
+    while (index < input.length) {
+      const char = input[index];
+      if (char === '"') {
+        index += 1;
+        return value;
+      }
+      if (char === "\\") {
+        const next = input[index + 1];
+        const escaped: Record<string, string> = { n: "\n", t: "\t", r: "\r", '"': '"', "\\": "\\" };
+        value += escaped[next] ?? next ?? "";
+        index += 2;
+        continue;
+      }
+      value += char;
+      index += 1;
+    }
+    return fail("字符串没有结束");
+  };
+
+  const parseNumber = (): number => {
+    const start = index;
+    if (input[index] === "-") index += 1;
+    while (index < input.length && /[0-9.]/.test(input[index])) index += 1;
+    const raw = input.slice(start, index);
+    const value = Number(raw);
+    if (!raw || Number.isNaN(value)) fail(`无法解析数字 ${raw}`);
+    return value;
+  };
+
+  const parseWord = (): HamburgerValue => {
+    const start = index;
+    if (input[index] === "@") index += 1;
+    while (index < input.length && /[A-Za-z0-9_+\-./]/.test(input[index])) index += 1;
+    const word = input.slice(start, index);
+    if (word === "true") return true;
+    if (word === "false") return false;
+    if (word === "null") return null;
+    if (!word) fail("遇到无法识别的内容");
+    return word;
+  };
+
+  const parseKey = (): string => {
+    skip();
+    if (input[index] === '"') return parseString();
+    const start = index;
+    while (index < input.length && /[A-Za-z0-9_]/.test(input[index])) index += 1;
+    const key = input.slice(start, index);
+    if (!key) fail("缺少字段名");
+    return key;
+  };
+
+  const value = parseValue();
+  skip();
+  if (index < input.length) fail("配置结束后还有多余内容");
+  return value;
+}
+
+function isRecord(value: HamburgerValue | undefined): value is { [key: string]: HamburgerValue } {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asString(value: HamburgerValue | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeProxy(value: HamburgerValue): ProxyRule | null {
+  if (!isRecord(value)) return null;
+  const staticDirect = isRecord(value.static_direct) ? value.static_direct : null;
+  const proxyDirect = isRecord(value.proxy_direct) ? value.proxy_direct : null;
+  const api = asString(value.api);
+  const service = asString(value.service);
+  const staticRoot = staticDirect ? asString(staticDirect.static_root) : "";
+  const proxyHost = proxyDirect ? asString(proxyDirect.proxy_host) : "";
+  const proxyPort = proxyDirect && typeof proxyDirect.proxy_port === "number" ? proxyDirect.proxy_port : undefined;
+  if (!api && !service && !staticRoot && !proxyHost) return null;
+  return {
+    api,
+    service: service || undefined,
+    useRewrite: value.use_rewrite === true,
+    rewrite: asString(value.rewrite) || undefined,
+    staticRoot: staticRoot || undefined,
+    proxyHost: proxyHost || undefined,
+    proxyPort,
+  };
+}
+
+function normalizeService(value: HamburgerValue): DomainServiceDef | null {
+  if (!isRecord(value)) return null;
+  const name = asString(value.service_name);
+  if (!name) return null;
+  const proxyPass = Array.isArray(value.proxy_pass) ? value.proxy_pass.flatMap((item) => {
+    const rule = normalizeProxy(item);
+    return rule ? [rule] : [];
+  }) : [];
+  return {
+    name,
+    type: asString(value.service_type) || "custom",
+    host: asString(value.host) || undefined,
+    port: typeof value.port === "number" ? value.port : undefined,
+    domain: asString(value.service_domain) || undefined,
+    proxyPass,
+  };
+}
+
+export function normalizeDomainConfig(value: HamburgerValue, source: string, runtimeMap?: string): DomainConfigModel {
+  if (!isRecord(value)) throw new Error("域名配置根节点必须是对象");
+  const services = Array.isArray(value.services) ? value.services.flatMap((item) => {
+    const service = normalizeService(item);
+    return service ? [service] : [];
+  }) : [];
+  const bindings = Array.isArray(value.domain_service)
+    ? value.domain_service.flatMap((item) => {
+        if (!isRecord(item)) return [];
+        const domain = asString(item.domain);
+        const service = asString(item.service);
+        return domain && service ? [{ domain, service }] : [];
+      })
+    : services.flatMap((service) => (service.domain ? [{ domain: service.domain, service: service.name }] : []));
+  return { source, runtimeMap, bindings, services };
+}

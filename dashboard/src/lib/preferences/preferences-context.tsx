@@ -9,6 +9,7 @@ export type ThemeMode = "dark" | "light";
 export type MessageKey =
   | "nav.overview"
   | "nav.domains"
+  | "nav.domainConfig"
   | "nav.configs"
   | "nav.experiments"
   | "brand.console"
@@ -76,7 +77,29 @@ export type MessageKey =
   | "experiments.subtitle"
   | "experiments.risk"
   | "experiments.enabled"
-  | "experiments.disabled";
+  | "experiments.disabled"
+  | "domainConfig.title"
+  | "domainConfig.subtitle"
+  | "domainConfig.source"
+  | "domainConfig.runtimeMap"
+  | "domainConfig.mappings"
+  | "domainConfig.services"
+  | "domainConfig.search"
+  | "domainConfig.filterAll"
+  | "domainConfig.frontend"
+  | "domainConfig.backend"
+  | "domainConfig.custom"
+  | "domainConfig.domain"
+  | "domainConfig.service"
+  | "domainConfig.type"
+  | "domainConfig.empty"
+  | "domainConfig.unbound"
+  | "domainConfig.undefined"
+  | "domainConfig.proxy"
+  | "domainConfig.static"
+  | "domainConfig.forward"
+  | "domainConfig.rewrite"
+  | "domainConfig.noProxy";
 
 interface I18nContextValue {
   locale: Locale;
@@ -90,6 +113,7 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
   zh: {
     "nav.overview": "总览",
     "nav.domains": "域名连接",
+    "nav.domainConfig": "域名配置",
     "nav.configs": "网关配置",
     "nav.experiments": "实验特性",
     "brand.console": "网关控制台",
@@ -158,10 +182,33 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "experiments.risk": "风险",
     "experiments.enabled": "已启用（点击关闭）",
     "experiments.disabled": "已关闭（点击启用）",
+    "domainConfig.title": "域名配置",
+    "domainConfig.subtitle": "域名映射与服务定义",
+    "domainConfig.source": "配置来源",
+    "domainConfig.runtimeMap": "网关当前加载的域名映射是 {file}",
+    "domainConfig.mappings": "域名映射",
+    "domainConfig.services": "服务定义",
+    "domainConfig.search": "搜索域名、服务或转发路径",
+    "domainConfig.filterAll": "全部类型",
+    "domainConfig.frontend": "前端",
+    "domainConfig.backend": "后端",
+    "domainConfig.custom": "自定义",
+    "domainConfig.domain": "域名",
+    "domainConfig.service": "服务",
+    "domainConfig.type": "类型",
+    "domainConfig.empty": "没有匹配的域名配置。",
+    "domainConfig.unbound": "未绑定域名",
+    "domainConfig.undefined": "未定义",
+    "domainConfig.proxy": "转发",
+    "domainConfig.static": "静态目录",
+    "domainConfig.forward": "转发到",
+    "domainConfig.rewrite": "重写",
+    "domainConfig.noProxy": "未配置目标",
   },
   en: {
     "nav.overview": "Overview",
     "nav.domains": "Domains",
+    "nav.domainConfig": "Domain Config",
     "nav.configs": "Configurations",
     "nav.experiments": "Experiments",
     "brand.console": "Gateway Console",
@@ -230,6 +277,28 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "experiments.risk": "Risk",
     "experiments.enabled": "Enabled (Click to Disable)",
     "experiments.disabled": "Disabled (Click to Enable)",
+    "domainConfig.title": "Domain Configuration",
+    "domainConfig.subtitle": "Domain mappings and service definitions",
+    "domainConfig.source": "Source",
+    "domainConfig.runtimeMap": "The gateway currently loads {file}",
+    "domainConfig.mappings": "Domain mappings",
+    "domainConfig.services": "Service definitions",
+    "domainConfig.search": "Search domain, service, or route",
+    "domainConfig.filterAll": "All types",
+    "domainConfig.frontend": "Frontend",
+    "domainConfig.backend": "Backend",
+    "domainConfig.custom": "Custom",
+    "domainConfig.domain": "Domain",
+    "domainConfig.service": "Service",
+    "domainConfig.type": "Type",
+    "domainConfig.empty": "No domain configuration matched.",
+    "domainConfig.unbound": "No domain bound",
+    "domainConfig.undefined": "Undefined",
+    "domainConfig.proxy": "Route",
+    "domainConfig.static": "Static root",
+    "domainConfig.forward": "Forward to",
+    "domainConfig.rewrite": "Rewrite",
+    "domainConfig.noProxy": "No target",
   },
 };
 
