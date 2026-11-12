@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, FlaskConical, FolderOpen, Globe, Home, Languages, LogIn, LogOut, Moon, Network, Server, Settings, ShieldCheck, Sun, Sandwich, UserCircle } from "lucide-react";
+import { Activity, FlaskConical, FolderOpen, Globe, Home, Info, Languages, Layers, LogIn, LogOut, Moon, Network, Server, Settings, Shield, ShieldCheck, Sun, Sandwich, UserCircle } from "lucide-react";
 
 import type { MessageKey } from "@/lib/preferences/preferences-context";
 import { usePreferences } from "@/lib/preferences/preferences-context";
 import { useAuth } from "@/lib/auth/auth-context";
 import { LoginDialog } from "@/components/auth/login-dialog";
+import { AboutDialog } from "@/components/layout/about-dialog";
 import { BurgerScene } from "@/components/visuals/burger-scene";
 
 interface DashboardShellProps {
@@ -23,6 +24,8 @@ const navItems: ReadonlyArray<{ href: string; key: MessageKey; icon: React.Compo
   { href: "/domain-config", key: "nav.domainConfig", icon: Globe },
   { href: "/services", key: "nav.services", icon: Server },
   { href: "/static-config", key: "nav.staticConfig", icon: FolderOpen },
+  { href: "/middleware", key: "nav.middleware", icon: Layers },
+  { href: "/security", key: "nav.security", icon: Shield },
   { href: "/certificates", key: "nav.certificates", icon: ShieldCheck },
   { href: "/configs", key: "nav.configs", icon: Settings },
   { href: "/experiments", key: "nav.experiments", icon: FlaskConical },
@@ -34,12 +37,13 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
   const { locale, setLocale, theme, setTheme, t } = usePreferences();
   const { user, ready, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <div className="app-bg min-h-screen lg:h-dvh lg:overflow-hidden">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 p-4 lg:h-full lg:grid-cols-[248px_1fr] lg:p-6">
-        <aside className="panel flex min-h-0 flex-col rounded-2xl border p-4 lg:h-full lg:overflow-y-auto">
-          <div className="mb-6 flex items-center gap-3 px-2">
+    <div className="app-bg h-dvh overflow-hidden">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col gap-6 p-4 lg:flex-row lg:p-6">
+        <aside className="panel flex max-h-[42dvh] min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border p-4 lg:max-h-none lg:w-[248px] lg:self-stretch">
+          <div className="mb-6 flex shrink-0 items-center gap-3 px-2">
             <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-400">
               <Activity size={20} />
             </div>
@@ -48,7 +52,7 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
               <p className="text-lg font-semibold">{t("brand.console")}</p>
             </div>
           </div>
-          <nav className="space-y-1">
+          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -69,7 +73,7 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
               );
             })}
           </nav>
-          <div className="mt-auto border-t border-[var(--border)] pt-4">
+          <div className="mt-4 shrink-0 border-t border-[var(--border)] pt-4">
             {user ? <div className="mb-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 text-sm"><span className="flex min-w-0 items-center gap-2"><UserCircle size={17} className="text-emerald-300" /><span className="truncate">{user.nickname || user.username}</span></span><button type="button" onClick={() => void logout()} className="text-secondary rounded-lg p-1.5 hover:text-rose-300" title="退出登录" aria-label="退出登录"><LogOut size={15} /></button></div> : <button type="button" onClick={() => setLoginOpen(true)} className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"><LogIn size={16} />登录管理面板</button>}
             <div className="flex items-center justify-start gap-2">
             <button
@@ -99,11 +103,20 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
             >
               <Sandwich size={16} />
             </button>
+            <button
+              type="button"
+              title={t("controls.about")}
+              aria-label={t("controls.about")}
+              onClick={() => setAboutOpen(true)}
+              className="panel-soft text-primary flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] transition hover:opacity-85"
+            >
+              <Info size={16} />
+            </button>
             </div>
           </div>
         </aside>
 
-        <main className="flex min-h-0 flex-col gap-5 lg:h-full lg:overflow-y-auto">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-y-contain">
           <header className="panel rounded-2xl border p-5">
             <p className="text-secondary text-sm">{subtitle}</p>
             <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
@@ -112,6 +125,7 @@ export function DashboardShell({ title, subtitle, children }: DashboardShellProp
         </main>
       </div>
       {loginOpen ? <LoginDialog onClose={() => setLoginOpen(false)} /> : null}
+      {aboutOpen ? <AboutDialog onClose={() => setAboutOpen(false)} /> : null}
     </div>
   );
 }

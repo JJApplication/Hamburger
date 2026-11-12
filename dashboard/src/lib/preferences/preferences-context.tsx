@@ -14,12 +14,73 @@ export type MessageKey =
   | "nav.staticConfig"
   | "nav.certificates"
   | "nav.configs"
+  | "nav.middleware"
+  | "nav.security"
   | "nav.experiments"
+  | "security.title"
+  | "security.subtitle"
+  | "security.access"
+  | "security.headers"
+  | "security.strictMode"
+  | "security.strictHint"
+  | "security.allowIps"
+  | "security.denyIps"
+  | "security.rateLimit"
+  | "security.maxQuerySize"
+  | "security.maxQueryHint"
+  | "security.whiteList"
+  | "security.whiteListHint"
+  | "security.hsts"
+  | "security.hstsHint"
+  | "security.hstsSubdomain"
+  | "security.hstsPreload"
+  | "security.xss"
+  | "security.iframe"
+  | "security.iframeHint"
+  | "security.sameSite"
+  | "security.onePerLine"
+  | "middleware.title"
+  | "middleware.subtitle"
+  | "middleware.cors"
+  | "middleware.trace"
+  | "middleware.secureHeader"
+  | "middleware.noCache"
+  | "middleware.gzip"
+  | "middleware.zstd"
+  | "middleware.sanitizer"
+  | "middleware.domainCheck"
+  | "middleware.imageProtect"
+  | "middleware.errorPage"
+  | "middleware.errorMode"
+  | "middleware.pageCache"
+  | "middleware.pagePath"
+  | "middleware.addPage"
+  | "middleware.modeText"
+  | "middleware.modeJson"
+  | "middleware.modeHtml"
+  | "middleware.modeInternal"
+  | "middleware.enabled"
+  | "middleware.level"
+  | "middleware.threshold"
+  | "middleware.types"
+  | "middleware.traceId"
+  | "middleware.methods"
+  | "middleware.origins"
+  | "middleware.headers"
+  | "middleware.imageTypes"
+  | "middleware.allowReferer"
+  | "middleware.statusCode"
+  | "middleware.onePerLine"
   | "brand.console"
   | "controls.lang"
   | "controls.theme"
   | "controls.themeDark"
   | "controls.themeLight"
+  | "controls.about"
+  | "about.title"
+  | "about.summary"
+  | "about.site"
+  | "about.panel"
   | "overview.title"
   | "overview.subtitle"
   | "overview.totalConnections"
@@ -111,6 +172,7 @@ export type MessageKey =
   | "services.runtimeMap"
   | "services.total"
   | "services.listen"
+  | "services.noRuntimePort"
   | "services.precheck"
   | "services.empty"
   | "staticConfig.title"
@@ -254,12 +316,73 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "nav.staticConfig": "静态配置",
     "nav.certificates": "证书检查",
     "nav.configs": "网关配置",
+    "nav.middleware": "中间件配置",
+    "nav.security": "安全配置",
     "nav.experiments": "实验特性",
+    "security.title": "安全配置",
+    "security.subtitle": "配置网关安全策略及其参数",
+    "security.access": "访问控制",
+    "security.headers": "响应安全头",
+    "security.strictMode": "严格模式",
+    "security.strictHint": "错误页按真实状态码返回",
+    "security.allowIps": "允许的 IP",
+    "security.denyIps": "拒绝的 IP",
+    "security.rateLimit": "速率限制",
+    "security.maxQuerySize": "请求大小上限（字节）",
+    "security.maxQueryHint": "限制请求路径和查询串。0 表示默认 2048 字节",
+    "security.whiteList": "域名白名单",
+    "security.whiteListHint": "每行一个域名，支持 *.renj.io",
+    "security.hsts": "HSTS",
+    "security.hstsHint": "发送 Strict-Transport-Security",
+    "security.hstsSubdomain": "包含子域名",
+    "security.hstsPreload": "预加载",
+    "security.xss": "XSS 防护",
+    "security.iframe": "禁止 iframe 嵌入",
+    "security.iframeHint": "白名单中的域名仍允许被嵌入",
+    "security.sameSite": "SameSite Cookie",
+    "security.onePerLine": "每行一项",
+    "middleware.title": "中间件配置",
+    "middleware.subtitle": "配置网关中间件及其参数",
+    "middleware.cors": "CORS 支持",
+    "middleware.trace": "请求追踪",
+    "middleware.secureHeader": "安全响应头",
+    "middleware.noCache": "禁用缓存",
+    "middleware.gzip": "Gzip 压缩",
+    "middleware.zstd": "Zstd 压缩",
+    "middleware.sanitizer": "请求头清洗",
+    "middleware.domainCheck": "域名校验",
+    "middleware.imageProtect": "图片防盗链",
+    "middleware.errorPage": "错误页面",
+    "middleware.errorMode": "错误页格式",
+    "middleware.pageCache": "页面缓存",
+    "middleware.pagePath": "页面路径",
+    "middleware.addPage": "添加页面",
+    "middleware.modeText": "纯文本",
+    "middleware.modeJson": "JSON",
+    "middleware.modeHtml": "自定义 HTML",
+    "middleware.modeInternal": "内置 HTML",
+    "middleware.enabled": "启用",
+    "middleware.level": "压缩级别",
+    "middleware.threshold": "压缩阈值（字节）",
+    "middleware.types": "压缩类型",
+    "middleware.traceId": "追踪头名称",
+    "middleware.methods": "允许的方法",
+    "middleware.origins": "允许的来源",
+    "middleware.headers": "允许的请求头",
+    "middleware.imageTypes": "图片类型",
+    "middleware.allowReferer": "允许的 Referer",
+    "middleware.statusCode": "状态码",
+    "middleware.onePerLine": "每行一项",
     "brand.console": "网关控制台",
     "controls.lang": "中/EN",
     "controls.theme": "主题",
     "controls.themeDark": "暗黑",
     "controls.themeLight": "明亮",
+    "controls.about": "关于",
+    "about.title": "关于",
+    "about.summary": "基于 Go 的网关与代理编排服务，用来管理前后端代理、证书、中间件和实验特性。",
+    "about.site": "官网",
+    "about.panel": "管理面板",
     "overview.title": "网关总览",
     "overview.subtitle": "网关健康与流量概览",
     "overview.totalConnections": "总连接数",
@@ -351,6 +474,7 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "services.runtimeMap": "主配置的 domain_map 指向 {file}",
     "services.total": "服务",
     "services.listen": "监听",
+    "services.noRuntimePort": "未登记运行端口",
     "services.precheck": "前置检查",
     "services.empty": "没有匹配的服务。",
     "staticConfig.title": "静态配置",
@@ -485,12 +609,73 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "nav.staticConfig": "Static Sites",
     "nav.certificates": "Certificates",
     "nav.configs": "Configurations",
+    "nav.middleware": "Middleware",
+    "nav.security": "Security",
     "nav.experiments": "Experiments",
+    "security.title": "Security",
+    "security.subtitle": "Configure gateway security policy and its parameters",
+    "security.access": "Access control",
+    "security.headers": "Response headers",
+    "security.strictMode": "Strict mode",
+    "security.strictHint": "Error pages keep the real status code",
+    "security.allowIps": "Allowed IPs",
+    "security.denyIps": "Denied IPs",
+    "security.rateLimit": "Rate limit",
+    "security.maxQuerySize": "Request target limit (bytes)",
+    "security.maxQueryHint": "Limits the path and query string. 0 uses the default of 2048 bytes",
+    "security.whiteList": "Domain allowlist",
+    "security.whiteListHint": "One domain per line. Wildcards such as *.renj.io are supported",
+    "security.hsts": "HSTS",
+    "security.hstsHint": "Sends Strict-Transport-Security",
+    "security.hstsSubdomain": "Include subdomains",
+    "security.hstsPreload": "Preload",
+    "security.xss": "XSS protection",
+    "security.iframe": "Block iframe embedding",
+    "security.iframeHint": "Allowlisted domains can still be embedded",
+    "security.sameSite": "SameSite cookie",
+    "security.onePerLine": "One item per line",
+    "middleware.title": "Middleware",
+    "middleware.subtitle": "Configure gateway middleware and its parameters",
+    "middleware.cors": "CORS",
+    "middleware.trace": "Trace",
+    "middleware.secureHeader": "Secure Headers",
+    "middleware.noCache": "No Cache",
+    "middleware.gzip": "Gzip",
+    "middleware.zstd": "Zstd",
+    "middleware.sanitizer": "Header Sanitizer",
+    "middleware.domainCheck": "Domain Check",
+    "middleware.imageProtect": "Image Protection",
+    "middleware.errorPage": "Error pages",
+    "middleware.errorMode": "Error format",
+    "middleware.pageCache": "Page cache",
+    "middleware.pagePath": "Page path",
+    "middleware.addPage": "Add page",
+    "middleware.modeText": "Plain text",
+    "middleware.modeJson": "JSON",
+    "middleware.modeHtml": "Custom HTML",
+    "middleware.modeInternal": "Built-in HTML",
+    "middleware.enabled": "Enabled",
+    "middleware.level": "Level",
+    "middleware.threshold": "Threshold (bytes)",
+    "middleware.types": "MIME types",
+    "middleware.traceId": "Trace header",
+    "middleware.methods": "Allowed methods",
+    "middleware.origins": "Allowed origins",
+    "middleware.headers": "Allowed headers",
+    "middleware.imageTypes": "Image types",
+    "middleware.allowReferer": "Allowed referers",
+    "middleware.statusCode": "Status code",
+    "middleware.onePerLine": "One item per line",
     "brand.console": "Gateway Console",
     "controls.lang": "EN/中",
     "controls.theme": "Theme",
     "controls.themeDark": "Dark",
     "controls.themeLight": "Light",
+    "controls.about": "About",
+    "about.title": "About",
+    "about.summary": "A Go gateway and proxy orchestrator for frontend and backend proxying, certificates, middleware, and experiments.",
+    "about.site": "Website",
+    "about.panel": "Console",
     "overview.title": "Gateway Overview",
     "overview.subtitle": "Gateway Health & Traffic Overview",
     "overview.totalConnections": "Total Connections",
@@ -582,6 +767,7 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "services.runtimeMap": "The main config domain_map points to {file}",
     "services.total": "Services",
     "services.listen": "Listen",
+    "services.noRuntimePort": "No runtime port",
     "services.precheck": "Pre-check",
     "services.empty": "No service matched.",
     "staticConfig.title": "Static Configuration",

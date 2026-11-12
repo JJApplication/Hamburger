@@ -319,8 +319,12 @@ function serializeValue(value: HamburgerValue, level: number): string {
   return `{\n${entries.map(([key, child]) => `${indent}${serializeKey(key)}: ${serializeValue(child, level + 1)}`).join(",\n")}\n${end}}`;
 }
 
+export function serializeHamburgerBlock(value: HamburgerValue, level = 0): string {
+  return serializeValue(value, level);
+}
+
 export function serializeHamburger(value: HamburgerValue): string {
-  return `${serializeValue(value, 0)}\n`;
+  return `${serializeHamburgerBlock(value, 0)}\n`;
 }
 
 export function normalizeDomainConfig(value: HamburgerValue, source: string, runtimeMap?: string): Omit<DomainConfigModel, "version"> {

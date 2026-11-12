@@ -138,6 +138,16 @@ func (s *APIService) GetManagementDomains() []ManagementDomain {
 	return items
 }
 
+// GetServicePorts returns the live backend listen ports keyed by service name.
+// These ports come from the Mongo service registry, not from the hamburger file.
+func (s *APIService) GetServicePorts() map[string][]int {
+	ports := runtime.GetDomainPortsSnapshot()
+	if ports == nil {
+		return map[string][]int{}
+	}
+	return ports
+}
+
 func managementFormatTarget(host string, port int) string {
 	host = strings.TrimSpace(host)
 	if host == "" {

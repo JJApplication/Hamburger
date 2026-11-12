@@ -61,6 +61,14 @@ export async function probeDomain(domain: string, token: string): Promise<{ stat
   const status = response.status === "online" || response.status === "offline" || response.status === "warning" ? response.status : "unknown";
   return { status, lastProbe: String(response.last_probe ?? "") };
 }
+export async function fetchServicePorts(token: string): Promise<Record<string, number[]>> {
+  const response = await request<{ ports?: Record<string, number[]> }>("/api/management/service-ports", {}, token);
+  const ports: Record<string, number[]> = {};
+  for (const [name, values] of Object.entries(response.ports ?? {})) {
+    ports[name] = (values ?? []).map((value) => Number(value)).filter((value) => Number.isFinite(value) && value > 0);
+  }
+  return ports;
+}
 export async function fetchManagementConfig(token: string): Promise<ManagementConfig> { return request("/api/management/config", {}, token); }
 export async function saveManagementConfig(payload: { version: string; values: Record<string, unknown> }, token: string): Promise<ManagementConfig> { return request("/api/management/config", { method: "PUT", body: JSON.stringify(payload) }, token); }
 export async function applyManagementConfig(services: string[], token: string): Promise<{ operation_id: string }> { return request("/api/management/config/apply", { method: "POST", body: JSON.stringify({ services }) }, token); }

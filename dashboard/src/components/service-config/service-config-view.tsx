@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ConfirmDelete, dangerButtonClass } from "@/components/config-editor/confirm-delete";
@@ -8,6 +8,7 @@ import { SaveBar, saveErrorText } from "@/components/config-editor/save-bar";
 import { ServiceDialog } from "@/components/config-editor/service-dialog";
 import { Panel } from "@/components/common/panel";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { fetchServicePorts } from "@/lib/api/gateway";
 import { saveServiceConfig } from "@/lib/config-edit/actions";
 import { blankService, serviceToDraft, type RuleDraft, type ServiceDraft } from "@/lib/config-edit/model";
 import type { DomainConfigModel, ProxyRule } from "@/lib/domain-config/parse";
@@ -42,6 +43,20 @@ function listenAddress(service: ServiceDraft): string {
   return service.host || service.port;
 }
 
+function runtimeAddresses(name: string, ports: Record<string, number[]> | null): string {
+  if (!ports || !name) return "";
+  return (ports[name] ?? []).map((port) => `127.0.0.1:${port}`).join(", ");
+}
+
+function forwardAddress(rule: ProxyRule, services: ServiceDraft[], ports: Record<string, number[]> | null): string {
+  if (!rule.service) return "";
+  const target = services.find((service) => service.name === rule.service);
+  if (target && (target.type === "custom" || target.type === "frontend") && target.host && target.port) {
+    return `${target.host}:${target.port}`;
+  }
+  return runtimeAddresses(rule.service, ports);
+}
+
 function asRule(rule: RuleDraft): ProxyRule {
   const port = Number(rule.proxyPort);
   return {
@@ -55,11 +70,12 @@ function asRule(rule: RuleDraft): ProxyRule {
   };
 }
 
-function routeText(rule: ProxyRule, t: (key: MessageKey) => string): string {
+function routeText(rule: ProxyRule, services: ServiceDraft[], ports: Record<string, number[]> | null, t: (key: MessageKey) => string): string {
+  const runtime = forwardAddress(rule, services, ports);
   const target = rule.staticRoot
     ? `${t("domainConfig.static")} ${rule.staticRoot}`
     : rule.service
-      ? `${t("domainConfig.forward")} ${rule.service}`
+      ? `${t("domainConfig.forward")} ${rule.service}${runtime ? ` ${runtime}` : ""}`
       : rule.proxyHost
         ? `${t("domainConfig.forward")} ${rule.proxyHost}${rule.proxyPort ? `:${rule.proxyPort}` : ""}`
         : t("domainConfig.noProxy");
@@ -78,6 +94,26 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [confirm, setConfirm] = useState<{ name: string; run: () => void } | null>(null);
+  const [ports, setPorts] = useState<Record<string, number[]> | null>(null);
+  const [portError, setPortError] = useState("");
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    fetchServicePorts(token).then((value) => {
+      if (!cancelled) {
+        setPorts(value);
+        setPortError("");
+      }
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        setPorts(null);
+        setPortError(error instanceof Error ? error.message : "无法读取运行端口");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
   if (seen !== config.version) {
     setSeen(config.version);
     setServices(config.services.map(serviceToDraft));
@@ -90,9 +126,9 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
   const visible = useMemo(() => services.filter((service) => {
     if (type !== "all" && service.type !== type) return false;
     if (!query) return true;
-    const routes = service.rules.map((rule) => [rule.api, rule.service, rule.staticRoot, rule.proxyHost].filter(Boolean).join(" ")).join(" ");
-    return [service.name, service.domain, service.type, listenAddress(service), routes].join(" ").toLowerCase().includes(query);
-  }), [query, services, type]);
+    const routes = service.rules.map((rule) => [rule.api, rule.service, rule.staticRoot, rule.proxyHost, forwardAddress(asRule(rule), services, ports)].filter(Boolean).join(" ")).join(" ");
+    return [service.name, service.domain, service.type, listenAddress(service), runtimeAddresses(service.name, ports), routes].join(" ").toLowerCase().includes(query);
+  }), [ports, query, services, type]);
 
   const counts = {
     frontend: services.filter((service) => service.type === "frontend").length,
@@ -131,7 +167,8 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
             <p className="text-tertiary mt-1 text-xs">{t("services.runtimeMap", { file: config.runtimeMap })}</p>
           ) : null}
         </div>
-        {config.error ? <p className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300 [html.theme-light_&]:text-rose-700">{config.error}</p> : null}
+          {config.error ? <p className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300 [html.theme-light_&]:text-rose-700">{config.error}</p> : null}
+          {portError ? <p className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200 [html.theme-light_&]:text-amber-800">运行端口未加载：{portError}</p> : null}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label={t("services.total")} value={services.length} />
           <Stat label={t("domainConfig.frontend")} value={counts.frontend} />
@@ -193,12 +230,13 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
               </thead>
               <tbody>
                 {visible.map((service) => {
-                  const listen = listenAddress(service);
+                  const listen = service.type === "backend" ? runtimeAddresses(service.name, ports) : listenAddress(service);
                   return (
                     <tr key={service.key} className="border-t border-[var(--border)] align-top">
                       <td className="px-4 py-2.5">
                         <p className="text-primary font-medium">{service.name || t("domainConfig.unbound")}</p>
                         {listen ? <p className="text-tertiary mt-1 font-mono text-xs">{t("services.listen")} {listen}</p> : null}
+                        {!listen && service.type === "backend" && ports ? <p className="text-tertiary mt-1 text-xs">{t("services.noRuntimePort")}</p> : null}
                       </td>
                       <td className="px-4 py-2.5">
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${typeClass(service.type)}`}>{typeLabel(service.type, t)}</span>
@@ -211,7 +249,7 @@ export function ServiceConfigView({ config }: { config: DomainConfigModel }) {
                             {service.rules.map((rule, index) => (
                               <li key={`${service.key}-${rule.api}-${index}`} className="text-secondary flex flex-wrap items-baseline gap-x-2 text-xs">
                                 <span className="text-primary font-mono">{rule.api || t("domainConfig.proxy")}</span>
-                                <span className="break-all">{routeText(asRule(rule), t)}</span>
+                                <span className="break-all">{routeText(asRule(rule), services, ports, t)}</span>
                               </li>
                             ))}
                           </ul>

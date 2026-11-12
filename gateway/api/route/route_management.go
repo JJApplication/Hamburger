@@ -29,6 +29,7 @@ type managementApplyRequest struct {
 func RegisterManagement(engine *gin.Engine, svc *service.APIService, auth gin.HandlerFunc) {
 	group := engine.Group("/api/management", auth)
 	group.GET("/domains", func(c *gin.Context) { handleManagementDomains(c, svc) })
+	group.GET("/service-ports", func(c *gin.Context) { handleManagementServicePorts(c, svc) })
 	group.POST("/domains/probe", func(c *gin.Context) { handleManagementDomainProbe(c, svc) })
 	group.POST("/domains/state", func(c *gin.Context) { handleManagementDomainState(c, svc) })
 	group.GET("/config", func(c *gin.Context) { handleManagementConfigGet(c, svc) })
@@ -39,6 +40,10 @@ func RegisterManagement(engine *gin.Engine, svc *service.APIService, auth gin.Ha
 
 func handleManagementDomains(c *gin.Context, svc *service.APIService) {
 	c.JSON(http.StatusOK, gin.H{"domains": svc.GetManagementDomains()})
+}
+
+func handleManagementServicePorts(c *gin.Context, svc *service.APIService) {
+	c.JSON(http.StatusOK, gin.H{"ports": svc.GetServicePorts()})
 }
 
 func handleManagementDomainProbe(c *gin.Context, svc *service.APIService) {

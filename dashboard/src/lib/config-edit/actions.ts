@@ -3,6 +3,10 @@
 import { fetchCurrentUser } from "@/lib/api/gateway";
 import { applyBindings, applyServices, applyStatic, commitEditedFile, ConfigEditError, DOMAIN_FILE, SERVICE_FILE, STATIC_FILE } from "@/lib/config-edit/commit";
 import type { BindingDraft, SaveResult, ServiceDraft, StaticDraft } from "@/lib/config-edit/model";
+import { commitMiddleware } from "@/lib/middleware-config/commit";
+import type { ErrorConfigDraft, MiddlewareDraft } from "@/lib/middleware-config/model";
+import { commitSecurity } from "@/lib/security-config/commit";
+import type { SecurityDraft } from "@/lib/security-config/model";
 
 async function authorize(token: string) {
   if (!token.trim()) throw new ConfigEditError({ code: "auth" });
@@ -36,4 +40,12 @@ export async function saveDomainConfig(token: string, version: string, bindings:
 
 export async function saveStaticConfig(token: string, version: string, draft: StaticDraft): Promise<SaveResult> {
   return run(token, () => commitEditedFile(STATIC_FILE, version, (root) => applyStatic(root, draft)));
+}
+
+export async function saveMiddlewareConfig(token: string, version: string, draft: MiddlewareDraft, errorConfig: ErrorConfigDraft): Promise<SaveResult> {
+  return run(token, () => commitMiddleware(version, draft, errorConfig));
+}
+
+export async function saveSecurityConfig(token: string, version: string, draft: SecurityDraft): Promise<SaveResult> {
+  return run(token, () => commitSecurity(version, draft));
 }
