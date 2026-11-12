@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -73,6 +75,85 @@ func TestLoggingMiddlewareKeepsDetailedInfoForAccessEnabled(t *testing.T) {
 	router.ServeHTTP(httptest.NewRecorder(), request)
 	if !strings.Contains(output.String(), "access log") || !strings.Contains(output.String(), "response_time") {
 		t.Fatalf("detailed access log missing: %s", output.String())
+	}
+}
+
+func TestRoutingMiddlewareUsesContextWithoutHeader(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("from-context"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	logger := zerolog.New(io.Discard)
+	cfg := &frontproxy_config.PxyFrontConfig{
+		InternalFlag: "X-Proxy-Internal-Front",
+		Servers: []frontproxy_config.FrontServerConfig{{
+			Name:  "Homeland",
+			Root:  dir,
+			Index: "index.html",
+		}},
+	}
+	server := testHelios(cfg, &logger)
+	router := gin.New()
+	router.Use(RoutingMiddleware(server))
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request = request.WithContext(WithSiteName(request.Context(), "Homeland"))
+	request.Header.Set("X-Proxy-Internal-Front", "forged-site")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	if !strings.Contains(recorder.Body.String(), "from-context") {
+		t.Fatalf("context site was not served: %d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestRoutingMiddlewareHeaderFallbackStillServesDirectListener(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("from-header"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	logger := zerolog.New(io.Discard)
+	cfg := &frontproxy_config.PxyFrontConfig{
+		InternalFlag: "X-Proxy-Internal-Front",
+		Servers: []frontproxy_config.FrontServerConfig{{
+			Name:  "Homeland",
+			Root:  dir,
+			Index: "index.html",
+		}},
+	}
+	router := gin.New()
+	router.Use(RoutingMiddleware(testHelios(cfg, &logger)))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("X-Proxy-Internal-Front", "Homeland")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	if !strings.Contains(recorder.Body.String(), "from-header") {
+		t.Fatalf("header fallback did not serve the site: %d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestRoutingMiddlewareMissingSiteIsNotFound(t *testing.T) {
+	logger := zerolog.New(io.Discard)
+	cfg := &frontproxy_config.PxyFrontConfig{InternalFlag: "X-Proxy-Internal-Front"}
+	router := gin.New()
+	router.Use(RoutingMiddleware(testHelios(cfg, &logger)))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	if !strings.Contains(recorder.Body.String(), "Page Not Found") {
+		t.Fatalf("missing site was served: %d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func testHelios(cfg *frontproxy_config.PxyFrontConfig, logger *zerolog.Logger) *HeliosServer {
+	gin.SetMode(gin.TestMode)
+	index := make(map[string]frontproxy_config.FrontServerConfig, len(cfg.Servers))
+	for _, server := range cfg.Servers {
+		index[server.Name] = server
+	}
+	return &HeliosServer{
+		config:       cfg,
+		logger:       logger,
+		cacheManager: &CacheManager{config: cfg, logger: logger, memory: newMemoryFileCache(1, 1)},
+		serverIndex:  index,
 	}
 }
 

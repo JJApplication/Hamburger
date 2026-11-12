@@ -25,8 +25,8 @@ func LoggingMiddleware(server *HeliosServer) gin.HandlerFunc {
 			bodySize = 0
 		}
 
-		// 获取内部标志
-		internalFlag := c.GetHeader(config.InternalFlag)
+		// 获取站点名：进程内 context 优先，直连监听才回退 Header
+		internalFlag := resolveSiteName(c, config.InternalFlag)
 
 		// 检查是否需要记录详细访问日志
 		serverConfig, found := server.lookupServer(internalFlag)
@@ -70,8 +70,8 @@ func CustomHeadersMiddleware(config *frontproxy_config.PxyFrontConfig) gin.Handl
 // RoutingMiddleware 路由中间件
 func RoutingMiddleware(server *HeliosServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 获取内部标志头
-		internalFlag := c.GetHeader(server.config.InternalFlag)
+		// 获取站点名：进程内 context 优先，直连监听才回退 Header
+		internalFlag := resolveSiteName(c, server.config.InternalFlag)
 		if internalFlag == "" {
 			server.HandleError(c, 404, "Internal flag header not found")
 			return

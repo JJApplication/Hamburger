@@ -2,11 +2,14 @@ package core
 
 import (
 	"Hamburger/gateway/precheck"
+	"Hamburger/gateway/prehandler"
+	"Hamburger/gateway/resolver"
 	"Hamburger/internal/config"
 	"Hamburger/internal/constant"
-	"github.com/rs/zerolog"
 	"net/http"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
 
 type Proxy struct {
@@ -15,7 +18,9 @@ type Proxy struct {
 	lock   sync.RWMutex
 	once   sync.Once
 
-	handler http.Handler
+	handler      http.Handler
+	frontHandler http.Handler
+	ruler        *resolver.Ruler
 }
 
 func NewProxy(conf *config.Config, logger *zerolog.Logger) *Proxy {
@@ -24,6 +29,7 @@ func NewProxy(conf *config.Config, logger *zerolog.Logger) *Proxy {
 		logger: logger,
 		lock:   sync.RWMutex{},
 		once:   sync.Once{},
+		ruler:  resolver.NewRuler(conf, logger),
 	}
 }
 
@@ -44,5 +50,7 @@ func (p *Proxy) Create() http.Handler {
 
 func (p *Proxy) proxy() http.Handler {
 	base := p.GlobalStaticAlias(p.handler)
-	return precheck.NewRouter(base).Handler()
+	inProcess := p.ServeFrontendInProcess(base)
+	checked := precheck.NewRouter(inProcess).Handler()
+	return prehandler.WrapStripInternalHeaders(checked, p.conf)
 }

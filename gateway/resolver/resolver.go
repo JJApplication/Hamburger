@@ -41,11 +41,14 @@ func OneResolver(cfg *config.Config, logger *zerolog.Logger) *Resolver {
 // configuration reload. If the singleton has not been initialized yet, its
 // first construction will read the already-reloaded configuration directly.
 func RefreshFrontendRules(cfg *config.Config) {
-	resolverMu.RLock()
-	ruler := resolver.ruler
-	resolverMu.RUnlock()
-	if ruler != nil {
-		ruler.Refresh(cfg)
+	rulerTrackMu.Lock()
+	rulers := make([]*Ruler, len(trackedRulers))
+	copy(rulers, trackedRulers)
+	rulerTrackMu.Unlock()
+	for _, ruler := range rulers {
+		if ruler != nil {
+			ruler.Refresh(cfg)
+		}
 	}
 }
 

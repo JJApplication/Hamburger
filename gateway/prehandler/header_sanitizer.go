@@ -26,10 +26,7 @@ func NewHeaderSanitizer() *HeaderSanitizer {
 	sanitizerOnce.Do(func() {
 		cf := loader.Get()
 		k := map[string]struct{}{
-			cf.ProxyHeader.TraceId:            {},
-			cf.ProxyHeader.FrontendHostHeader: {},
-			cf.ProxyHeader.BackendHeader:      {},
-			cf.ProxyHeader.ProxyApp:           {},
+			cf.ProxyHeader.TraceId: {},
 		}
 		d := map[string]struct{}{
 			"Authorization":       {},

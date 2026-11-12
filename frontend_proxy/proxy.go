@@ -17,8 +17,8 @@ import (
 // BackendProxyMiddleware 后端代理中间件
 func BackendProxyMiddleware(server *HeliosServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 获取内部标志头
-		internalFlag := c.GetHeader(server.config.InternalFlag)
+		// 获取站点名：进程内 context 优先，直连监听才回退 Header
+		internalFlag := resolveSiteName(c, server.config.InternalFlag)
 		server.logger.Debug().Str("internal_flag", internalFlag).Msg("received request")
 		if internalFlag == "" {
 			c.Next()

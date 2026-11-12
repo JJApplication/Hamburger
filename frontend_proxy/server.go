@@ -161,8 +161,8 @@ func (s *HeliosServer) HandleStaticFile(c *gin.Context, serverConfig *frontproxy
 		filePath = filepath.Join(serverConfig.Root, requestPath)
 	}
 
-	// 获取internal_flag
-	internalFlag := c.GetHeader(s.config.InternalFlag)
+	// 缓存键使用站点名，进程内请求来自 context
+	internalFlag := resolveSiteName(c, s.config.InternalFlag)
 
 	// 先查内存缓存，再回落到磁盘缓存。内存命中在验证窗口内不触发
 	// 文件系统调用；缓存层未命中时继续走下面的源文件和 try_file 逻辑。

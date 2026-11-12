@@ -10,6 +10,9 @@ func (i *Initializer) InitGatewayManager() Runner {
 	return Runner{
 		Priority: PriorityLow,
 		fn: func() error {
+			if i.Gateway != nil && i.FrontServer != nil {
+				i.Gateway.SetFrontHandler(i.FrontServer.GetHandler())
+			}
 			gatewayHandler := i.Gateway.Create()
 			initial := config.ConnectProtocolConfig{}
 			if i.cfg != nil {

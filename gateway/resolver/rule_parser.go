@@ -84,14 +84,30 @@ func buildFrontendRules(cfg *config.Config) (map[string][]Rule, frontendRouteCon
 	return rules, frontConfig
 }
 
+var (
+	rulerTrackMu  sync.Mutex
+	trackedRulers []*Ruler
+)
+
+func trackRuler(ruler *Ruler) {
+	if ruler == nil {
+		return
+	}
+	rulerTrackMu.Lock()
+	trackedRulers = append(trackedRulers, ruler)
+	rulerTrackMu.Unlock()
+}
+
 func NewRuler(cfg *config.Config, logger *zerolog.Logger) *Ruler {
 	rules, frontConfig := buildFrontendRules(cfg)
 
-	return &Ruler{
+	ruler := &Ruler{
 		logger:      logger,
 		apiRules:    rules,
 		frontConfig: frontConfig,
 	}
+	trackRuler(ruler)
+	return ruler
 }
 
 // Refresh atomically replaces all frontend API rules and the scalar routing
@@ -134,18 +150,13 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 		// 根据请求和域名判断转发到的真实服务
 		switch serviceType.ServiceType {
 		case constant.FrontendType:
-			// 纯前端服务
-			// 未匹配API转发时直接转到前端处理
+			// 纯前端服务的 API 仍由网关直连后端。
+			// 未命中 API 的静态请求由进程内 Helios 处理，不再回环到前端端口。
 			if result, ok := r.MatchAPIRule(req, rules); ok {
 				return result
 			}
-			req.Header.Set(frontConfig.InternalFlag, serviceMap.ServiceName)
 			return RuleResult{
-				ProxyToType: Frontend,
-				ProxyTo:     serviceMap.ServiceName,
-				ProxyHost:   frontConfig.Host,
-				ProxyPort:   frontConfig.Port,
-				ProxyScheme: StaticSchema,
+				ProxyError: errUnknownPath,
 			}
 		case constant.BackendType:
 			// 纯后端服务
@@ -309,6 +320,34 @@ func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProx
 	}
 
 	return RuleResult{}, false
+}
+
+// FrontendStaticSite reports the Helios site when the request belongs to a
+// frontend service and does not match an API prefix. Those requests are served
+// in-process and must not be reverse-proxied to the frontend listener.
+func (r *Ruler) FrontendStaticSite(req *http.Request) (string, bool) {
+	if r == nil || req == nil {
+		return "", false
+	}
+	host := req.Host
+	if host == "" || host == "localhost" || host == StaticHost || strings.HasPrefix(host, "localhost:") || strings.HasPrefix(host, StaticHost+":") {
+		return "", false
+	}
+	serviceMap, ok := runtime.GetDomain2Service(host)
+	if !ok || serviceMap.ServiceName == "" {
+		return "", false
+	}
+	service, ok := runtime.GetService(serviceMap.ServiceName)
+	if !ok || service.ServiceType != constant.FrontendType {
+		return "", false
+	}
+	r.rwLock.RLock()
+	rules := r.apiRules[serviceMap.ServiceName]
+	r.rwLock.RUnlock()
+	if _, matched := r.MatchAPIRule(req, rules); matched {
+		return "", false
+	}
+	return serviceMap.ServiceName, true
 }
 
 //go:inline
