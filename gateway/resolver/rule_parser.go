@@ -163,6 +163,7 @@ func (r *Ruler) Parse(req *http.Request) RuleResult {
 			ports, ok := runtime.ServicePortsMap.Get(serviceMap.ServiceName)
 			if !ok {
 				return RuleResult{
+					ProxyTo:    serviceMap.ServiceName,
 					ProxyError: errDomainsPortEmpty,
 				}
 			}
@@ -234,6 +235,7 @@ func (r *Ruler) MatchAPIRule(req *http.Request, rules []Rule) (RuleResult, bool)
 		ports, ok := runtime.ServicePortsMap.Get(rule.Backend)
 		if !ok {
 			return RuleResult{
+				ProxyTo:    rule.Backend,
 				ProxyError: errDomainsPortEmpty,
 			}, true
 		}
@@ -289,6 +291,7 @@ func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProx
 		service, ok := runtime.GetService(rule.Service)
 		if !ok {
 			return RuleResult{
+				ProxyTo:    rule.Service,
 				ProxyError: errDomainsMapEmpty,
 			}, true
 		}
@@ -305,6 +308,7 @@ func (r *Ruler) MatchCustomAPIRule(req *http.Request, rules []config.ServiceProx
 			ports, ok := runtime.ServicePortsMap.Get(rule.Service)
 			if !ok {
 				return RuleResult{
+					ProxyTo:    rule.Service,
 					ProxyError: errDomainsPortEmpty,
 				}, true
 			}

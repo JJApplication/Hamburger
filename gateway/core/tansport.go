@@ -1,22 +1,28 @@
 package core
 
 import (
-	"Hamburger/gateway/grpc_proxy"
-	"Hamburger/gateway/grpc_web"
-	"Hamburger/internal/config"
-	"Hamburger/internal/constant"
-	"Hamburger/internal/utils"
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"time"
 
+	"Hamburger/gateway/breaker"
+	"Hamburger/gateway/grpc_proxy"
+	"Hamburger/gateway/grpc_web"
+	"Hamburger/internal/config"
+	"Hamburger/internal/constant"
+	"Hamburger/internal/serror"
+	"Hamburger/internal/utils"
+
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
 )
+
+var errSandwichShortCircuit = errors.New("gateway route handled")
 
 type myTransport struct {
 	conf         *config.Config
@@ -26,9 +32,31 @@ type myTransport struct {
 }
 
 func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if req.URL == nil {
+	if req == nil || req.URL == nil {
 		return t.Transport.RoundTrip(req)
 	}
+
+	key := breaker.TargetKey(req)
+	generation, allowErr := breaker.Allow(key)
+	if allowErr != nil {
+		if req.Header == nil {
+			req.Header = make(http.Header)
+		}
+		req.Header.Set(serror.SandwichInternalFlag, serror.SandwichBucketLimit)
+		return nil, allowErr
+	}
+	if req.URL.Scheme == constant.SchemeSandwich {
+		// 路由错误由 ErrorHandler 记账。这里只归还半开探测名额。
+		breaker.Ignore(key, generation)
+		return nil, errSandwichShortCircuit
+	}
+
+	resp, err := t.dispatch(req)
+	breaker.Observe(key, generation, req.Context(), resp, err)
+	return resp, err
+}
+
+func (t *myTransport) dispatch(req *http.Request) (*http.Response, error) {
 	// 检查是否为gRPC代理请求
 	if req.URL.Scheme == constant.SchemeGrpc {
 		return t.handleGrpcProxy(req)
@@ -49,15 +77,14 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	} else if t.shouldUseH2C(req) && t.h2cTransport != nil {
 		transport = t.h2cTransport
 	}
+	if transport == nil {
+		return nil, errors.New("nil transport")
+	}
 
-	if t.conf.Debug {
+	if t.conf != nil && t.conf.Debug {
 		start := time.Now()
 		resp, err := transport.RoundTrip(req)
-
-		if t.conf.Debug {
-			utils.PerformCalc("round-trip", start)
-		}
-
+		utils.PerformCalc("round-trip", start)
 		return resp, err
 	}
 

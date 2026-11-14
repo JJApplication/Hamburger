@@ -19,4 +19,7 @@ func TestDefaultConnectProtocolConfig(t *testing.T) {
 	if cfg.ConnectProtocol.EnableBidiStream {
 		t.Fatal("bidirectional streams should be disabled by default")
 	}
+	if !cfg.Features.Break.IsEnabled() || cfg.Features.Break.MaxError != core_config.DefaultBreakMaxError || cfg.Features.Break.Reset != core_config.DefaultBreakResetSeconds {
+		t.Fatalf("default breaker = %+v", cfg.Features.Break)
+	}
 }

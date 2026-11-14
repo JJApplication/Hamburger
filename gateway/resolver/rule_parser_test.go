@@ -44,6 +44,9 @@ func TestNewRulerIndexesAPIRulesByServiceName(t *testing.T) {
 	if result.ProxyPath != "/v2/users" || result.ProxyHost != "127.0.0.1" || result.ProxyPort != 9000 {
 		t.Fatalf("unexpected API result: %#v", result)
 	}
+	if result.BreakerKey() != "127.0.0.1:9000" {
+		t.Fatalf("breaker key = %q", result.BreakerKey())
+	}
 }
 
 func TestParseFrontendStaticDoesNotLoopToHelios(t *testing.T) {

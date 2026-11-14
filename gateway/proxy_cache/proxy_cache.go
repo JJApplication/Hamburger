@@ -12,11 +12,15 @@ import (
 	"Hamburger/internal/utils"
 	"context"
 	"fmt"
-	"github.com/allegro/bigcache/v3"
+	"net"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/allegro/bigcache/v3"
 )
 
 type PxyCacheManager struct {
@@ -25,12 +29,24 @@ type PxyCacheManager struct {
 }
 
 type PxyCache struct {
-	Key        string // 全局唯一的Key
-	RequestURL string // 请求路径
-	RealHost   string
-	Host       string
-	Port       int
-	Schema     string
+	Key         string // 全局唯一的Key
+	RequestURL  string // 请求路径
+	ServiceName string // 后端服务名，熔断按它隔离
+	RealHost    string
+	Host        string
+	Port        int
+	Schema      string
+}
+
+// BreakerKey 返回缓存目标对应的熔断键。
+func (c PxyCache) BreakerKey() string {
+	if name := strings.TrimSpace(c.ServiceName); name != "" {
+		return name
+	}
+	if c.Host != "" && c.Port > 0 {
+		return net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
+	}
+	return ""
 }
 
 func (c PxyCache) ToJSON() []byte {
@@ -98,18 +114,19 @@ func (p *PxyCacheManager) IsEnabled() bool {
 }
 
 // Set 存储rule转发解析规则 不再进行规则解析
-func (p *PxyCacheManager) Set(req *http.Request, host string, port int, schema string) {
+func (p *PxyCacheManager) Set(req *http.Request, serviceName, host string, port int, schema string) {
 	if !p.IsEnabled() {
 		return
 	}
 	key := uniqueCacheKey(req)
 	p.bc.Set(key, PxyCache{
-		Key:        key,
-		RequestURL: req.RequestURI,
-		RealHost:   req.Host,
-		Host:       host,
-		Port:       port,
-		Schema:     schema,
+		Key:         key,
+		RequestURL:  req.RequestURI,
+		ServiceName: serviceName,
+		RealHost:    req.Host,
+		Host:        host,
+		Port:        port,
+		Schema:      schema,
 	}.ToJSON())
 }
 
@@ -133,13 +150,13 @@ func (p *PxyCacheManager) Del(req *http.Request) {
 	p.bc.Delete(key)
 }
 
-func (p *PxyCacheManager) SetIfNotExists(req *http.Request, host string, port int, schema string) {
+func (p *PxyCacheManager) SetIfNotExists(req *http.Request, serviceName, host string, port int, schema string) {
 	if !p.IsEnabled() {
 		return
 	}
 	key := uniqueCacheKey(req)
 	_, err := p.bc.Get(key)
 	if err != nil {
-		p.Set(req, host, port, schema)
+		p.Set(req, serviceName, host, port, schema)
 	}
 }

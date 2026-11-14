@@ -46,11 +46,90 @@ type GrpcProxyConfig struct {
 	GrpcAddr   string   `yaml:"grpc_addr" json:"grpc_addr"`     // 目标gRPC地址
 }
 
-// BreakConfig 熔断配置
+const (
+	DefaultBreakMaxError            = 5
+	DefaultBreakResetSeconds        = 30
+	DefaultBreakBucket              = 16
+	DefaultBreakMinRequests         = 10
+	DefaultBreakHalfOpenMaxRequests = 3
+	DefaultBreakSuccessThreshold    = 3
+)
+
+// DefaultBreakTripStatusCodes 是后端响应里计入失败的状态码。
+func DefaultBreakTripStatusCodes() []int {
+	return []int{500, 502, 503, 504}
+}
+
+// BreakConfig 熔断配置。
+// Enabled 为空时默认开启；显式 false 才关闭。
 type BreakConfig struct {
-	Bucket   int `yaml:"bucket" json:"bucket"`       // 桶数量
-	MaxError int `yaml:"max_error" json:"max_error"` // 最大允许错误
-	Reset    int `yaml:"reset" json:"reset"`         // 重置时间
+	Enabled             *bool   `yaml:"enabled" json:"enabled"`                               // 为空默认开启
+	Bucket              int     `yaml:"bucket" json:"bucket"`                                 // 内存链路表预分配容量
+	MaxError            int     `yaml:"max_error" json:"max_error"`                           // 窗口内连续失败次数阈值
+	Reset               int     `yaml:"reset" json:"reset"`                                   // 统计窗口和熔断冷却时间（秒）
+	FailureRatio        float64 `yaml:"failure_ratio" json:"failure_ratio"`                   // 窗口失败率阈值，0 表示不启用
+	MinRequests         int     `yaml:"min_requests" json:"min_requests"`                     // 失败率判定的最小样本数
+	HalfOpenMaxRequests int     `yaml:"half_open_max_requests" json:"half_open_max_requests"` // 半开状态并发探测数
+	SuccessThreshold    int     `yaml:"success_threshold" json:"success_threshold"`           // 半开恢复所需连续成功次数
+	TripStatusCodes     []int   `yaml:"trip_status_codes" json:"trip_status_codes"`           // 计入失败的后端状态码
+}
+
+// IsEnabled 报告熔断是否生效。未配置时默认开启。
+func (c BreakConfig) IsEnabled() bool {
+	if c.Enabled == nil {
+		return true
+	}
+	return *c.Enabled
+}
+
+// Effective 返回补齐默认值并修正非法值后的配置副本。
+func (c BreakConfig) Effective() BreakConfig {
+	out := c
+	if out.MaxError <= 0 {
+		out.MaxError = DefaultBreakMaxError
+	}
+	if out.Reset <= 0 {
+		out.Reset = DefaultBreakResetSeconds
+	}
+	if out.Bucket <= 0 {
+		out.Bucket = DefaultBreakBucket
+	}
+	if out.FailureRatio < 0 {
+		out.FailureRatio = 0
+	}
+	if out.FailureRatio > 1 {
+		out.FailureRatio = 1
+	}
+	if out.MinRequests <= 0 {
+		out.MinRequests = DefaultBreakMinRequests
+	}
+	if out.HalfOpenMaxRequests <= 0 {
+		out.HalfOpenMaxRequests = DefaultBreakHalfOpenMaxRequests
+	}
+	if out.SuccessThreshold <= 0 {
+		out.SuccessThreshold = DefaultBreakSuccessThreshold
+	}
+	if len(c.TripStatusCodes) == 0 {
+		out.TripStatusCodes = DefaultBreakTripStatusCodes()
+	} else {
+		out.TripStatusCodes = append([]int(nil), c.TripStatusCodes...)
+	}
+	return out
+}
+
+// Normalize 就地补齐默认值并修正非法值。
+func (c *BreakConfig) Normalize() {
+	if c == nil {
+		return
+	}
+	normalized := c.Effective()
+	*c = normalized
+}
+
+// DefaultBreakConfig 是进程内置的熔断配置，默认开启。
+func DefaultBreakConfig() BreakConfig {
+	enabled := true
+	return (BreakConfig{Enabled: &enabled}).Effective()
 }
 
 // FlowControlRule 流控规则配置结构体

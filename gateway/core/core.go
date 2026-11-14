@@ -188,19 +188,41 @@ func ProxyDirector(cfg *config.Config, logger *zerolog.Logger) func(request *htt
 				// existing flow, so a cache hit is a backend observation too.
 				stat.MarkRoute(request, stat.RouteBackend)
 				request.URL = cache.CacheToURL(request)
+				attachBreakerTarget(request, cache.BreakerKey())
 			} else {
 				// 缓存未命中
 				finalURL, result := resolver.OneResolver(cfg, logger).Parse(request)
-				request.URL = finalURL
-				if result.ProxyToType != resolver.Frontend {
-					proxy_cache.M().Set(request, result.ProxyHost, result.ProxyPort, result.ProxyScheme)
+				if applyResolvedRoute(request, finalURL, result) && result.ProxyToType != resolver.Frontend {
+					proxy_cache.M().Set(request, result.ProxyTo, result.ProxyHost, result.ProxyPort, result.ProxyScheme)
 				}
 			}
 		} else {
-			request.URL, _ = resolver.OneResolver(cfg, logger).Parse(request)
+			finalURL, result := resolver.OneResolver(cfg, logger).Parse(request)
+			applyResolvedRoute(request, finalURL, result)
 		}
 		logger.Debug().Any("URL", request.URL).Msg("parse request")
 	}
+}
+
+func applyResolvedRoute(request *http.Request, finalURL *url.URL, result resolver.RuleResult) bool {
+	if result.ProxyError != nil || finalURL == nil {
+		if request.Header.Get(serror.SandwichInternalFlag) == "" {
+			request.Header.Set(serror.SandwichInternalFlag, serror.SandwichBackendError)
+		}
+		request.URL = &url.URL{Scheme: constant.SchemeSandwich}
+		attachBreakerTarget(request, result.BreakerKey())
+		return false
+	}
+	request.URL = finalURL
+	attachBreakerTarget(request, result.BreakerKey())
+	return true
+}
+
+func attachBreakerTarget(request *http.Request, key string) {
+	if request == nil || key == "" {
+		return
+	}
+	*request = *request.WithContext(breaker.WithTarget(request.Context(), key))
 }
 
 // ProxyModifyResponse 响应修改逻辑
@@ -249,8 +271,8 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 		// 熔断判断
 		switch request.Header.Get(serror.SandwichInternalFlag) {
 		case serror.SandwichBucketLimit:
-			logger.Error().Str("host", request.Host).Msg("reach breaker limit")
-			writer.WriteHeader(http.StatusGatewayTimeout)
+			logger.Error().Str("host", request.Host).Str("target", breakerTarget(request)).Msg("reach breaker limit")
+			writeProxyError(writer, request, http.StatusServiceUnavailable)
 			return
 		case serror.SandwichReqLimit:
 			logger.Error().Str("host", request.Host).Msg("reach flow control limit")
@@ -265,9 +287,11 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			error_page.EPM.Response(http.StatusUnauthorized, writer, request)
 			return
 		case serror.SandwichBackendError:
-			breaker.Set(request.Host)
-			logger.Error().Str("host", request.Host).Msg("backend: service is down")
-			error_page.EPM.Response(http.StatusInternalServerError, writer, request)
+			if key := breakerTarget(request); key != "" {
+				breaker.Set(key)
+			}
+			logger.Error().Str("host", request.Host).Str("target", breakerTarget(request)).Msg("backend: service is down")
+			writeProxyError(writer, request, http.StatusInternalServerError)
 			return
 		case serror.SandwichServiceStopped:
 			logger.Error().Str("host", request.Host).Msg("service is stopped")
@@ -275,6 +299,22 @@ func ProxyErrorHandler(logger *zerolog.Logger) func(writer http.ResponseWriter, 
 			return
 		}
 		logger.Error().Err(err).Str("host", request.Host).Msg("proxy connect error")
-		error_page.EPM.Response(http.StatusBadGateway, writer, request)
+		writeProxyError(writer, request, http.StatusBadGateway)
 	}
+}
+
+func breakerTarget(request *http.Request) string {
+	if request == nil {
+		return ""
+	}
+	key, _ := breaker.TargetFrom(request.Context())
+	return key
+}
+
+func writeProxyError(writer http.ResponseWriter, request *http.Request, code int) {
+	if error_page.EPM != nil {
+		error_page.EPM.Response(code, writer, request)
+		return
+	}
+	writer.WriteHeader(code)
 }

@@ -96,6 +96,24 @@ func TestLoadConfigJSONConnectProtocol(t *testing.T) {
 	}
 }
 
+func TestProjectConfigEnablesBreakerDefaults(t *testing.T) {
+	file := filepath.Join("..", "..", "..", "config", "config.hamburger")
+	appCfg, err := LoadConfig(file)
+	if err != nil {
+		t.Fatalf("load project config failed: %v", err)
+	}
+	cfg := Merge(appCfg)
+	if !cfg.Features.Break.IsEnabled() {
+		t.Fatal("project breaker config should stay enabled when enabled is omitted")
+	}
+	if cfg.Features.Break.MaxError != 5 || cfg.Features.Break.Reset != 30 || cfg.Features.Break.Bucket != 16 {
+		t.Fatalf("project breaker = %+v", cfg.Features.Break)
+	}
+	if cfg.Features.Break.SuccessThreshold != 3 || len(cfg.Features.Break.TripStatusCodes) != 4 {
+		t.Fatalf("project breaker probe config = %+v", cfg.Features.Break)
+	}
+}
+
 func TestMergeConnectProtocolDefaultRoute(t *testing.T) {
 	cfg := Merge(&config.AppConfig{})
 	if cfg.ConnectProtocol.BaseRoute != "/hamburger.service" {

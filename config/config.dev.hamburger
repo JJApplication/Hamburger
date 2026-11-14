@@ -142,6 +142,15 @@
       enabled: true,
       cache_size: 2048,
       cache_ttl: 3600
+    },
+    break: {
+      max_error: 5,
+      reset: 30,
+      bucket: 16,
+      min_requests: 10,
+      half_open_max_requests: 3,
+      success_threshold: 3,
+      trip_status_codes: [500, 502, 503, 504]
     }
   },
 

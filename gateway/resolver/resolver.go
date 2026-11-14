@@ -63,7 +63,7 @@ func (r *Resolver) Parse(request *http.Request) (*url.URL, RuleResult) {
 
 	r.logger.Debug().Any("Result", result).Err(result.ProxyError).Msg("rule-parse request")
 	if r.ResolveError(result, request) {
-		return nil, RuleResult{}
+		return nil, result
 	}
 
 	if result.ProxyToType == Frontend {

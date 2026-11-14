@@ -133,6 +133,7 @@ func GetDefaultConfig() *AppConfig {
 				TTL:      60,
 				Strategy: "lru",
 			},
+			Break: core_config.DefaultBreakConfig(),
 		},
 		GRPC: GRPCConfig{
 			Enabled: false,
